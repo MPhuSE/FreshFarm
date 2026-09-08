@@ -28,7 +28,7 @@ class AddToCartRequest extends FormRequest
             'success' => false,
             'message' => 'Dữ liệu không hợp lệ',
             'data' => null,
-            'errors_code' => 'VALIDATION_ERROR',
+            'error_code' => 'VALIDATION_ERROR',
             'errors' => $validator->errors(),
             'trace_id' => 'req_' . uniqid(),
         ], 422));

@@ -75,7 +75,7 @@ class CartService
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'discount' => $discount,
-                'total' => max (0, $grand_total), //đảm bảo tổng >= 0
+                'grand_total' => max (0, $grand_total), //đảm bảo tổng >= 0
             ],
         ];
 
@@ -123,7 +123,7 @@ class CartService
 
 
     //cập nhật số lượng sản phẩm trong giỏ hàng
-    public function updateItemQuantity(int $userId, int $cartItemId, float $quantity): array {
+    public function updateItem(int $userId, int $cartItemId, float $quantity): array {
         $cart = Cart::where('user_id', $userId)->first();
         if (!$cart) {
             throw new Exception('Giỏ hàng không tồn tại', 404);
