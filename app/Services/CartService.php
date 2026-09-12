@@ -8,13 +8,12 @@ use Exception;
 
 class CartService
 {
-
-    //lấy giỏ hàng và tổng tiền
+    
     public function getCartDetails(int $userId): array {
         //tìm giỏ hàng của user, nếu chưa có dùng firstOrCreate để tạo mới
         $cart = Cart::firstOrCreate(['user_id' => $userId]);
 
-        //load các bảng liên quan 
+         
         $items = CartItem::with('product.category', 'product.inventory', 'product.primaryImage')
             ->where('cart_id', $cart->id)
             ->get();
@@ -23,25 +22,21 @@ class CartService
         $formattedItems = [];
         foreach ($items as $item) {
             $product = $item->product;
-            //xử lý giá tiền
             $unitPrice  = (int) $product->price; 
-            $linePrice = (int) round($unitPrice * $item->quantity); //lam tròn giá tiền
-            $subtotal += $linePrice; //cộng dồn subtotal
+            $linePrice = (int) round($unitPrice * $item->quantity); 
+            $subtotal += $linePrice; 
 
-
-             //tính tồn kho
-            $availableStock = $product->inventory
-            ? max (0, (float)($product->inventory->quantity_on_hand - $product->inventory->quantity_reserved) )
-            : 0;
+           
+            $availableStock = $product->inventory ? (float) $product->inventory->quantity : 0;
 
             $primaryImg = $product->primaryImage ? '/storage/' . $product->primaryImage->path : null;
 
-            //api V1 format response
+            //API V1 format response
             $formattedItems[] = [
                 'id' => $item->id,
                 'product' => [
-                    'id' => $product -> id,
-                    'category' => $product -> category ? [
+                    'id' => $product->id,
+                    'category' => $product->category ? [
                         'id' => $product->category->id,
                         'name' => $product->category->name,
                         'slug' => $product->category->slug,
@@ -63,9 +58,9 @@ class CartService
             ];
         }
 
-        //tính tổng 
+        
         $shippingFee = $subtotal > 0 ? 30000 : 0; //phí ship cố định 30k
-        $discount = 0; //giảm giá
+        $discount = 0; 
         $grand_total = $subtotal + $shippingFee - $discount;
 
         return [
@@ -75,13 +70,12 @@ class CartService
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'discount' => $discount,
-                'grand_total' => max (0, $grand_total), //đảm bảo tổng >= 0
+                'grand_total' => max(0, $grand_total), 
             ],
         ];
-
     }
 
-    //thêm sản phẩm vào giỏ hàng
+    
     public function addItem (int $userId, int $productId, float $quantity): array {
         $product = Product::with('inventory')->find($productId);
 
@@ -89,10 +83,8 @@ class CartService
             throw new Exception('Sản phẩm không tồn tại', 404);
         }
 
-        $availableStock = $product->inventory
-            ? ($product->inventory->quantity_on_hand - $product->inventory->quantity_reserved)
-            : 0;
-        
+        $availableStock = $product->inventory ? (float) $product->inventory->quantity : 0;
+       
         if ($availableStock < $quantity) {
             throw new Exception('Số lượng sản phẩm vượt quá tồn kho', 400);
         }
@@ -102,13 +94,14 @@ class CartService
             ->where('product_id', $productId)
             ->first();
         
-        $newQuantity = $cartItem ? ($cartItem->quantity + $quantity) : $quantity; //check tồn kho, chua có thì thêm mới, có rồi thì cộng dồn
+        $newQuantity = $cartItem ? ($cartItem->quantity + $quantity) : $quantity; 
+        
         if ($newQuantity > $availableStock) {
             throw new Exception('Số lượng sản phẩm vượt quá tồn kho', 400);
         }
 
         if ($cartItem){
-            $cartItem -> update (['quantity' => $newQuantity]);
+            $cartItem->update(['quantity' => $newQuantity]);
         } else {
             $cartItem = CartItem::create([
                 'cart_id' => $cart->id,
@@ -117,12 +110,10 @@ class CartService
             ]);
         }
 
-        //trả về giỏ hàng mới nhất
         return $this->getCartDetails($userId);
     }
 
-
-    //cập nhật số lượng sản phẩm trong giỏ hàng
+    
     public function updateItem(int $userId, int $cartItemId, float $quantity): array {
         $cart = Cart::where('user_id', $userId)->first();
         if (!$cart) {
@@ -132,24 +123,26 @@ class CartService
         $cartItem = CartItem::where('id', $cartItemId)
             ->where('cart_id', $cart->id)
             ->first();
+            
         if (!$cartItem) {
             throw new Exception('Sản phẩm trong giỏ hàng không tồn tại', 404);
         }
 
         $product = Product::with('inventory')->find($cartItem->product_id);
-        $availableStock = $product && $product->inventory
-            ? ($product->inventory->quantity_on_hand - $product->inventory->quantity_reserved)
-            : 0;
+        
+        
+        $availableStock = $product && $product->inventory ? (float) $product->inventory->quantity : 0;
+            
         if ($quantity > $availableStock) {
             throw new Exception('Số lượng sản phẩm vượt quá tồn kho', 409);
         }
 
         $cartItem->update(['quantity' => $quantity]);
+        
         return $this->getCartDetails($userId);
-
     }
 
-    //xóa sản phẩm khỏi giỏ hàng
+    
     public function removeItem(int $userId, int $cartItemId): void {
         $cart = Cart::where('user_id', $userId)->first();
         if (!$cart) {
@@ -159,12 +152,11 @@ class CartService
         $cartItem = CartItem::where('id', $cartItemId)
             ->where('cart_id', $cart->id)
             ->first();
+            
         if (!$cartItem) {
             throw new Exception('Sản phẩm trong giỏ hàng không tồn tại', 404);
         }
 
         $cartItem->delete();
     }
-
 }
-

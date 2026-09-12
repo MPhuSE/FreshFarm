@@ -4,34 +4,52 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Inventory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 
 class CartApiTest extends TestCase
 {
-    /**
-     * Bật Transaction TRƯỚC mỗi bài test để ghi nhận thay đổi
-     */
+    use RefreshDatabase; 
+
     protected function setUp(): void
     {
         parent::setUp();
-        DB::beginTransaction();
+
+        // Không cần gán cứng 'id' => 1 nữa, cứ để DB tự tăng
+        User::create([
+            'name' => 'Nguyễn Văn An',
+            'email' => 'an.nguyen@example.com',
+            'password' => Hash::make('password123'),
+            'phone' => '0901234567',
+        ]);
+
+        $category = Category::create([
+            'name' => 'Trái Cây',
+            'slug' => 'trai-cay'
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Cam Vinh',
+            'slug' => 'cam-vinh',
+            'sku' => 'CAM-01',
+            'price' => 45000,
+            'unit' => 'kg',
+            'status' => 'active'
+        ]);
+
+        Inventory::create([
+            'product_id' => $product->id,
+            'quantity' => 100
+        ]);
     }
 
-    /**
-     * Hoàn tác (Rollback) SAU MỖI bài test để giữ database sạch sẽ
-     */
-    protected function tearDown(): void
-    {
-        DB::rollBack();
-        parent::tearDown();
-    }
-
-    /**
-     * Test 1: Khách hàng xem giỏ hàng thành công
-     */
     public function test_get_cart_successfully()
     {
-        $user = User::find(1); // User Nguyễn Văn An từ hi.sql
+        $user = User::first(); // Lấy user đầu tiên
 
         $response = $this->actingAs($user)->getJson('/api/v1/cart');
 
@@ -49,15 +67,13 @@ class CartApiTest extends TestCase
             ]);
     }
 
-    /**
-     * Test 2: Khách hàng thêm sản phẩm vào giỏ thành công
-     */
     public function test_add_item_to_cart_success()
     {
-        $user = User::find(1);
+        $user = User::first();
+        $product = Product::first(); // Lấy sản phẩm đầu tiên thay vì id = 1
 
         $response = $this->actingAs($user)->postJson('/api/v1/cart/items', [
-            'product_id' => 1, // Cam Vinh
+            'product_id' => $product->id, 
             'quantity' => 2
         ]);
 
@@ -68,16 +84,14 @@ class CartApiTest extends TestCase
             ]);
     }
 
-    /**
-     * Test 3: Bắt lỗi Validation khi khách nhập số lượng âm
-     */
     public function test_add_item_invalid_quantity_returns_422()
     {
-        $user = User::find(1);
+        $user = User::first();
+        $product = Product::first();
 
         $response = $this->actingAs($user)->postJson('/api/v1/cart/items', [
-            'product_id' => 1,
-            'quantity' => -5 // Số lượng âm (Không hợp lệ)
+            'product_id' => $product->id,
+            'quantity' => -5 
         ]);
 
         $response->assertStatus(422)
@@ -87,51 +101,44 @@ class CartApiTest extends TestCase
             ]);
     }
 
-    /**
-     * Test 4: Cập nhật số lượng sản phẩm trong giỏ
-     */
     public function test_update_cart_item_quantity()
     {
-        $user = User::find(1);
+        $user = User::first();
+        $product = Product::first();
 
-        // Bước 1: Gọi API tạo trước 1 item trong giỏ
         $addResponse = $this->actingAs($user)->postJson('/api/v1/cart/items', [
-            'product_id' => 1,
+            'product_id' => $product->id,
             'quantity' => 2
         ]);
         
-        // Trích xuất cart_item_id vừa được tạo ra từ JSON
         $cartItemId = $addResponse->json('data.items.0.id');
 
-        // Bước 2: Gọi API cập nhật item đó lên 5 kg
         $response = $this->actingAs($user)->patchJson("/api/v1/cart/items/{$cartItemId}", [
             'quantity' => 5
         ]);
+        $response->dump();
+
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.items.0.quantity', 5) // Kiểm tra giá trị đã lên 5 chưa
+            ->assertJsonPath('data.items.0.quantity', 5) 
             ->assertJson([
                 'success' => true,
                 'message' => 'Cập nhật số lượng trong giỏ thành công.'
             ]);
     }
 
-    /**
-     * Test 5: Xóa sản phẩm khỏi giỏ hàng
-     */
     public function test_delete_cart_item()
     {
-        $user = User::find(1);
+        $user = User::first();
+        $product = Product::first();
 
-        // Bước 1: Gọi API tạo trước 1 item trong giỏ
         $addResponse = $this->actingAs($user)->postJson('/api/v1/cart/items', [
-            'product_id' => 1,
+            'product_id' => $product->id,
             'quantity' => 2
         ]);
         
         $cartItemId = $addResponse->json('data.items.0.id');
 
-        // Bước 2: Gọi API xóa item đó
         $response = $this->actingAs($user)->deleteJson("/api/v1/cart/items/{$cartItemId}");
 
         $response->assertStatus(200)
