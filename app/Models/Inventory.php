@@ -2,19 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable(['product_id', 'quantity'])]
 class Inventory extends Model
 {
-    protected $table = 'inventory';
-    protected $primaryKey = 'product_id';
-    public $incrementing = false;
-    const CREATED_AT = null;
-
+    use HasFactory;
     protected $fillable = [
         'product_id',
-        'quantity_on_hand',
-        'quantity_reserved',
-        'reorder_level',
+        'quantity',
     ];
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

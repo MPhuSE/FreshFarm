@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable(['cart_id', 'product_id', 'quantity'])]
 class CartItem extends Model
 {
-    const UPDATED_AT = null;
+    use HasFactory;
     protected $fillable = [
         'cart_id',
         'product_id',
@@ -17,14 +20,15 @@ class CartItem extends Model
     protected $casts = [
         'quantity' => 'float',  //decimal (13,2)
     ];
+    
 
     public function cart(): BelongsTo
     {
-        return $this->belongsTo(Cart::class, 'cart_id');
-    }   
+        return $this->belongsTo(Cart::class);
+    }
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class);
     }
 }
