@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="vi">
 
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,200 +12,615 @@
 
 <body class="min-h-screen bg-slate-100 text-slate-800">
 
-    <main class="mx-auto max-w-7xl px-6 py-10">
+<main class="mx-auto max-w-7xl px-6 py-10">
 
-        <!-- Tiêu đề -->
-        <div class="mb-8">
+    <div class="mb-8">
+        <p class="text-sm font-medium text-emerald-600">
+            Admin Order
+        </p>
 
-            <p class="text-sm font-medium text-emerald-600">
-                Admin Orders
-            </p>
+        <h1 class="mt-1 text-3xl font-bold">
+            Quản lý đơn hàng
+        </h1>
 
-            <h1 class="mt-1 text-3xl font-bold">
-                Quản lý đơn hàng
-            </h1>
+        <p class="mt-2 text-slate-500">
+            Quản lý danh sách đơn hàng trong hệ thống
+        </p>
+    </div>
 
-            <p class="mt-2 text-slate-500">
-                Danh sách đơn hàng, trạng thái và thanh toán
-            </p>
+
+   
+    <section class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+
+        <h2 class="mb-4 font-semibold">
+            Tìm kiếm và lọc đơn hàng
+        </h2>
+
+        <div class="grid gap-4 md:grid-cols-4">
+
+        
+            <div>
+                <label class="mb-1 block text-sm font-medium">
+                    Tìm kiếm
+                </label>
+
+                <input
+                    type="text"
+                    id="searchOrder"
+                    placeholder="Mã đơn hàng..."
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2">
+            </div>
+
+
+            <div>
+                <label class="mb-1 block text-sm font-medium">
+                    Trạng thái
+                </label>
+
+                <select
+                    id="statusFilter"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2">
+
+                    <option value="">
+                        Tất cả
+                    </option>
+
+                    <option value="pending">
+                        Chờ xử lý
+                    </option>
+
+                    <option value="confirmed">
+                        Đã xác nhận
+                    </option>
+
+                    <option value="shipping">
+                        Đang giao
+                    </option>
+
+                    <option value="completed">
+                        Hoàn thành
+                    </option>
+
+                    <option value="cancelled">
+                        Đã hủy
+                    </option>
+
+                </select>
+            </div>
+
+            <div>
+                <label class="mb-1 block text-sm font-medium">
+                    Thanh toán
+                </label>
+
+                <select
+                    id="paymentStatusFilter"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2">
+
+                    <option value="">
+                        Tất cả
+                    </option>
+
+                    <option value="unpaid">
+                        Chưa thanh toán
+                    </option>
+
+                    <option value="paid">
+                        Đã thanh toán
+                    </option>
+
+                </select>
+            </div>
+
+            <div class="flex items-end">
+
+                <button
+                    type="button"
+                    onclick="loadOrders()"
+                    class="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+
+                    Tìm kiếm
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+  
+    <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+
+        <div class="border-b border-slate-200 px-6 py-4">
+
+            <h2 class="font-semibold">
+                Danh sách đơn hàng
+            </h2>
 
         </div>
 
 
-        <!-- Danh sách đơn hàng -->
-        <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="overflow-x-auto">
 
-            <div class="border-b border-slate-200 px-6 py-4">
+            <table class="w-full min-w-[1000px] text-left text-sm">
 
-                <h2 class="font-semibold">
-                    Danh sách đơn hàng
-                </h2>
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500">
 
-            </div>
+                    <tr>
 
+                        <th class="px-6 py-4">
+                            Mã đơn
+                        </th>
 
-            <div class="overflow-x-auto">
+                        <th class="px-6 py-4">
+                            Trạng thái
+                        </th>
 
-                <table class="w-full min-w-[900px] text-left text-sm">
+                        <th class="px-6 py-4">
+                            Thanh toán
+                        </th>
 
-                    <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                        <th class="px-6 py-4">
+                            Phương thức
+                        </th>
 
-                        <tr>
+                        <th class="px-6 py-4">
+                            Tổng tiền
+                        </th>
 
-                            <th class="px-6 py-4">
-                                Mã đơn hàng
-                            </th>
+                        <th class="px-6 py-4">
+                            Ngày tạo
+                        </th>
 
-                            <th class="px-6 py-4">
-                                Khách hàng
-                            </th>
+                        <th class="px-6 py-4">
+                            Chi tiết
+                        </th>
 
-                            <th class="px-6 py-4">
-                                Tổng tiền
-                            </th>
+                    </tr>
 
-                            <th class="px-6 py-4">
-                                Trạng thái
-                            </th>
+                </thead>
 
-                            <th class="px-6 py-4">
-                                Thanh toán
-                            </th>
 
-                            <th class="px-6 py-4">
-                                Chi tiết
-                            </th>
+                <tbody
+                    id="orderTableBody"
+                    class="divide-y divide-slate-100">
 
-                        </tr>
+                    <tr>
 
-                    </thead>
+                        <td
+                            colspan="7"
+                            class="px-6 py-12 text-center text-slate-500">
 
+                            Đang tải đơn hàng...
 
-                    <tbody class="divide-y divide-slate-100">
+                        </td>
 
-                        @forelse ($orders ?? [] as $order)
+                    </tr>
 
-                            <tr class="hover:bg-slate-50">
+                </tbody>
 
-                                <!-- Mã đơn -->
-                                <td class="px-6 py-4 font-medium">
-                                    #{{ $order->id }}
-                                </td>
+            </table>
 
+        </div>
 
-                                <!-- Khách hàng -->
-                                <td class="px-6 py-4">
-                                    {{ $order->user->name ?? 'Khách hàng' }}
-                                </td>
+    </section>
 
 
-                                <!-- Tổng tiền -->
-                                <td class="px-6 py-4 font-medium">
-                                    {{ number_format($order->total_amount ?? 0, 0, ',', '.') }}đ
-                                </td>
 
+    <div
+        id="pagination"
+        class="mt-6 flex justify-center gap-2">
+    </div>
 
-                                <!-- Trạng thái -->
-                                <td class="px-6 py-4">
+</main>
 
-                                    @if (($order->status ?? '') === 'pending')
 
-                                        <span class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
-                                            Chờ xác nhận
-                                        </span>
+<script>
 
-                                    @elseif (($order->status ?? '') === 'confirmed')
+const API_BASE_URL = '/api/v1';
 
-                                        <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                                            Đã xác nhận
-                                        </span>
+const token = localStorage.getItem('access_token');
 
-                                    @elseif (($order->status ?? '') === 'shipping')
 
-                                        <span class="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
-                                            Đang giao
-                                        </span>
 
-                                    @elseif (($order->status ?? '') === 'delivered')
+async function loadOrders(page = 1) {
 
-                                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                                            Đã giao
-                                        </span>
+    const q =
+        document.getElementById('searchOrder').value.trim();
 
-                                    @elseif (($order->status ?? '') === 'cancelled')
+    const status =
+        document.getElementById('statusFilter').value;
 
-                                        <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                                            Đã hủy
-                                        </span>
+    const paymentStatus =
+        document.getElementById('paymentStatusFilter').value;
 
-                                    @else
 
-                                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                                            {{ $order->status ?? 'Chưa xác định' }}
-                                        </span>
+    const params = new URLSearchParams();
 
-                                    @endif
+    params.append('page', page);
 
-                                </td>
+    params.append('per_page', 20);
 
 
-                                <!-- Thanh toán -->
-                                <td class="px-6 py-4">
+    if (q !== '') {
+        params.append('q', q);
+    }
 
-                                    @if (($order->payment_status ?? '') === 'paid')
+    if (status !== '') {
+        params.append('status', status);
+    }
 
-                                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                                            Đã thanh toán
-                                        </span>
+    if (paymentStatus !== '') {
+        params.append(
+            'payment_status',
+            paymentStatus
+        );
+    }
 
-                                    @else
 
-                                        <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
-                                            Chưa thanh toán
-                                        </span>
+    try {
 
-                                    @endif
+        const response = await fetch(
+            `${API_BASE_URL}/admin/orders?${params.toString()}`,
+            {
+                method: 'GET',
 
-                                </td>
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }
+            }
+        );
 
 
-                                <!-- Chi tiết -->
-                                <td class="px-6 py-4">
+        const result = await response.json();
 
-                                    <a href="#"
-                                        class="font-medium text-emerald-600 hover:text-emerald-700">
-                                        Chi tiết đơn hàng
-                                    </a>
 
-                                </td>
 
-                            </tr>
+        if (response.ok && result.success === true) {
 
-                        @empty
+            displayOrders(result.data || []);
 
-                            <tr>
+            displayPagination(result.meta);
 
-                                <td colspan="6"
-                                    class="px-6 py-12 text-center text-slate-500">
+            return;
+        }
 
-                                    Chưa có đơn hàng nào.
 
-                                </td>
 
-                            </tr>
+        const errorCode =
+            result.errors?.error_code ||
+            result.error_code;
 
-                        @endforelse
 
-                    </tbody>
+        if (errorCode === 'FORBIDDEN') {
 
-                </table>
+            alert(
+                'FORBIDDEN: Bạn không có quyền Staff/Admin.'
+            );
 
-            </div>
+            return;
+        }
 
-        </section>
 
-    </main>
+        if (errorCode === 'INVALID_DATE_RANGE') {
+
+            alert(
+                'INVALID_DATE_RANGE: Khoảng thời gian không hợp lệ.'
+            );
+
+            return;
+        }
+
+
+        if (response.status === 401) {
+
+            alert(
+                'Bạn chưa đăng nhập hoặc token đã hết hạn.'
+            );
+
+            return;
+        }
+
+
+        alert(
+            'Không thể tải danh sách đơn hàng: ' +
+            (errorCode || 'UNKNOWN_ERROR')
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            'Không thể kết nối đến API.'
+        );
+
+    }
+
+}
+
+
+function displayOrders(orders) {
+
+    const tbody =
+        document.getElementById('orderTableBody');
+
+
+    if (!orders || orders.length === 0) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="7"
+                    class="px-6 py-12 text-center text-slate-500">
+
+                    Chưa có đơn hàng nào.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML = '';
+
+
+    orders.forEach(function(order) {
+
+        const row = document.createElement('tr');
+
+        row.className = 'hover:bg-slate-50';
+
+
+        row.innerHTML = `
+
+            <td class="px-6 py-4">
+
+                <p class="font-medium">
+                    ${order.order_code ?? ''}
+                </p>
+
+                <p class="text-xs text-slate-500">
+                    ID: ${order.id}
+                </p>
+
+            </td>
+
+
+            <td class="px-6 py-4">
+
+                ${getOrderStatus(order.status)}
+
+            </td>
+
+
+            <td class="px-6 py-4">
+
+                ${getPaymentStatus(order.payment_status)}
+
+            </td>
+
+
+            <td class="px-6 py-4">
+
+                ${order.payment_method ?? '-'}
+
+            </td>
+
+
+            <td class="px-6 py-4 font-medium">
+
+                ${formatMoney(order.grand_total)}
+
+            </td>
+
+
+            <td class="px-6 py-4">
+
+                ${formatDate(order.created_at)}
+
+            </td>
+
+
+            <td class="px-6 py-4">
+
+                <button
+                    type="button"
+                    onclick="viewOrder(${order.id})"
+                    class="font-medium text-emerald-600 hover:text-emerald-700">
+
+                    Xem chi tiết
+
+                </button>
+
+            </td>
+
+        `;
+
+
+        tbody.appendChild(row);
+
+    });
+
+}
+
+
+
+function viewOrder(id) {
+
+    window.location.href =
+        `/admin/orders/${id}`;
+
+}
+
+
+
+function getOrderStatus(status) {
+
+    const statusMap = {
+
+        pending:
+            ['Chờ xử lý', 'bg-yellow-100 text-yellow-700'],
+
+        confirmed:
+            ['Đã xác nhận', 'bg-blue-100 text-blue-700'],
+
+        shipping:
+            ['Đang giao', 'bg-purple-100 text-purple-700'],
+
+        completed:
+            ['Hoàn thành', 'bg-emerald-100 text-emerald-700'],
+
+        cancelled:
+            ['Đã hủy', 'bg-red-100 text-red-700']
+
+    };
+
+
+    const item =
+        statusMap[status] ||
+        ['Không xác định', 'bg-slate-100 text-slate-600'];
+
+
+    return `
+
+        <span class="rounded-full px-3 py-1 text-xs font-medium ${item[1]}">
+
+            ${item[0]}
+
+        </span>
+
+    `;
+
+}
+
+
+
+
+function getPaymentStatus(status) {
+
+    if (status === 'paid') {
+
+        return `
+
+            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+
+                Đã thanh toán
+
+            </span>
+
+        `;
+
+    }
+
+
+    return `
+
+        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+
+            Chưa thanh toán
+
+        </span>
+
+    `;
+
+}
+
+
+
+
+function formatMoney(value) {
+
+    return Number(value || 0)
+        .toLocaleString('vi-VN') + 'đ';
+
+}
+
+
+
+
+function formatDate(value) {
+
+    if (!value) {
+        return '-';
+    }
+
+    return new Date(value)
+        .toLocaleString('vi-VN');
+
+}
+
+
+
+function displayPagination(meta) {
+
+    const pagination =
+        document.getElementById('pagination');
+
+
+    if (!meta || meta.last_page <= 1) {
+
+        pagination.innerHTML = '';
+
+        return;
+    }
+
+
+    pagination.innerHTML = '';
+
+
+    for (
+        let page = 1;
+        page <= meta.last_page;
+        page++
+    ) {
+
+        const button =
+            document.createElement('button');
+
+
+        button.type = 'button';
+
+        button.textContent = page;
+
+        button.className =
+            'rounded-lg border px-3 py-2';
+
+
+        if (page === meta.current_page) {
+
+            button.className +=
+                ' bg-emerald-600 text-white';
+
+        }
+
+
+        button.onclick = function() {
+
+            loadOrders(page);
+
+        };
+
+
+        pagination.appendChild(button);
+
+    }
+
+}
+
+loadOrders();
+
+</script>
 
 </body>
-
 </html>

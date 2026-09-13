@@ -1,216 +1,472 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Báo cáo hệ thống</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <title>Báo cáo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="min-h-screen bg-slate-100 text-slate-800">
+<body class="bg-gray-100">
 
-    <main class="mx-auto max-w-7xl px-6 py-10">
+<div class="container mx-auto px-6 py-8">
 
-        <!-- Tiêu đề -->
-        <div class="mb-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+            Báo cáo tổng hợp
+        </h1>
 
-            <p class="text-sm font-medium text-emerald-600">
-                Admin System
-            </p>
+        <p class="text-gray-500 mt-1">
+            Thống kê doanh thu và đơn hàng
+        </p>
+    </div>
 
-            <h1 class="mt-1 text-3xl font-bold">
-                Báo cáo hệ thống
-            </h1>
 
-            <p class="mt-2 text-slate-500">
-                Theo dõi tình hình hoạt động và doanh thu của hệ thống
-            </p>
+    <!-- Bộ lọc ngày -->
+    <div class="bg-white p-5 rounded-lg shadow mb-6">
+
+        <div class="flex flex-wrap items-end gap-4">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Từ ngày
+                </label>
+
+                <input
+                    type="date"
+                    id="fromDate"
+                    value="2026-09-01"
+                    class="border rounded px-3 py-2"
+                >
+            </div>
+
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Đến ngày
+                </label>
+
+                <input
+                    type="date"
+                    id="toDate"
+                    value="2026-09-30"
+                    class="border rounded px-3 py-2"
+                >
+            </div>
+
+
+            <button
+                onclick="loadReport()"
+                class="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700"
+            >
+                Xem báo cáo
+            </button>
 
         </div>
 
+    </div>
 
-        <!-- Bộ lọc thời gian -->
-        <section class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
-            <h2 class="mb-4 font-semibold">
-                Thời gian báo cáo
+    <!-- KPI -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+
+        <!-- Doanh thu -->
+        <div class="bg-white p-5 rounded-lg shadow">
+            <p class="text-gray-500 text-sm">
+                Tổng doanh thu
+            </p>
+
+            <h2
+                id="revenue"
+                class="text-2xl font-bold text-green-600 mt-2"
+            >
+                0 ₫
             </h2>
-
-            <div class="grid gap-4 md:grid-cols-3">
-
-                <div>
-
-                    <label class="mb-2 block text-sm font-medium">
-                        Từ ngày
-                    </label>
-
-                    <input
-                        type="date"
-                        class="w-full rounded-lg border border-slate-300 px-4 py-2.5">
-
-                </div>
+        </div>
 
 
-                <div>
+        <!-- Đơn hàng -->
+        <div class="bg-white p-5 rounded-lg shadow">
+            <p class="text-gray-500 text-sm">
+                Tổng đơn hàng
+            </p>
 
-                    <label class="mb-2 block text-sm font-medium">
-                        Đến ngày
-                    </label>
-
-                    <input
-                        type="date"
-                        class="w-full rounded-lg border border-slate-300 px-4 py-2.5">
-
-                </div>
-
-
-                <div class="flex items-end">
-
-                    <button
-                        type="button"
-                        class="w-full rounded-lg bg-emerald-600 px-5 py-2.5 font-medium text-white hover:bg-emerald-700">
-                        Xem báo cáo
-                    </button>
-
-                </div>
-
-            </div>
-
-        </section>
+            <h2
+                id="orders"
+                class="text-2xl font-bold text-blue-600 mt-2"
+            >
+                0
+            </h2>
+        </div>
 
 
-        <!-- Thống kê -->
-        <section class="grid gap-6 md:grid-cols-3">
+        <!-- Giá trị đơn trung bình -->
+        <div class="bg-white p-5 rounded-lg shadow">
+            <p class="text-gray-500 text-sm">
+                Giá trị đơn trung bình
+            </p>
 
-            <!-- Tổng đơn hàng -->
-            <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+            <h2
+                id="averageOrderValue"
+                class="text-2xl font-bold text-purple-600 mt-2"
+            >
+                0 ₫
+            </h2>
+        </div>
 
-                <p class="text-sm text-slate-500">
-                    Tổng đơn hàng
-                </p>
-
-                <p class="mt-2 text-3xl font-bold">
-                    {{ $totalOrders ?? 0 }}
-                </p>
-
-            </div>
-
-
-            <!-- Tổng sản phẩm -->
-            <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-
-                <p class="text-sm text-slate-500">
-                    Tổng sản phẩm
-                </p>
-
-                <p class="mt-2 text-3xl font-bold">
-                    {{ $totalProducts ?? 0 }}
-                </p>
-
-            </div>
+    </div>
 
 
-            <!-- Doanh thu -->
-            <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+    <!-- Doanh thu theo ngày -->
+    <div class="bg-white rounded-lg shadow mb-6">
 
-                <p class="text-sm text-slate-500">
-                    Tổng doanh thu
-                </p>
+        <div class="p-5 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">
+                Doanh thu theo ngày
+            </h2>
+        </div>
 
-                <p class="mt-2 text-3xl font-bold text-emerald-600">
-                    {{ number_format($revenue ?? 0, 0, ',', '.') }}đ
-                </p>
+        <div class="overflow-x-auto">
 
-            </div>
+            <table class="w-full">
 
-        </section>
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                            Ngày
+                        </th>
+
+                        <th class="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                            Doanh thu
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="revenueSeries">
+
+                    <tr>
+                        <td
+                            colspan="2"
+                            class="px-5 py-4 text-center text-gray-500"
+                        >
+                            Chưa có dữ liệu
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
 
-        <!-- Báo cáo doanh thu -->
-        <section class="mt-6 rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+    <!-- Top sản phẩm -->
+    <div class="bg-white rounded-lg shadow">
 
-            <div class="border-b border-slate-200 px-6 py-4">
-
-                <h2 class="font-semibold">
-                    Báo cáo doanh thu
-                </h2>
-
-            </div>
+        <div class="p-5 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">
+                Sản phẩm bán chạy
+            </h2>
+        </div>
 
 
-            <div class="overflow-x-auto">
+        <div class="overflow-x-auto">
 
-                <table class="w-full text-left text-sm">
+            <table class="w-full">
 
-                    <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                <thead class="bg-gray-50">
 
-                        <tr>
+                    <tr>
 
-                            <th class="px-6 py-4">
-                                Thời gian
-                            </th>
+                        <th class="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                            ID
+                        </th>
 
-                            <th class="px-6 py-4">
-                                Số đơn hàng
-                            </th>
+                        <th class="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                            Tên sản phẩm
+                        </th>
 
-                            <th class="px-6 py-4">
-                                Doanh thu
-                            </th>
+                        <th class="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                            Số lượng bán
+                        </th>
+
+                        <th class="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                            Doanh thu
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="topProducts">
+
+                    <tr>
+                        <td
+                            colspan="4"
+                            class="px-5 py-4 text-center text-gray-500"
+                        >
+                            Chưa có dữ liệu
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const API_BASE_URL = 'http://api.nongsanxanh.local';
+
+    const token = localStorage.getItem('access_token');
+
+
+    // Format tiền Việt Nam
+    function formatMoney(value) {
+
+        return new Intl.NumberFormat('vi-VN').format(value || 0) + ' ₫';
+
+    }
+
+
+    // Load báo cáo
+    async function loadReport() {
+
+        const from = document.getElementById('fromDate').value;
+        const to = document.getElementById('toDate').value;
+
+
+        // Kiểm tra ngày
+        if (!from || !to) {
+
+            alert('Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc');
+
+            return;
+
+        }
+
+
+        // Ngày bắt đầu không được lớn hơn ngày kết thúc
+        if (from > to) {
+
+            alert('Ngày bắt đầu không được lớn hơn ngày kết thúc');
+
+            return;
+
+        }
+
+
+        try {
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/admin/reports/summary?from=${from}&to=${to}`,
+                {
+                    method: 'GET',
+
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+
+            const result = await response.json();
+
+
+            // Lấy error_code từ API
+            const errorCode =
+                result.errors?.error_code ||
+                result.error_code;
+
+
+            // Không có quyền
+            if (errorCode === 'FORBIDDEN') {
+
+                alert('Bạn không có quyền xem báo cáo');
+
+                return;
+
+            }
+
+
+            // Khoảng ngày không hợp lệ
+            if (errorCode === 'INVALID_DATE_RANGE') {
+
+                alert('Khoảng thời gian không hợp lệ');
+
+                return;
+
+            }
+
+
+            // Các lỗi khác
+            if (!response.ok || result.success === false) {
+
+                alert(result.message || 'Không thể tải báo cáo');
+
+                return;
+
+            }
+
+
+            // =========================
+            // KPI
+            // =========================
+
+            const kpis = result.data?.kpis || {};
+
+
+            document.getElementById('revenue').textContent =
+                formatMoney(kpis.revenue);
+
+
+            document.getElementById('orders').textContent =
+                kpis.orders || 0;
+
+
+            document.getElementById('averageOrderValue').textContent =
+                formatMoney(kpis.average_order_value);
+
+
+            // =========================
+            // DOANH THU THEO NGÀY
+            // =========================
+
+            const revenueSeries =
+                result.data?.revenue_series || [];
+
+
+            const revenueTable =
+                document.getElementById('revenueSeries');
+
+
+            revenueTable.innerHTML = '';
+
+
+            if (revenueSeries.length === 0) {
+
+                revenueTable.innerHTML = `
+                    <tr>
+                        <td
+                            colspan="2"
+                            class="px-5 py-4 text-center text-gray-500"
+                        >
+                            Chưa có dữ liệu
+                        </td>
+                    </tr>
+                `;
+
+            } else {
+
+                revenueSeries.forEach(item => {
+
+                    revenueTable.innerHTML += `
+                        <tr class="border-t">
+
+                            <td class="px-5 py-3">
+                                ${item.date}
+                            </td>
+
+                            <td class="px-5 py-3">
+                                ${formatMoney(item.revenue)}
+                            </td>
 
                         </tr>
+                    `;
 
-                    </thead>
+                });
+
+            }
 
 
-                    <tbody class="divide-y divide-slate-100">
+            // =========================
+            // TOP SẢN PHẨM
+            // =========================
 
-                        @forelse ($reports ?? [] as $report)
+            const topProducts =
+                result.data?.top_products || [];
 
-                            <tr class="hover:bg-slate-50">
 
-                                <td class="px-6 py-4">
-                                    {{ $report->date ?? '' }}
-                                </td>
+            const productTable =
+                document.getElementById('topProducts');
 
-                                <td class="px-6 py-4">
-                                    {{ $report->order_count ?? 0 }}
-                                </td>
 
-                                <td class="px-6 py-4 font-medium">
-                                    {{ number_format($report->revenue ?? 0, 0, ',', '.') }}đ
-                                </td>
+            productTable.innerHTML = '';
 
-                            </tr>
 
-                        @empty
+            if (topProducts.length === 0) {
 
-                            <tr>
+                productTable.innerHTML = `
+                    <tr>
+                        <td
+                            colspan="4"
+                            class="px-5 py-4 text-center text-gray-500"
+                        >
+                            Chưa có dữ liệu
+                        </td>
+                    </tr>
+                `;
 
-                                <td colspan="3"
-                                    class="px-6 py-12 text-center text-slate-500">
+            } else {
 
-                                    Chưa có dữ liệu báo cáo.
+                topProducts.forEach(product => {
 
-                                </td>
+                    productTable.innerHTML += `
+                        <tr class="border-t">
 
-                            </tr>
+                            <td class="px-5 py-3">
+                                ${product.product_id}
+                            </td>
 
-                        @endforelse
+                            <td class="px-5 py-3">
+                                ${product.name}
+                            </td>
 
-                    </tbody>
+                            <td class="px-5 py-3">
+                                ${product.quantity_sold}
+                            </td>
 
-                </table>
+                            <td class="px-5 py-3">
+                                ${formatMoney(product.revenue)}
+                            </td>
 
-            </div>
+                        </tr>
+                    `;
 
-        </section>
+                });
 
-    </main>
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert('Không thể kết nối đến API');
+
+        }
+
+    }
+
+
+    // Load báo cáo khi mở trang
+    document.addEventListener('DOMContentLoaded', function () {
+
+        loadReport();
+
+    });
+
+</script>
 
 </body>
-
 </html>

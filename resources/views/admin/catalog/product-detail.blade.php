@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-@php
-    use Illuminate\Support\Facades\Storage;
-@endphp
+
 <html lang="vi">
 
 <head>
@@ -13,142 +11,51 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-screen bg-slate-100 text-slate-800">
 
-    <main class="mx-auto max-w-5xl px-6 py-10">
+<body class="min-h-screen bg-white text-slate-800 font-sans antialiased">
 
-        <!-- Tiêu đề -->
-        <div class="mb-8">
+    <main class="w-full px-5 py-10">
 
-            <p class="text-sm font-medium text-emerald-600">
-                Admin Catalog
-            </p>
+        {{-- ================= TIÊU ĐỀ ================= --}}
+        <div class="mb-8 flex items-center justify-between gap-4">
 
-            <h1 class="mt-1 text-3xl font-bold">
-                Chi tiết sản phẩm
-            </h1>
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">
+                    Chi tiết sản phẩm
+                </h1>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    Thông tin chi tiết và quản lý sản phẩm
+                </p>
+            </div>
+
+
+            <a
+                href="{{ route('admin.products.index') }}"
+                class="inline-flex items-center rounded-lg px-5 py-3 text-sm font-semibold text-white"
+                style="background: rgb(8, 17, 19);"
+            >
+                ← Quay lại
+            </a>
 
         </div>
 
 
-        @if (isset($product))
+        {{-- ================= THÔNG TIN SẢN PHẨM ================= --}}
+        <section class="overflow-hidden">
 
-            <!-- Thông tin sản phẩm -->
-            <section class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+            <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-3">
 
-                <div class="grid gap-8 md:grid-cols-2">
+                {{-- ================= HÌNH ẢNH CHÍNH ================= --}}
+                <div class="lg:col-span-1">
 
-                    <!-- Hình ảnh -->
-                    <div>
+                    <div
+                        id="mainImageContainer"
+                        class="flex min-h-[400px] items-center justify-center rounded-xl bg-slate-50 p-5"
+                    >
 
-                        @if ($product->primaryImage)
-
-                            <img
-                                src="{{ Storage::url($product->primaryImage->file_path) }}"
-                                alt="{{ $product->name }}"
-                                class="h-80 w-full rounded-xl object-cover">
-
-                        @else
-
-                            <div class="flex h-80 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                                Chưa có hình ảnh
-                            </div>
-
-                        @endif
-
-                    </div>
-
-
-                    <!-- Thông tin -->
-                    <div>
-
-                        <h2 class="text-2xl font-bold">
-                            {{ $product->name }}
-                        </h2>
-
-                        <p class="mt-2 text-sm text-slate-500">
-                            SKU: {{ $product->sku }}
-                        </p>
-
-
-                        <div class="mt-6 space-y-4">
-
-                            <div>
-                                <p class="text-sm text-slate-500">
-                                    Danh mục
-                                </p>
-
-                                <p class="font-medium">
-                                    {{ $product->category->name ?? 'Chưa phân loại' }}
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <p class="text-sm text-slate-500">
-                                    Đơn vị
-                                </p>
-
-                                <p class="font-medium">
-                                    {{ $product->unit }}
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <p class="text-sm text-slate-500">
-                                    Nguồn gốc
-                                </p>
-
-                                <p class="font-medium">
-                                    {{ $product->origin }}
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <p class="text-sm text-slate-500">
-                                    Giá
-                                </p>
-
-                                <p class="text-xl font-bold text-emerald-600">
-                                    {{ number_format($product->price, 0, ',', '.') }}đ
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <p class="text-sm text-slate-500">
-                                    Tồn kho
-                                </p>
-
-                                <p class="font-medium">
-                                    {{ $product->inventory->quantity_on_hand ?? 0 }}
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <p class="text-sm text-slate-500">
-                                    Trạng thái
-                                </p>
-
-                                @if (($product->status ?? '') === 'active')
-
-                                    <span class="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                                        Đang bán
-                                    </span>
-
-                                @else
-
-                                    <span class="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                                        Không hoạt động
-                                    </span>
-
-                                @endif
-
-                            </div>
-
+                        <div class="text-center text-slate-400">
+                            Đang tải hình ảnh...
                         </div>
 
                     </div>
@@ -156,56 +63,1368 @@
                 </div>
 
 
-                <!-- Mô tả -->
-                <div class="mt-8 border-t border-slate-200 pt-6">
+                {{-- ================= THÔNG TIN ================= --}}
+                <div class="lg:col-span-2">
 
-                    <h3 class="text-lg font-semibold">
-                        Mô tả sản phẩm
-                    </h3>
+                    <div
+                        class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                    >
 
-                    <div class="mt-3 text-slate-600">
-                        {!! $product->description_html ?? 'Chưa có mô tả sản phẩm.' !!}
+                        <div>
+
+                            <h2
+                                id="productName"
+                                class="text-3xl font-bold"
+                            >
+                                Đang tải...
+                            </h2>
+
+                            <p
+                                id="productSku"
+                                class="mt-2 text-sm text-slate-500"
+                            >
+                                SKU: —
+                            </p>
+
+                        </div>
+
+
+                        <span
+                            id="productStatus"
+                            class="inline-flex w-fit rounded-full px-4 py-2 text-sm font-semibold"
+                        >
+                            Đang tải...
+                        </span>
+
+                    </div>
+
+
+                    {{-- ================= GIÁ ================= --}}
+                    <div class="mb-6 rounded-xl bg-slate-50 p-5">
+
+                        <p class="mb-2 text-sm text-slate-500">
+                            Giá bán
+                        </p>
+
+                        <p
+                            id="productPrice"
+                            class="text-3xl font-bold"
+                            style="color: rgb(4, 14, 16);"
+                        >
+                            0 đ
+                        </p>
+
+                    </div>
+
+
+                    {{-- ================= THÔNG TIN CƠ BẢN ================= --}}
+                    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+
+                        <div>
+
+                            <p class="mb-1 text-sm text-slate-500">
+                                Danh mục
+                            </p>
+
+                            <p
+                                id="productCategory"
+                                class="font-semibold"
+                            >
+                                —
+                            </p>
+
+                        </div>
+
+
+                        <div>
+
+                            <p class="mb-1 text-sm text-slate-500">
+                                Đơn vị
+                            </p>
+
+                            <p
+                                id="productUnit"
+                                class="font-semibold"
+                            >
+                                —
+                            </p>
+
+                        </div>
+
+
+                        <div>
+
+                            <p class="mb-1 text-sm text-slate-500">
+                                Xuất xứ
+                            </p>
+
+                            <p
+                                id="productOrigin"
+                                class="font-semibold"
+                            >
+                                —
+                            </p>
+
+                        </div>
+
+
+                        <div>
+
+                            <p class="mb-1 text-sm text-slate-500">
+                                Tồn kho
+                            </p>
+
+                            <p
+                                id="productQuantity"
+                                class="font-semibold"
+                            >
+                                0
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- ================= MÔ TẢ ================= --}}
+                    <div class="mt-8">
+
+                        <h3 class="mb-3 text-xl font-bold">
+                            Mô tả sản phẩm
+                        </h3>
+
+                        <div
+                            id="productDescription"
+                            class="rounded-xl bg-slate-50 p-5 leading-7 text-slate-600"
+                        >
+                            Chưa có mô tả.
+                        </div>
+
+                    </div>
+
+
+                    {{-- ================= NÚT CHỨC NĂNG ================= --}}
+                    <div class="mt-8 flex flex-wrap gap-3">
+
+                        <button
+                            type="button"
+                            onclick="openEditModal()"
+                            class="rounded-lg px-5 py-3 text-sm font-semibold text-white"
+                            style="background: rgb(51, 101, 110);"
+                        >
+                            Sửa sản phẩm
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onclick="openImageModal()"
+                            class="rounded-lg border px-5 py-3 text-sm font-semibold"
+                            style="border-color: rgb(51, 101, 110); color: rgb(51, 101, 110);"
+                        >
+                            Quản lý hình ảnh
+                        </button>
+
                     </div>
 
                 </div>
 
+            </div>
 
-                <!-- Nút -->
-                <div class="mt-8 flex gap-3 border-t border-slate-200 pt-6">
+        </section>
 
-                          <a href="{{ route('admin.products.edit', $product) }}"
-                       class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
-                       Chỉnh sửa
-                    </a>
+    </main>
 
-                    <a href="{{ url('/admin/catalog/products/' . $product->id . '/images') }}"
-                       class="rounded-lg border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
-                       Quản lý ảnh
-                    </a>
 
-                          <a href="{{ route('admin.products.index') }}"
-                       class="rounded-lg border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
-                       Quay lại
-                    </a>
+
+
+    <div
+        id="editModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 px-4"
+    >
+
+        <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+
+            <div class="mb-6 flex items-center justify-between">
+
+                <h2 class="text-2xl font-bold">
+                    Sửa sản phẩm
+                </h2>
+
+
+                <button
+                    type="button"
+                    onclick="closeEditModal()"
+                    class="text-2xl text-slate-400 hover:text-slate-700"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="space-y-5">
+
+                {{-- Tên --}}
+                <div>
+
+                    <label class="mb-2 block text-sm font-semibold">
+                        Tên sản phẩm
+                    </label>
+
+                    <input
+                        id="editName"
+                        type="text"
+                        class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none"
+                    >
 
                 </div>
 
-            </section>
 
-        @else
+                {{-- Giá --}}
+                <div>
 
-            <!-- Không có sản phẩm -->
-            <section class="rounded-xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
+                    <label class="mb-2 block text-sm font-semibold">
+                        Giá
+                    </label>
 
-                <p class="text-slate-500">
-                    Không tìm thấy sản phẩm.
-                </p>
+                    <input
+                        id="editPrice"
+                        type="number"
+                        class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none"
+                    >
 
-            </section>
+                </div>
 
-        @endif
 
-    </main>
+                {{-- Xuất xứ --}}
+                <div>
+
+                    <label class="mb-2 block text-sm font-semibold">
+                        Xuất xứ
+                    </label>
+
+                    <input
+                        id="editOrigin"
+                        type="text"
+                        class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none"
+                    >
+
+                </div>
+
+
+                {{-- Trạng thái --}}
+                <div>
+
+                    <label class="mb-2 block text-sm font-semibold">
+                        Trạng thái
+                    </label>
+
+                    <select
+                        id="editStatus"
+                        class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none"
+                    >
+
+                        <option value="active">
+                            Đang bán
+                        </option>
+
+                        <option value="inactive">
+                            Ngừng bán
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="mt-7 flex justify-end gap-3">
+
+                <button
+                    type="button"
+                    onclick="closeEditModal()"
+                    class="rounded-lg border border-slate-300 px-5 py-3 font-semibold"
+                >
+                    Hủy
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="updateProduct()"
+                    class="rounded-lg px-5 py-3 font-semibold text-white"
+                    style="background: rgb(51, 101, 110);"
+                >
+                    Lưu thay đổi
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    
+
+    <div
+        id="imageModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 px-4"
+    >
+
+        <div class="w-full max-w-4xl rounded-xl bg-white p-6 shadow-xl">
+
+            <div class="mb-6 flex items-center justify-between">
+
+                <h2 class="text-2xl font-bold">
+                    Quản lý hình ảnh
+                </h2>
+
+
+                <button
+                    type="button"
+                    onclick="closeImageModal()"
+                    class="text-2xl text-slate-400 hover:text-slate-700"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            {{-- ================= UPLOAD ================= --}}
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+
+                <label class="mb-3 block text-sm font-semibold">
+                    Thêm hình ảnh
+                </label>
+
+
+                <input
+                    id="imageFiles"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-3"
+                >
+
+
+                {{-- Preview ảnh --}}
+                <div
+                    id="imagePreview"
+                    class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4"
+                >
+                </div>
+
+
+                <button
+                    type="button"
+                    onclick="uploadImages()"
+                    class="mt-5 rounded-lg px-5 py-3 font-semibold text-white"
+                    style="background: rgb(51, 101, 110);"
+                >
+                    Tải ảnh lên
+                </button>
+
+            </div>
+
+
+            {{-- ================= SẮP XẾP ẢNH ================= --}}
+            <div class="mt-7">
+
+                <div class="mb-4 flex items-center justify-between gap-3">
+
+                    <div>
+
+                        <h3 class="text-lg font-bold">
+                            Hình ảnh hiện tại
+                        </h3>
+
+                        <p class="mt-1 text-sm text-slate-500">
+                            Dùng nút ↑ ↓ để thay đổi thứ tự. Chọn ảnh chính nếu cần.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        onclick="saveImageOrder()"
+                        class="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                        style="background: rgb(51, 101, 110);"
+                    >
+                        Lưu thứ tự
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="currentImages"
+                    class="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                >
+                </div>
+
+            </div>
+
+
+            {{-- Đóng --}}
+            <div class="mt-7 flex justify-end">
+
+                <button
+                    type="button"
+                    onclick="closeImageModal()"
+                    class="rounded-lg border border-slate-300 px-5 py-3 font-semibold"
+                >
+                    Đóng
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+  
+
+    <script>
+
+        // ID lấy trực tiếp từ route:
+        // /admin/products/{id}
+
+        const productId = {{ $id }};
+
+
+        // API Backend
+        const API_BASE_URL = 'http://api.nongsanxanh.local/api/v1';
+
+
+        // Danh sách ảnh hiện tại
+        let currentImages = [];
+
+
+
+        function getAuthHeaders() {
+
+            const token = localStorage.getItem('access_token');
+
+            return {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+
+        }
+
+
+    
+
+        async function loadProductDetail() {
+
+            try {
+
+                const token = localStorage.getItem('access_token');
+
+
+                const response = await fetch(
+                    `${API_BASE_URL}/admin/products/${productId}`,
+                    {
+                        method: 'GET',
+
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+
+
+                const result = await response.json();
+
+
+                if (!response.ok) {
+
+                    alert(
+                        result.message ||
+                        'Không thể lấy thông tin sản phẩm.'
+                    );
+
+                    return;
+                }
+
+
+                const product = result.data;
+
+
+                console.log('Chi tiết sản phẩm:', product);
+
+
+               
+
+                document.getElementById('productName').textContent =
+                    product.name || '—';
+
+
+                document.getElementById('productSku').textContent =
+                    `SKU: ${product.sku || '—'}`;
+
+
+                document.getElementById('productPrice').textContent =
+                    Number(product.price || 0)
+                        .toLocaleString('vi-VN') + ' đ';
+
+
+                document.getElementById('productCategory').textContent =
+                    product.category?.name || 'Chưa có danh mục';
+
+
+                document.getElementById('productUnit').textContent =
+                    product.unit || '—';
+
+
+                document.getElementById('productOrigin').textContent =
+                    product.origin || '—';
+
+
+                document.getElementById('productQuantity').textContent =
+                    product.available_quantity ?? 0;
+
+
+              
+
+                const statusElement =
+                    document.getElementById('productStatus');
+
+
+                if (product.status === 'active') {
+
+                    statusElement.textContent = 'Đang bán';
+
+                    statusElement.className =
+                        'inline-flex w-fit rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700';
+
+                } else {
+
+                    statusElement.textContent = 'Ngừng bán';
+
+                    statusElement.className =
+                        'inline-flex w-fit rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600';
+
+                }
+
+
+               
+
+                document.getElementById('productDescription').innerHTML =
+                    product.description_html ||
+                    'Chưa có mô tả.';
+
+
+             
+
+                document.getElementById('editName').value =
+                    product.name || '';
+
+
+                document.getElementById('editPrice').value =
+                    product.price || 0;
+
+
+                document.getElementById('editOrigin').value =
+                    product.origin || '';
+
+
+                document.getElementById('editStatus').value =
+                    product.status || 'active';
+
+
+             
+
+                renderMainImage(product);
+
+
+                renderImages(product.images || []);
+
+            }
+
+
+            catch (error) {
+
+                console.error(error);
+
+                alert('Không thể kết nối đến API.');
+
+            }
+
+        }
+
+
+
+        function renderMainImage(product) {
+
+            const container =
+                document.getElementById('mainImageContainer');
+
+
+            let imageUrl = product.primary_image_url;
+
+
+            if (
+                !imageUrl &&
+                product.images &&
+                product.images.length > 0
+            ) {
+
+                imageUrl = product.images[0].url;
+
+            }
+
+
+            if (!imageUrl) {
+
+                container.innerHTML = `
+                    <div class="text-center text-slate-400">
+                        Không có hình ảnh
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            if (!imageUrl.startsWith('http')) {
+
+                imageUrl =
+                    'http://api.nongsanxanh.local' + imageUrl;
+
+            }
+
+
+            container.innerHTML = `
+                <img
+                    src="${imageUrl}"
+                    alt="${product.name || 'Sản phẩm'}"
+                    class="max-h-[420px] w-full rounded-lg object-contain"
+                >
+            `;
+
+        }
+
+
+        function renderImages(images) {
+
+            currentImages = [...images];
+
+
+            const container =
+                document.getElementById('currentImages');
+
+
+            container.innerHTML = '';
+
+
+            if (!currentImages.length) {
+
+                container.innerHTML = `
+                    <p class="col-span-full text-sm text-slate-400">
+                        Chưa có hình ảnh.
+                    </p>
+                `;
+
+                return;
+
+            }
+
+
+            currentImages.forEach((image, index) => {
+
+                let imageUrl = image.url || '';
+
+
+                if (!imageUrl.startsWith('http')) {
+
+                    imageUrl =
+                        'http://api.nongsanxanh.local' + imageUrl;
+
+                }
+
+
+                const div =
+                    document.createElement('div');
+
+
+                div.className =
+                    'rounded-lg border border-slate-200 bg-slate-50 p-3';
+
+
+                div.innerHTML = `
+
+                    <img
+                        src="${imageUrl}"
+                        alt="${image.alt_text || 'Hình ảnh sản phẩm'}"
+                        class="h-32 w-full rounded object-cover"
+                    >
+
+
+                    <p class="mt-2 text-center text-sm font-semibold">
+                        Thứ tự: ${index + 1}
+                    </p>
+
+
+                    ${
+                        image.is_primary
+                        ?
+                        `
+                            <p class="mt-1 text-center text-xs font-semibold text-green-600">
+                                Ảnh chính
+                            </p>
+                        `
+                        :
+                        ''
+                    }
+
+
+                    <label class="mt-3 flex items-center justify-center gap-2 text-sm">
+
+                        <input
+                            type="radio"
+                            name="primaryImage"
+                            value="${image.id}"
+                            ${image.is_primary ? 'checked' : ''}
+                        >
+
+                        Ảnh chính
+
+                    </label>
+
+
+                    <div class="mt-3 flex justify-center gap-2">
+
+                        <button
+                            type="button"
+                            onclick="moveImageUp(${index})"
+                            class="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
+                            ${index === 0 ? 'disabled' : ''}
+                        >
+                            ↑
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onclick="moveImageDown(${index})"
+                            class="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
+                            ${index === currentImages.length - 1 ? 'disabled' : ''}
+                        >
+                            ↓
+                        </button>
+
+                    </div>
+
+                `;
+
+
+                container.appendChild(div);
+
+            });
+
+        }
+
+
+        function moveImageUp(index) {
+
+            if (index <= 0) {
+                return;
+            }
+
+
+            const temp =
+                currentImages[index - 1];
+
+
+            currentImages[index - 1] =
+                currentImages[index];
+
+
+            currentImages[index] =
+                temp;
+
+
+            renderImages(currentImages);
+
+        }
+
+
+        function moveImageDown(index) {
+
+            if (
+                index >=
+                currentImages.length - 1
+            ) {
+                return;
+            }
+
+
+            const temp =
+                currentImages[index + 1];
+
+
+            currentImages[index + 1] =
+                currentImages[index];
+
+
+            currentImages[index] =
+                temp;
+
+
+            renderImages(currentImages);
+
+        }
+
+
+        async function saveImageOrder() {
+
+            if (!currentImages.length) {
+
+                alert('Sản phẩm chưa có hình ảnh.');
+
+                return;
+
+            }
+
+
+            try {
+
+                const token =
+                    localStorage.getItem('access_token');
+
+
+                // Lấy ID ảnh chính
+                const primaryId =
+                    document.querySelector(
+                        'input[name="primaryImage"]:checked'
+                    )?.value;
+
+
+                const images =
+                    currentImages.map(
+                        (image, index) => ({
+
+                            id: image.id,
+
+                            sort_order: index + 1,
+
+                            is_primary:
+                                String(image.id) ===
+                                String(primaryId)
+
+                        })
+                    );
+
+
+                console.log(
+                    'Dữ liệu reorder gửi lên:',
+                    images
+                );
+
+
+                const response =
+                    await fetch(
+                        `${API_BASE_URL}/admin/products/${productId}/images/reorder`,
+                        {
+                            method: 'PATCH',
+
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+
+                            body: JSON.stringify({
+                                images: images
+                            })
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    if (
+                        result.error_code ===
+                        'INVALID_IMAGE_ORDER'
+                    ) {
+
+                        alert(
+                            'Thứ tự hình ảnh không hợp lệ.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    alert(
+                        result.message ||
+                        'Không thể sắp xếp hình ảnh.'
+                    );
+
+                    return;
+
+                }
+
+
+                alert(
+                    'Cập nhật thứ tự hình ảnh thành công.'
+                );
+
+
+       
+                if (Array.isArray(result.data)) {
+
+                    renderImages(result.data);
+
+                }
+
+
+            }
+
+
+            catch (error) {
+
+                console.error(error);
+
+                alert(
+                    'Không thể kết nối đến API.'
+                );
+
+            }
+
+        }
+
+
+        
+
+        function openEditModal() {
+
+            const modal =
+                document.getElementById('editModal');
+
+
+            modal.classList.remove('hidden');
+
+            modal.classList.add('flex');
+
+        }
+
+
+
+        function closeEditModal() {
+
+            const modal =
+                document.getElementById('editModal');
+
+
+            modal.classList.add('hidden');
+
+            modal.classList.remove('flex');
+
+        }
+
+
+  
+
+        async function updateProduct() {
+
+            const name =
+                document.getElementById('editName')
+                    .value
+                    .trim();
+
+
+            const price =
+                document.getElementById('editPrice')
+                    .value;
+
+
+            const origin =
+                document.getElementById('editOrigin')
+                    .value
+                    .trim();
+
+
+            const status =
+                document.getElementById('editStatus')
+                    .value;
+
+
+            if (!name) {
+
+                alert('Vui lòng nhập tên sản phẩm.');
+
+                return;
+
+            }
+
+
+            if (!price || Number(price) < 0) {
+
+                alert('Giá sản phẩm không hợp lệ.');
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_BASE_URL}/admin/products/${productId}`,
+                        {
+                            method: 'PATCH',
+
+                            headers:
+                                getAuthHeaders(),
+
+                            body:
+                                JSON.stringify({
+
+                                    name: name,
+
+                                    price:
+                                        Number(price),
+
+                                    origin: origin,
+
+                                    status: status
+
+                                })
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    if (
+                        result.error_code ===
+                        'DUPLICATE_VALUE'
+                    ) {
+
+                        alert(
+                            'Dữ liệu bị trùng.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        result.error_code ===
+                        'VALIDATION_ERROR'
+                    ) {
+
+                        alert(
+                            'Dữ liệu không hợp lệ.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    alert(
+                        result.message ||
+                        'Không thể cập nhật sản phẩm.'
+                    );
+
+                    return;
+
+                }
+
+
+                alert(
+                    'Cập nhật sản phẩm thành công.'
+                );
+
+
+                closeEditModal();
+
+
+                await loadProductDetail();
+
+            }
+
+
+            catch (error) {
+
+                console.error(error);
+
+                alert(
+                    'Không thể kết nối đến API.'
+                );
+
+            }
+
+        }
+
+
+     
+
+        function openImageModal() {
+
+            const modal =
+                document.getElementById('imageModal');
+
+
+            modal.classList.remove('hidden');
+
+            modal.classList.add('flex');
+
+        }
+
+
+        
+
+        function closeImageModal() {
+
+            const modal =
+                document.getElementById('imageModal');
+
+
+            modal.classList.add('hidden');
+
+            modal.classList.remove('flex');
+
+        }
+
+
+    
+
+        document
+            .getElementById('imageFiles')
+            .addEventListener(
+                'change',
+                function (event) {
+
+                    const preview =
+                        document.getElementById(
+                            'imagePreview'
+                        );
+
+
+                    preview.innerHTML = '';
+
+
+                    Array
+                        .from(event.target.files)
+                        .forEach(file => {
+
+                            const reader =
+                                new FileReader();
+
+
+                            reader.onload =
+                                function (e) {
+
+                                    const div =
+                                        document.createElement(
+                                            'div'
+                                        );
+
+
+                                    div.className =
+                                        'overflow-hidden rounded-lg border border-slate-200';
+
+
+                                    div.innerHTML = `
+
+                                        <img
+                                            src="${e.target.result}"
+                                            class="h-32 w-full object-cover"
+                                        >
+
+                                    `;
+
+
+                                    preview.appendChild(
+                                        div
+                                    );
+
+                                };
+
+
+                            reader.readAsDataURL(
+                                file
+                            );
+
+                        });
+
+                }
+            );
+
+
+
+        async function uploadImages() {
+
+            const input =
+                document.getElementById(
+                    'imageFiles'
+                );
+
+
+            if (!input.files.length) {
+
+                alert(
+                    'Vui lòng chọn hình ảnh.'
+                );
+
+                return;
+
+            }
+
+
+            const formData =
+                new FormData();
+
+
+            Array
+                .from(input.files)
+                .forEach(file => {
+
+                    formData.append(
+                        'images[]',
+                        file
+                    );
+
+                    formData.append(
+                        'alt_text[]',
+                        file.name
+                    );
+
+                });
+
+
+            try {
+
+                const token =
+                    localStorage.getItem(
+                        'access_token'
+                    );
+
+
+                const response =
+                    await fetch(
+                        `${API_BASE_URL}/admin/products/${productId}/images`,
+                        {
+                            method: 'POST',
+
+                            headers: {
+                                'Accept':
+                                    'application/json',
+
+                                'Authorization':
+                                    `Bearer ${token}`
+                            },
+
+                            body: formData
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    if (
+                        result.error_code ===
+                        'FILE_TOO_LARGE'
+                    ) {
+
+                        alert(
+                            'File ảnh quá lớn.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        result.error_code ===
+                        'UNSUPPORTED_MEDIA'
+                    ) {
+
+                        alert(
+                            'Định dạng ảnh không được hỗ trợ.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    alert(
+                        result.message ||
+                        'Không thể tải ảnh lên.'
+                    );
+
+                    return;
+
+                }
+
+
+                alert(
+                    'Tải ảnh lên thành công.'
+                );
+
+
+                input.value = '';
+
+
+                document.getElementById(
+                    'imagePreview'
+                ).innerHTML = '';
+
+
+               
+                await loadProductDetail();
+
+            }
+
+
+            catch (error) {
+
+                console.error(error);
+
+                alert(
+                    'Không thể kết nối đến API.'
+                );
+
+            }
+
+        }
+
+
+        
+
+        loadProductDetail();
+
+    </script>
 
 </body>
 

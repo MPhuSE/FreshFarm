@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Exceptions\ApiException;
-use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -19,8 +18,7 @@ class ProductImageService
     public function __construct(
         private readonly UploadService $uploadService,
         private readonly ProductService $productService,
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/v1/admin/products/{id}/images
@@ -85,13 +83,12 @@ class ProductImageService
             $imageIds = collect($imagesData)->pluck('id');
 
             $existingImages = ProductImage::where('product_id', $product->id)
-                ->whereIn('id', $imageIds)
                 ->get()
                 ->keyBy('id');
 
-            if ($existingImages->count() !== $imageIds->count()) {
+            if ($existingImages->keys()->sort()->values()->all() !== $imageIds->sort()->values()->all()) {
                 throw new ApiException(
-                    'Danh sách ảnh không hợp lệ: có ảnh không thuộc sản phẩm này.',
+                    'Danh sách ảnh phải chứa đủ và đúng các ảnh thuộc sản phẩm này.',
                     'INVALID_IMAGE_ORDER',
                     422
                 );
