@@ -1,0 +1,10 @@
+@extends('layouts.storefront')
+@section('title', 'Trạng thái giao diện')
+@section('page', 'states')
+@section('content')
+@if($tv4Preview)
+<main><section class="page-hero page-hero--compact"><div class="container"><nav class="breadcrumbs"><a href="{{ url('/') }}{{ $tv4Preview ? '?preview=1' : '' }}">Trang chủ</a><span>/</span><span>UI states</span></nav><h1>Trạng thái tích hợp API</h1></div></section><section class="section container state-grid"><article class="panel"><span class="eyebrow">Loading</span><div class="skeleton-card"><i></i><div><b></b><b></b><b></b></div></div><p>Dùng khi chờ catalog, giỏ hàng hoặc đơn hàng.</p></article><article class="panel"><span class="eyebrow">Empty</span><div class="empty-state"><span><i data-feather="package" aria-hidden="true"></i></span><h2>Giỏ hàng đang trống</h2><p>Chọn sản phẩm tươi để bắt đầu đơn hàng.</p><a class="btn btn--primary" href="{{ url('/products') }}{{ $tv4Preview ? '?preview=1' : '' }}">Khám phá sản phẩm</a></div></article><article class="panel"><span class="eyebrow">Error 401</span><div class="alert alert--error"><strong>Phiên đăng nhập đã hết hạn</strong><span>Vui lòng đăng nhập lại để tiếp tục.</span></div><a class="btn btn--outline" href="{{ url('/login') }}{{ $tv4Preview ? '?preview=1' : '' }}">Đăng nhập lại</a></article><article class="panel"><span class="eyebrow">Error 409</span><div class="alert alert--warning"><strong>Số lượng trong giỏ đã thay đổi</strong><span>Tồn kho hiện chỉ còn 2 kg. Giỏ hàng đã được cập nhật.</span></div><button class="btn btn--outline">Tải lại giỏ hàng</button></article><article class="panel"><span class="eyebrow">Validation 422</span><label>Email<input class="is-invalid" value="email-sai"><small class="field-error is-visible">Email không đúng định dạng.</small></label></article><article class="panel"><span class="eyebrow">Success</span><div class="alert alert--success"><strong>Cập nhật thành công</strong><span>Thông tin của bạn đã được lưu.</span></div></article></section></main>
+@else
+<main id="live-main" class="container section" aria-live="polite"><div class="panel"><p>Đang tải…</p></div></main>
+@endif
+@endsection
