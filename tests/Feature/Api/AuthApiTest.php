@@ -13,7 +13,7 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_register(): void
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'phone' => '0123456789',
@@ -22,7 +22,17 @@ class AuthApiTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['message', 'user', 'token']);
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => [
+                    'user',
+                    'token',
+                    'token_type'
+                ],
+                'meta',
+                'errors',
+            ]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
@@ -31,50 +41,59 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_login(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'login@example.com',
             'password' => Hash::make('password123'),
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'login@example.com',
             'password' => 'password123',
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['message', 'user', 'token']);
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => [
+                    'user',
+                    'token',
+                    'token_type'
+                ],
+            ]);
     }
 
     public function test_user_cannot_login_with_invalid_credentials(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'login@example.com',
             'password' => Hash::make('password123'),
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'login@example.com',
             'password' => 'wrongpassword',
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+        $response->assertStatus(401)
+            ->assertJsonPath('error_code', 'INVALID_CREDENTIALS');
     }
 
     public function test_locked_user_cannot_login(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'locked@example.com',
             'password' => Hash::make('password'),
             'status' => 'locked',
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'locked@example.com',
             'password' => 'password',
         ]);
 
-        $response->assertStatus(403);
+        $response->assertStatus(403)
+            ->assertJsonPath('error_code', 'ACCOUNT_LOCKED');
     }
 
     public function test_user_can_logout(): void
@@ -83,9 +102,10 @@ class AuthApiTest extends TestCase
         $token = $user->createToken('auth_token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/auth/logout');
+            ->postJson('/api/v1/auth/logout');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true);
     }
 
     public function test_user_can_get_profile(): void
@@ -93,9 +113,10 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/auth/me');
+            ->getJson('/api/v1/me');
 
         $response->assertStatus(200)
-            ->assertJsonPath('user.id', $user->id);
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.id', $user->id);
     }
 }

@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\UpdateProfileRequest;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
 class ProfileController extends Controller
 {
+    use ApiResponse;
+
     #[OA\Put(
-        path: '/api/user/profile',
+        path: '/api/v1/user/profile',
         summary: 'Cập nhật thông tin cá nhân',
         tags: ['Profile'],
         security: [['bearerAuth' => []]],
@@ -32,9 +35,6 @@ class ProfileController extends Controller
 
         $user->update($request->validated());
 
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user->refresh(),
-        ]);
+        return $this->respondSuccess($user->refresh(), 'Cập nhật thông tin cá nhân thành công.');
     }
 }

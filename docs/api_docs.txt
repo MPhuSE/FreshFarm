@@ -1,0 +1,1853 @@
+TÀI LIỆU KỸ THUẬT
+API SPECIFICATION
+Hệ thống thương mại điện tử Nông Sản Xanh
+REST API Laravel | Phiên bản v1.0 | MVP môn học
+Phạm vi: Tài liệu này là hợp đồng tích hợp giữa Backend và Frontend, bao phủ 15 Functional Requirements, 36 endpoints, chuẩn dữ liệu, bảo mật, transaction đặt hàng, kiểm thử và bàn giao.
+
+Base path: /api/v1
+Ngày phát hành: 02/09/2026
+Trạng thái: Baseline để bắt đầu triển khai
+Nguồn: Project Overview + Design System & Database + Bảng phân công 5 thành viên
+
+Kiểm soát tài liệu
+Tên tài liệu
+API Specification - Nông Sản Xanh
+Phiên bản
+1.0
+API version
+/api/v1
+Backend
+Laravel + MySQL + Sanctum/session
+Đối tượng đọc
+Backend, Frontend, QA, người hướng dẫn/chấm đồ án
+Chủ sở hữu contract
+Backend Lead (TV1)
+Nguyên tắc thay đổi
+Breaking change phải tạo API v2 hoặc có migration plan được nhóm chấp thuận
+Lịch sử phiên bản
+Phiên bản
+Ngày
+Thay đổi
+Trạng thái
+1.0
+02/09/2026
+Baseline đầy đủ từ khởi tạo đến bàn giao MVP
+Chốt để triển khai
+Cách sử dụng tài liệu
+Backend dùng tài liệu này để thiết kế route, Form Request, Service, Resource, Policy, Feature Test và mã lỗi ổn định.
+Frontend chỉ tích hợp endpoint đã chốt; không tự suy đoán field và không tự tính giá, giảm giá, phí ship hay tổng thanh toán.
+QA kiểm tra cả HTTP status, error_code, cấu trúc response, quyền truy cập, transaction và các trường hợp cạnh tranh tồn kho.
+Khi có thay đổi contract, cập nhật tài liệu trước hoặc cùng Pull Request và thông báo cho người phụ trách Frontend.
+
+Mục lục
+1. Tổng quan API
+2. Quy chuẩn giao tiếp
+3. Xác thực và phân quyền
+4. Mô hình dữ liệu trả về
+5. Danh mục mã lỗi nghiệp vụ
+6. Danh mục endpoint tổng hợp
+7. Đặc tả chi tiết 36 endpoint
+8. Luồng nghiệp vụ xuyên suốt
+9. Quy tắc nghiệp vụ
+10. Bảo mật và vận hành
+11. Hiệu năng và database
+12. Chiến lược kiểm thử
+13. Quy trình phát triển API từ đầu đến cuối
+14. Versioning và quản lý thay đổi
+15. Checklist triển khai và bàn giao
+Phụ lục A-D: Laravel, middleware, dữ liệu demo và nguồn tham chiếu
+1. Tổng quan API
+1.1 Mục tiêu
+API v1 cung cấp dữ liệu và nghiệp vụ cho hai nhóm giao diện: Storefront dành cho khách hàng và Admin Dashboard dành cho Staff/Admin. API chịu trách nhiệm xác thực, phân quyền, kiểm tra nghiệp vụ, tính toán tiền, bảo toàn tồn kho và trả dữ liệu theo một contract thống nhất.
+1.2 Phạm vi chức năng
+Nhóm
+FR
+Phạm vi API
+Authentication
+FR-AUTH-01..02
+Đăng ký, đăng nhập, đăng xuất, hồ sơ hiện tại, khóa tài khoản, RBAC
+Catalog
+FR-CAT-01..02
+Danh mục, danh sách, tìm kiếm, lọc, phân trang, chi tiết sản phẩm
+Commerce
+FR-CART-01, FR-CHK-01, FR-ORD-01..02
+Giỏ hàng, checkout preview, tạo đơn, lịch sử, chi tiết và hủy đơn
+Review
+FR-REV-01
+Xem đánh giá đã duyệt và tạo đánh giá sau khi nhận hàng
+Admin
+FR-ADM-01..05
+Catalog, ảnh, đơn, thanh toán, nội dung, người dùng và vai trò
+Report
+FR-RPT-01
+KPI doanh thu, số đơn, chuỗi doanh thu và top sản phẩm
+1.3 Kiến trúc logic
+Client Blade/JavaScript         | HTTPS + JSON         v Route /api/v1 -> Middleware auth/role/rate-limit -> Form Request         -> Controller -> Service/Transaction -> Eloquent/Repository -> MySQL         -> API Resource -> JSON Envelope -> Client
+
+Quyết định kiến trúc: Controller mỏng; nghiệp vụ đặt hàng, coupon, tồn kho và chuyển trạng thái nằm ở Service. API Resource kiểm soát field trả về. Policy/Middleware kiểm tra quyền ở server.
+
+1.4 Môi trường và base URL
+Môi trường
+Base URL mẫu
+Mục đích
+Local
+http://localhost:8000/api/v1
+Lập trình và test cá nhân
+Staging
+https://staging-api.example.com/api/v1
+Tích hợp nhóm và dữ liệu demo
+Production
+https://api.example.com/api/v1
+Triển khai chính thức; debug=false
+2. Quy chuẩn giao tiếp
+2.1 Header chuẩn
+Accept: application/json Content-Type: application/json Authorization: Bearer <access_token>   # endpoint cần đăng nhập Idempotency-Key: <uuid>                # bắt buộc khi tạo đơn X-Request-ID: <client_request_id>      # tùy chọn để truy vết
+
+2.2 Quy tắc field và kiểu dữ liệu
+Chủ đề
+Quy chuẩn
+Ví dụ
+Tên field
+snake_case
+order_code, payment_status, created_at
+Ngày giờ
+ISO 8601 UTC
+2026-09-02T10:30:00Z
+Tiền VND
+Integer theo đơn vị đồng; không kèm ký hiệu
+45000
+Boolean
+true/false thật
+is_primary: true
+Null
+null thật; không dùng chuỗi 'null'
+thumbnail_url: null
+ID
+Số nguyên dương; order_code là chuỗi nghiệp vụ
+id: 101; order_code: NSX-...
+2.3 Response thành công
+{   "success": true,   "message": "Lấy chi tiết sản phẩm thành công.",   "data": {     "id": 101,     "category": {       "id": 3,       "name": "Trái cây",       "slug": "trai-cay",       "status": "active"     },     "sku": "CAM-VINH-01",     "name": "Cam Vinh",     "slug": "cam-vinh",     "unit": "kg",     "price": 45000,     "origin": "Nghệ An",     "available_quantity": 38,     "status": "active",     "primary_image_url": "/storage/products/cam-vinh-01.webp"   },   "meta": null,   "errors": null }
+
+2.4 Response danh sách phân trang
+{   "success": true,   "message": "Lấy danh sách sản phẩm thành công.",   "data": [     {       "id": 101,       "category": {         "id": 3,         "name": "Trái cây",         "slug": "trai-cay",         "status": "active"       },       "sku": "CAM-VINH-01",       "name": "Cam Vinh",       "slug": "cam-vinh",       "unit": "kg",       "price": 45000,       "origin": "Nghệ An",       "available_quantity": 38,       "status": "active",       "primary_image_url": "/storage/products/cam-vinh-01.webp"     }   ],   "meta": {     "current_page": 1,     "per_page": 12,     "total": 30,     "last_page": 3,     "from": 1,     "to": 12   },   "errors": null,   "links": {     "first": "/api/v1/products?page=1",     "last": "/api/v1/products?page=3",     "prev": null,     "next": "/api/v1/products?page=2"   } }
+
+2.5 Response lỗi
+{   "success": false,   "message": "Dữ liệu không hợp lệ.",   "data": null,   "error_code": "VALIDATION_ERROR",   "errors": {     "email": [       "Email đã tồn tại."     ],     "password": [       "Mật khẩu phải có ít nhất 8 ký tự."     ]   },   "trace_id": "req_01J_EXAMPLE" }
+
+Bắt buộc: Frontend phân nhánh theo HTTP status và error_code; message chỉ dùng để hiển thị. Backend không trả HTTP 200 cho lỗi nghiệp vụ.
+
+2.6 HTTP status
+Status
+Ý nghĩa
+Khi sử dụng
+200 OK
+Đọc/cập nhật/xóa logic thành công
+GET, PATCH, DELETE hoặc POST action
+201 Created
+Tạo resource thành công
+Register, cart item, order, review, admin create/upload
+401 Unauthorized
+Chưa xác thực hoặc token hết hạn
+Endpoint Required
+403 Forbidden
+Đã xác thực nhưng thiếu quyền
+Role/policy/ownership
+404 Not Found
+Không tìm thấy hoặc không được phép tiết lộ resource
+Product/order/cart item/post
+409 Conflict
+Xung đột nghiệp vụ hoặc trạng thái
+Hết hàng, đơn sai transition, dữ liệu đã tồn tại
+413/415
+File quá lớn/định dạng không hỗ trợ
+Upload ảnh
+422 Unprocessable Entity
+Validation hoặc filter không hợp lệ
+Form Request
+429 Too Many Requests
+Vượt rate limit
+Login và endpoint nhạy cảm
+500 Internal Server Error
+Lỗi không mong đợi
+Ẩn stack trace; trả trace_id
+3. Xác thực và phân quyền
+3.1 Cơ chế đề xuất
+MVP dùng Laravel Sanctum theo Bearer Token hoặc session cookie tùy cách tổ chức frontend. Nếu Blade chạy cùng domain với Laravel, session + CSRF là lựa chọn đơn giản. Nếu Frontend tách riêng, dùng Sanctum token và CORS whitelist.
+Mật khẩu được hash bằng password_hash/Bcrypt hoặc Argon2; không bao giờ trả password_hash/remember_token.
+Tài khoản status=locked không được đăng nhập và token/session cũ nên bị thu hồi khi khóa.
+Route /admin luôn kiểm tra role/policy tại server; ẩn menu không thay thế authorization.
+Login giới hạn tần suất theo email + IP; lỗi không tiết lộ email có tồn tại hay không.
+3.2 Ma trận vai trò
+Nhóm endpoint
+Public
+Customer
+Staff
+Admin
+Catalog/review công khai
+Có
+Có
+Có
+Có
+Cart/checkout/order/review create
+Không
+Có
+Không
+Không
+Admin catalog/order/content/report
+Không
+Không
+Theo quyền
+Có
+Admin user role/status
+Không
+Không
+Không
+Có
+4. Mô hình dữ liệu trả về
+UserResource
+Field
+Kiểu
+Mô tả
+id
+integer
+Mã người dùng
+full_name
+string
+Họ tên
+email
+string
+Email
+phone
+string|null
+Số điện thoại
+role
+enum
+customer|staff|admin
+status
+enum
+active|locked
+created_at
+datetime
+ISO 8601 UTC
+ProductResource
+Field
+Kiểu
+Mô tả
+id
+integer
+Mã sản phẩm
+category
+object
+Danh mục rút gọn
+sku
+string
+Mã kho duy nhất
+name/slug
+string
+Tên và slug
+unit
+string
+Đơn vị bán
+price
+integer
+Giá VND
+origin
+string|null
+Nguồn gốc
+available_quantity
+integer
+Tồn khả dụng
+images
+array
+Danh sách ảnh khi xem chi tiết
+status
+enum
+active|inactive
+CartResource
+Field
+Kiểu
+Mô tả
+id
+integer
+Mã giỏ
+items
+array
+Sản phẩm, quantity, unit_price, line_total
+summary.subtotal
+integer
+Tạm tính
+summary.discount
+integer
+Tiền giảm
+summary.shipping_fee
+integer
+Phí ship MVP
+summary.grand_total
+integer
+Tổng thanh toán
+OrderResource
+Field
+Kiểu
+Mô tả
+id
+integer
+ID nội bộ
+order_code
+string
+Mã hiển thị cho khách
+status
+enum
+pending|confirmed|shipping|delivered|cancelled|returned
+payment_status
+enum
+unpaid|paid|refunded
+payment_method
+enum
+cod|bank_transfer
+items
+array
+Snapshot tên, đơn vị, giá, số lượng
+subtotal/discount/shipping_fee/grand_total
+integer
+Các giá trị tiền
+created_at
+datetime
+Thời điểm tạo
+ReviewResource
+Field
+Kiểu
+Mô tả
+id
+integer
+Mã đánh giá
+product_id
+integer
+Sản phẩm
+rating
+integer
+1..5
+comment
+string|null
+Nội dung
+status
+enum
+pending|approved|rejected
+created_at
+datetime
+Ngày tạo
+5. Danh mục mã lỗi nghiệp vụ
+error_code
+HTTP
+Ý nghĩa
+VALIDATION_ERROR
+422
+Dữ liệu đầu vào không hợp lệ
+UNAUTHENTICATED
+401
+Chưa đăng nhập/token hết hạn
+FORBIDDEN
+403
+Thiếu quyền
+INVALID_CREDENTIALS
+401
+Sai thông tin đăng nhập
+ACCOUNT_LOCKED
+403
+Tài khoản bị khóa
+TOO_MANY_ATTEMPTS
+429
+Vượt giới hạn đăng nhập
+EMAIL_EXISTS
+409/422
+Email đã tồn tại
+PRODUCT_NOT_FOUND
+404
+Không tìm thấy sản phẩm
+OUT_OF_STOCK
+409
+Sản phẩm hết hàng
+INSUFFICIENT_STOCK
+409
+Số lượng vượt tồn
+CART_ITEM_NOT_FOUND
+404
+Không tìm thấy item trong giỏ của user
+CART_CHANGED
+409
+Giỏ/giá/tồn thay đổi sau preview
+INVALID_COUPON
+422
+Coupon không hợp lệ
+ORDER_NOT_FOUND
+404
+Không tìm thấy đơn thuộc phạm vi truy cập
+INVALID_ORDER_TRANSITION
+409
+Chuyển trạng thái không hợp lệ
+INVALID_PAYMENT_STATE
+409
+Cập nhật thanh toán không hợp lệ
+PURCHASE_REQUIRED
+403
+Chưa mua hoặc đơn chưa delivered
+REVIEW_EXISTS
+409
+Đã đánh giá order_item
+SKU_EXISTS
+409
+SKU đã tồn tại
+SLUG_EXISTS
+409
+Slug đã tồn tại
+PRODUCT_IN_ACTIVE_ORDER
+409
+Không thể xóa sản phẩm đang có trong đơn
+FILE_TOO_LARGE
+413
+Ảnh vượt dung lượng
+UNSUPPORTED_MEDIA
+415
+MIME không hỗ trợ
+INVALID_IMAGE_ORDER
+422
+Danh sách/sắp xếp ảnh không hợp lệ
+CANNOT_LOCK_SELF
+409
+Admin không tự khóa mình
+CANNOT_CHANGE_SELF_ROLE
+409
+Admin không tự hạ vai trò
+INVALID_DATE_RANGE
+422
+Khoảng ngày không hợp lệ
+6. Danh mục endpoint tổng hợp
+Method
+Endpoint
+FR
+Chức năng
+Role
+POST
+/api/v1/auth/register
+FR-AUTH-01
+Đăng ký tài khoản
+-
+POST
+/api/v1/auth/login
+FR-AUTH-02
+Đăng nhập
+-
+POST
+/api/v1/auth/logout
+FR-AUTH-02
+Đăng xuất
+Customer/Staff/Admin
+GET
+/api/v1/me
+FR-AUTH-02
+Lấy hồ sơ người dùng hiện tại
+All
+GET
+/api/v1/categories
+FR-CAT-01
+Danh sách danh mục công khai
+-
+GET
+/api/v1/products
+FR-CAT-01
+Danh sách và tìm kiếm sản phẩm
+-
+GET
+/api/v1/products/{slug}
+FR-CAT-02
+Chi tiết sản phẩm
+-
+GET
+/api/v1/cart
+FR-CART-01
+Lấy giỏ hàng hiện tại
+Customer
+POST
+/api/v1/cart/items
+FR-CART-01
+Thêm sản phẩm vào giỏ
+Customer
+PATCH
+/api/v1/cart/items/{id}
+FR-CART-01
+Cập nhật số lượng trong giỏ
+Customer
+DELETE
+/api/v1/cart/items/{id}
+FR-CART-01
+Xóa sản phẩm khỏi giỏ
+Customer
+POST
+/api/v1/checkout/preview
+FR-CHK-01
+Xem trước kết quả checkout
+Customer
+POST
+/api/v1/orders
+FR-ORD-01
+Tạo đơn hàng
+Customer
+GET
+/api/v1/orders
+FR-ORD-02
+Danh sách đơn của khách
+Customer
+GET
+/api/v1/orders/{order_code}
+FR-ORD-02
+Chi tiết đơn của khách
+Customer
+POST
+/api/v1/orders/{order_code}/cancel
+FR-ORD-02
+Khách hủy đơn
+Customer
+GET
+/api/v1/products/{id}/reviews
+FR-REV-01
+Danh sách đánh giá đã duyệt
+-
+POST
+/api/v1/reviews
+FR-REV-01
+Tạo đánh giá sản phẩm
+Customer
+GET
+/api/v1/admin/products
+FR-ADM-01
+Admin - danh sách sản phẩm
+Staff/Admin
+POST
+/api/v1/admin/products
+FR-ADM-01
+Admin - tạo sản phẩm
+Staff/Admin
+GET
+/api/v1/admin/products/{id}
+FR-ADM-01
+Admin - chi tiết sản phẩm
+Staff/Admin
+PATCH
+/api/v1/admin/products/{id}
+FR-ADM-01
+Admin - cập nhật sản phẩm
+Staff/Admin
+DELETE
+/api/v1/admin/products/{id}
+FR-ADM-01
+Admin - ẩn/xóa mềm sản phẩm
+Staff/Admin
+POST
+/api/v1/admin/products/{id}/images
+FR-ADM-02
+Admin - upload nhiều ảnh
+Staff/Admin
+PATCH
+/api/v1/admin/products/{id}/images/reorder
+FR-ADM-02
+Admin - sắp thứ tự ảnh
+Staff/Admin
+GET
+/api/v1/admin/orders
+FR-ADM-03
+Admin - danh sách đơn
+Staff/Admin
+GET
+/api/v1/admin/orders/{id}
+FR-ADM-03
+Admin - chi tiết đơn
+Staff/Admin
+PATCH
+/api/v1/admin/orders/{id}/status
+FR-ADM-03
+Admin - cập nhật trạng thái đơn
+Staff/Admin
+PATCH
+/api/v1/admin/orders/{id}/payment-status
+FR-ADM-03
+Admin - cập nhật thanh toán
+Staff/Admin
+GET
+/api/v1/admin/posts
+FR-ADM-04
+Admin - danh sách bài viết
+Staff/Admin
+POST
+/api/v1/admin/posts
+FR-ADM-04
+Admin - tạo bài viết
+Staff/Admin
+PATCH
+/api/v1/admin/posts/{id}
+FR-ADM-04
+Admin - cập nhật bài viết
+Staff/Admin
+GET
+/api/v1/admin/users
+FR-ADM-05
+Admin - danh sách người dùng
+Admin
+PATCH
+/api/v1/admin/users/{id}/status
+FR-ADM-05
+Admin - khóa/mở tài khoản
+Admin
+PATCH
+/api/v1/admin/users/{id}/role
+FR-ADM-05
+Admin - thay đổi vai trò
+Admin
+GET
+/api/v1/admin/reports/summary
+FR-RPT-01
+Admin - báo cáo tổng hợp
+Staff/Admin theo quyền
+7. Đặc tả chi tiết endpoint
+Quy tắc đọc: Mỗi endpoint dưới đây là một contract độc lập. Ví dụ request dùng dữ liệu demo; response luôn phải bọc trong envelope chung. Các endpoint Required cần Authorization header.
+
+7.1 Xác thực và tài khoản
+POST /api/v1/auth/register
+Mục đích
+Đăng ký tài khoản
+FR / Owner
+FR-AUTH-01 | Backend: TV1 | Frontend: TV4
+Authentication
+Public
+Role
+-
+Request
+full_name, email, phone, password, password_confirmation
+Success
+HTTP 201 - user + token/session
+Ví dụ request
+POST /api/v1/auth/register HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Content-Type: application/json  {   "full_name": "Nguyễn Văn An",   "email": "an@example.com",   "phone": "0901234567",   "password": "Password@123",   "password_confirmation": "Password@123" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Đăng ký tài khoản thành công.",   "data": {     "user": {       "id": 12,       "full_name": "Nguyễn Văn An",       "email": "an@example.com",       "phone": "0901234567",       "role": "customer",       "status": "active",       "created_at": "2026-09-02T10:30:00Z"     },     "token": "<access_token>",     "token_type": "Bearer"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+409
+EMAIL_EXISTS
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/auth/login
+Mục đích
+Đăng nhập
+FR / Owner
+FR-AUTH-02 | Backend: TV1 | Frontend: TV4
+Authentication
+Public
+Role
+-
+Request
+email, password, remember
+Success
+HTTP 200 - user + token/session
+Ví dụ request
+POST /api/v1/auth/login HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Content-Type: application/json  {   "email": "an@example.com",   "password": "Password@123",   "remember": true }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Đăng nhập thành công.",   "data": {     "user": {       "id": 12,       "full_name": "Nguyễn Văn An",       "email": "an@example.com",       "phone": "0901234567",       "role": "customer",       "status": "active",       "created_at": "2026-09-02T10:30:00Z"     },     "token": "<access_token>",     "token_type": "Bearer"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+401
+INVALID_CREDENTIALS
+Xử lý theo error_code; không phụ thuộc message.
+403
+ACCOUNT_LOCKED
+Xử lý theo error_code; không phụ thuộc message.
+429
+TOO_MANY_ATTEMPTS
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/auth/logout
+Mục đích
+Đăng xuất
+FR / Owner
+FR-AUTH-02 | Backend: TV1 | Frontend: TV4
+Authentication
+Required
+Role
+Customer/Staff/Admin
+Request
+Không
+Success
+HTTP 200 - data=null
+Ví dụ request
+POST /api/v1/auth/logout HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Đăng xuất thành công.",   "data": null,   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+401
+UNAUTHENTICATED
+Xử lý theo error_code; không phụ thuộc message.
+GET /api/v1/me
+Mục đích
+Lấy hồ sơ người dùng hiện tại
+FR / Owner
+FR-AUTH-02 | Backend: TV1 | Frontend: TV4
+Authentication
+Required
+Role
+All
+Request
+Không
+Success
+HTTP 200 - user profile
+Ví dụ request
+GET /api/v1/me HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Lấy hồ sơ người dùng hiện tại thành công.",   "data": {     "id": 12,     "full_name": "Nguyễn Văn An",     "email": "an@example.com",     "phone": "0901234567",     "role": "customer",     "status": "active",     "created_at": "2026-09-02T10:30:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+401
+UNAUTHENTICATED
+Xử lý theo error_code; không phụ thuộc message.
+7.2 Catalog công khai
+GET /api/v1/categories
+Mục đích
+Danh sách danh mục công khai
+FR / Owner
+FR-CAT-01 | Backend: TV2 | Frontend: TV4
+Authentication
+Public
+Role
+-
+Request
+status=active
+Success
+HTTP 200 - category[]
+Ví dụ request
+GET /api/v1/categories HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json
+
+Ví dụ response thành công
+{   "success": true,   "message": "Danh sách danh mục công khai thành công.",   "data": [     {       "id": 3,       "name": "Trái cây",       "slug": "trai-cay",       "status": "active"     }   ],   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+-
+-
+Không có lỗi nghiệp vụ riêng ngoài lỗi hệ thống chung.
+GET /api/v1/products
+Mục đích
+Danh sách và tìm kiếm sản phẩm
+FR / Owner
+FR-CAT-01 | Backend: TV2 | Frontend: TV4
+Authentication
+Public
+Role
+-
+Request
+q, category_id, min_price, max_price, in_stock, sort, page, per_page
+Success
+HTTP 200 - product[] + meta + links
+Ví dụ request
+GET /api/v1/products?q=cam&category_id=3&in_stock=true&sort=price_asc&page=1&per_page=12 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json
+
+Ví dụ response thành công
+{   "success": true,   "message": "Danh sách và tìm kiếm sản phẩm thành công.",   "data": [     {       "id": 101,       "category": {         "id": 3,         "name": "Trái cây",         "slug": "trai-cay",         "status": "active"       },       "sku": "CAM-VINH-01",       "name": "Cam Vinh",       "slug": "cam-vinh",       "unit": "kg",       "price": 45000,       "origin": "Nghệ An",       "available_quantity": 38,       "status": "active",       "primary_image_url": "/storage/products/cam-vinh-01.webp"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/products?page=1",     "last": "/api/v1/products?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+422
+INVALID_FILTER
+Xử lý theo error_code; không phụ thuộc message.
+GET /api/v1/products/{slug}
+Mục đích
+Chi tiết sản phẩm
+FR / Owner
+FR-CAT-02 | Backend: TV2 | Frontend: TV4
+Authentication
+Public
+Role
+-
+Request
+slug path
+Success
+HTTP 200 - product detail + images + inventory
+Ví dụ request
+GET /api/v1/products/cam-vinh HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json
+
+Ví dụ response thành công
+{   "success": true,   "message": "Chi tiết sản phẩm thành công.",   "data": {     "id": 101,     "category": {       "id": 3,       "name": "Trái cây",       "slug": "trai-cay",       "status": "active"     },     "sku": "CAM-VINH-01",     "name": "Cam Vinh",     "slug": "cam-vinh",     "unit": "kg",     "price": 45000,     "origin": "Nghệ An",     "available_quantity": 38,     "status": "active",     "primary_image_url": "/storage/products/cam-vinh-01.webp",     "images": [       {         "id": 81,         "url": "/storage/products/cam-1.webp",         "is_primary": true,         "sort_order": 1       }     ],     "description_html": "<p>Sản phẩm chọn lọc.</p>"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+PRODUCT_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+7.3 Giỏ hàng và checkout
+GET /api/v1/cart
+Mục đích
+Lấy giỏ hàng hiện tại
+FR / Owner
+FR-CART-01 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+Không
+Success
+HTTP 200 - items + pricing summary
+Ví dụ request
+GET /api/v1/cart HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Lấy giỏ hàng hiện tại thành công.",   "data": {     "id": 8,     "items": [       {         "id": 21,         "product": {           "id": 101,           "category": {             "id": 3,             "name": "Trái cây",             "slug": "trai-cay",             "status": "active"           },           "sku": "CAM-VINH-01",           "name": "Cam Vinh",           "slug": "cam-vinh",           "unit": "kg",           "price": 45000,           "origin": "Nghệ An",           "available_quantity": 38,           "status": "active",           "primary_image_url": "/storage/products/cam-vinh-01.webp"         },         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "summary": {       "subtotal": 90000,       "discount": 0,       "shipping_fee": 30000,       "grand_total": 120000     }   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+401
+UNAUTHENTICATED
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/cart/items
+Mục đích
+Thêm sản phẩm vào giỏ
+FR / Owner
+FR-CART-01 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+product_id, quantity
+Success
+HTTP 201 - cart item + summary
+Ví dụ request
+POST /api/v1/cart/items HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "product_id": 101,   "quantity": 2 }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Thêm sản phẩm vào giỏ thành công.",   "data": {     "id": 8,     "items": [       {         "id": 21,         "product": {           "id": 101,           "category": {             "id": 3,             "name": "Trái cây",             "slug": "trai-cay",             "status": "active"           },           "sku": "CAM-VINH-01",           "name": "Cam Vinh",           "slug": "cam-vinh",           "unit": "kg",           "price": 45000,           "origin": "Nghệ An",           "available_quantity": 38,           "status": "active",           "primary_image_url": "/storage/products/cam-vinh-01.webp"         },         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "summary": {       "subtotal": 90000,       "discount": 0,       "shipping_fee": 30000,       "grand_total": 120000     }   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+PRODUCT_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+409
+OUT_OF_STOCK
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+PATCH /api/v1/cart/items/{id}
+Mục đích
+Cập nhật số lượng trong giỏ
+FR / Owner
+FR-CART-01 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+quantity
+Success
+HTTP 200 - updated item + summary
+Ví dụ request
+PATCH /api/v1/cart/items/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "quantity": 3 }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Cập nhật số lượng trong giỏ thành công.",   "data": {     "id": 8,     "items": [       {         "id": 21,         "product": {           "id": 101,           "category": {             "id": 3,             "name": "Trái cây",             "slug": "trai-cay",             "status": "active"           },           "sku": "CAM-VINH-01",           "name": "Cam Vinh",           "slug": "cam-vinh",           "unit": "kg",           "price": 45000,           "origin": "Nghệ An",           "available_quantity": 38,           "status": "active",           "primary_image_url": "/storage/products/cam-vinh-01.webp"         },         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "summary": {       "subtotal": 90000,       "discount": 0,       "shipping_fee": 30000,       "grand_total": 120000     }   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+CART_ITEM_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+409
+INSUFFICIENT_STOCK
+Xử lý theo error_code; không phụ thuộc message.
+DELETE /api/v1/cart/items/{id}
+Mục đích
+Xóa sản phẩm khỏi giỏ
+FR / Owner
+FR-CART-01 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+Không
+Success
+HTTP 200 - data=null + summary
+Ví dụ request
+DELETE /api/v1/cart/items/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Xóa sản phẩm khỏi giỏ thành công.",   "data": null,   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+CART_ITEM_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/checkout/preview
+Mục đích
+Xem trước kết quả checkout
+FR / Owner
+FR-CHK-01 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+address_id, payment_method, coupon_code?
+Success
+HTTP 200 - normalized checkout summary
+Ví dụ request
+POST /api/v1/checkout/preview HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "address_id": 4,   "payment_method": "cod",   "coupon_code": "XANH10" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Xem trước kết quả checkout thành công.",   "data": {     "items": [       {         "id": 21,         "product": {           "id": 101,           "category": {             "id": 3,             "name": "Trái cây",             "slug": "trai-cay",             "status": "active"           },           "sku": "CAM-VINH-01",           "name": "Cam Vinh",           "slug": "cam-vinh",           "unit": "kg",           "price": 45000,           "origin": "Nghệ An",           "available_quantity": 38,           "status": "active",           "primary_image_url": "/storage/products/cam-vinh-01.webp"         },         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "address": {       "id": 4,       "recipient_name": "Nguyễn Văn An",       "phone": "0901234567",       "full_address": "12 Nguyễn Huệ, Quận 1, TP.HCM"     },     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "coupon": {       "code": "XANH10",       "discount": 9000     }   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+CART_CHANGED
+Xử lý theo error_code; không phụ thuộc message.
+422
+INVALID_COUPON
+Xử lý theo error_code; không phụ thuộc message.
+409/422
+VALIDATION_ERROR
+Lỗi nghiệp vụ hoặc validation theo ngữ cảnh endpoint.
+7.4 Đơn hàng khách hàng
+POST /api/v1/orders
+Mục đích
+Tạo đơn hàng
+FR / Owner
+FR-ORD-01 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+address_id, payment_method, coupon_code?, note?, idempotency_key
+Success
+HTTP 201 - order_code, status, totals
+Ví dụ request
+POST /api/v1/orders HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Idempotency-Key: 41d3345c-8731-4ca6-8b8d-22c899b5a100 Authorization: Bearer <access_token> Content-Type: application/json  {   "address_id": 4,   "payment_method": "cod",   "coupon_code": "XANH10",   "note": "Giao giờ hành chính",   "idempotency_key": "41d3345c-8731-4ca6-8b8d-22c899b5a100" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Tạo đơn hàng thành công.",   "data": {     "id": 501,     "order_code": "NSX-20260902-0001",     "status": "pending",     "payment_status": "unpaid",     "payment_method": "cod",     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "created_at": "2026-09-02T10:35:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+OUT_OF_STOCK
+Xử lý theo error_code; không phụ thuộc message.
+409/422
+CART_CHANGED
+Lỗi nghiệp vụ hoặc validation theo ngữ cảnh endpoint.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+Lưu ý transaction: Endpoint tạo đơn phải khóa tồn kho bằng SELECT FOR UPDATE, tính lại giá/coupon/phí ship, ghi order + order_items snapshot + payment + coupon_usage, xóa cart và rollback toàn bộ khi lỗi.
+
+GET /api/v1/orders
+Mục đích
+Danh sách đơn của khách
+FR / Owner
+FR-ORD-02 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+status, page, per_page
+Success
+HTTP 200 - own order[] + meta + links
+Ví dụ request
+GET /api/v1/orders?status=pending&page=1&per_page=20 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Danh sách đơn của khách thành công.",   "data": [     {       "id": 501,       "order_code": "NSX-20260902-0001",       "status": "pending",       "payment_status": "unpaid",       "payment_method": "cod",       "subtotal": 90000,       "discount": 0,       "shipping_fee": 30000,       "grand_total": 120000,       "created_at": "2026-09-02T10:35:00Z"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/orders?page=1",     "last": "/api/v1/orders?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+401
+UNAUTHENTICATED
+Xử lý theo error_code; không phụ thuộc message.
+GET /api/v1/orders/{order_code}
+Mục đích
+Chi tiết đơn của khách
+FR / Owner
+FR-ORD-02 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+order_code path
+Success
+HTTP 200 - own order detail + items + shipment
+Ví dụ request
+GET /api/v1/orders/NSX-20260902-0001 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Chi tiết đơn của khách thành công.",   "data": {     "id": 501,     "order_code": "NSX-20260902-0001",     "status": "pending",     "payment_status": "unpaid",     "payment_method": "cod",     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "created_at": "2026-09-02T10:35:00Z",     "items": [       {         "product_id": 101,         "product_name": "Cam Vinh",         "unit": "kg",         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "shipment": null   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+ORDER_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/orders/{order_code}/cancel
+Mục đích
+Khách hủy đơn
+FR / Owner
+FR-ORD-02 | Backend: TV3 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+reason?
+Success
+HTTP 200 - cancelled order
+Ví dụ request
+POST /api/v1/orders/NSX-20260902-0001/cancel HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "reason": "Tôi muốn thay đổi sản phẩm" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Khách hủy đơn thành công.",   "data": {     "id": 501,     "order_code": "NSX-20260902-0001",     "status": "cancelled",     "payment_status": "unpaid",     "payment_method": "cod",     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "created_at": "2026-09-02T10:35:00Z",     "items": [       {         "product_id": 101,         "product_name": "Cam Vinh",         "unit": "kg",         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "shipment": null   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+INVALID_ORDER_TRANSITION
+Xử lý theo error_code; không phụ thuộc message.
+7.5 Đánh giá
+GET /api/v1/products/{id}/reviews
+Mục đích
+Danh sách đánh giá đã duyệt
+FR / Owner
+FR-REV-01 | Backend: TV2 | Frontend: TV4
+Authentication
+Public
+Role
+-
+Request
+page, per_page
+Success
+HTTP 200 - review[] + meta
+Ví dụ request
+GET /api/v1/products/101/reviews HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json
+
+Ví dụ response thành công
+{   "success": true,   "message": "Danh sách đánh giá đã duyệt thành công.",   "data": [     {       "id": 41,       "product_id": 101,       "rating": 5,       "comment": "Sản phẩm tươi và đóng gói tốt.",       "status": "pending",       "created_at": "2026-09-02T12:00:00Z"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/products/{id}/reviews?page=1",     "last": "/api/v1/products/{id}/reviews?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+PRODUCT_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/reviews
+Mục đích
+Tạo đánh giá sản phẩm
+FR / Owner
+FR-REV-01 | Backend: TV2 | Frontend: TV4
+Authentication
+Required
+Role
+Customer
+Request
+order_item_id, rating, comment?
+Success
+HTTP 201 - review pending
+Ví dụ request
+POST /api/v1/reviews HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "order_item_id": 702,   "rating": 5,   "comment": "Sản phẩm tươi và đóng gói tốt." }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Tạo đánh giá sản phẩm thành công.",   "data": {     "id": 41,     "product_id": 101,     "rating": 5,     "comment": "Sản phẩm tươi và đóng gói tốt.",     "status": "pending",     "created_at": "2026-09-02T12:00:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+403
+PURCHASE_REQUIRED
+Xử lý theo error_code; không phụ thuộc message.
+409
+REVIEW_EXISTS
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+7.6 Quản trị catalog và ảnh
+GET /api/v1/admin/products
+Mục đích
+Admin - danh sách sản phẩm
+FR / Owner
+FR-ADM-01 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+q, category_id, status, page, per_page
+Success
+HTTP 200 - product[] + meta + links
+Ví dụ request
+GET /api/v1/admin/products?q=cam&category_id=3&in_stock=true&sort=price_asc&page=1&per_page=12 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - danh sách sản phẩm thành công.",   "data": [     {       "id": 101,       "category": {         "id": 3,         "name": "Trái cây",         "slug": "trai-cay",         "status": "active"       },       "sku": "CAM-VINH-01",       "name": "Cam Vinh",       "slug": "cam-vinh",       "unit": "kg",       "price": 45000,       "origin": "Nghệ An",       "available_quantity": 38,       "status": "active",       "primary_image_url": "/storage/products/cam-vinh-01.webp"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/admin/products?page=1",     "last": "/api/v1/admin/products?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+403
+FORBIDDEN
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/admin/products
+Mục đích
+Admin - tạo sản phẩm
+FR / Owner
+FR-ADM-01 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+category_id, sku, name, unit, price, origin, descriptions, status
+Success
+HTTP 201 - created product
+Ví dụ request
+POST /api/v1/admin/products HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "category_id": 3,   "sku": "CAM-VINH-01",   "name": "Cam Vinh",   "unit": "kg",   "price": 45000,   "origin": "Nghệ An",   "short_description": "Cam ngọt tự nhiên",   "content_html": "<p>Sản phẩm chọn lọc.</p>",   "status": "active",   "quantity_on_hand": 50 }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - tạo sản phẩm thành công.",   "data": [     {       "id": 101,       "category": {         "id": 3,         "name": "Trái cây",         "slug": "trai-cay",         "status": "active"       },       "sku": "CAM-VINH-01",       "name": "Cam Vinh",       "slug": "cam-vinh",       "unit": "kg",       "price": 45000,       "origin": "Nghệ An",       "available_quantity": 38,       "status": "active",       "primary_image_url": "/storage/products/cam-vinh-01.webp"     }   ],   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+SKU_EXISTS
+Xử lý theo error_code; không phụ thuộc message.
+409/422
+SLUG_EXISTS
+Lỗi nghiệp vụ hoặc validation theo ngữ cảnh endpoint.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+GET /api/v1/admin/products/{id}
+Mục đích
+Admin - chi tiết sản phẩm
+FR / Owner
+FR-ADM-01 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+id path
+Success
+HTTP 200 - product detail
+Ví dụ request
+GET /api/v1/admin/products/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - chi tiết sản phẩm thành công.",   "data": {     "id": 101,     "category": {       "id": 3,       "name": "Trái cây",       "slug": "trai-cay",       "status": "active"     },     "sku": "CAM-VINH-01",     "name": "Cam Vinh",     "slug": "cam-vinh",     "unit": "kg",     "price": 45000,     "origin": "Nghệ An",     "available_quantity": 38,     "status": "active",     "primary_image_url": "/storage/products/cam-vinh-01.webp",     "images": [       {         "id": 81,         "url": "/storage/products/cam-1.webp",         "is_primary": true,         "sort_order": 1       }     ],     "description_html": "<p>Sản phẩm chọn lọc.</p>"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+PRODUCT_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+PATCH /api/v1/admin/products/{id}
+Mục đích
+Admin - cập nhật sản phẩm
+FR / Owner
+FR-ADM-01 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+Các field cần cập nhật
+Success
+HTTP 200 - updated product
+Ví dụ request
+PATCH /api/v1/admin/products/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "name": "Cam Vinh loại 1",   "price": 48000,   "origin": "Nghệ An",   "status": "active" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - cập nhật sản phẩm thành công.",   "data": {     "id": 101,     "category": {       "id": 3,       "name": "Trái cây",       "slug": "trai-cay",       "status": "active"     },     "sku": "CAM-VINH-01",     "name": "Cam Vinh",     "slug": "cam-vinh",     "unit": "kg",     "price": 45000,     "origin": "Nghệ An",     "available_quantity": 38,     "status": "active",     "primary_image_url": "/storage/products/cam-vinh-01.webp",     "images": [       {         "id": 81,         "url": "/storage/products/cam-1.webp",         "is_primary": true,         "sort_order": 1       }     ],     "description_html": "<p>Sản phẩm chọn lọc.</p>"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+DUPLICATE_VALUE
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+DELETE /api/v1/admin/products/{id}
+Mục đích
+Admin - ẩn/xóa mềm sản phẩm
+FR / Owner
+FR-ADM-01 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+Không
+Success
+HTTP 200 - data=null
+Ví dụ request
+DELETE /api/v1/admin/products/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - ẩn/xóa mềm sản phẩm thành công.",   "data": null,   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+PRODUCT_IN_ACTIVE_ORDER
+Xử lý theo error_code; không phụ thuộc message.
+POST /api/v1/admin/products/{id}/images
+Mục đích
+Admin - upload nhiều ảnh
+FR / Owner
+FR-ADM-02 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+multipart images[], alt_text[]
+Success
+HTTP 201 - uploaded image[]
+Ví dụ request
+POST /api/v1/admin/products/101/images HTTP/1.1 Host: api.nongsanxanh.local Authorization: Bearer <access_token> Accept: application/json Content-Type: multipart/form-data  images[]=@cam-1.webp images[]=@cam-2.webp alt_text[]=Cam Vinh mặt trước alt_text[]=Cam Vinh đóng gói
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - upload nhiều ảnh thành công.",   "data": [     {       "id": 81,       "url": "/storage/products/cam-1.webp",       "alt_text": "Cam Vinh",       "is_primary": true,       "sort_order": 1     }   ],   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+413
+FILE_TOO_LARGE
+Xử lý theo error_code; không phụ thuộc message.
+415
+UNSUPPORTED_MEDIA
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+Lưu ý upload: Chỉ nhận JPG/PNG/WebP, giới hạn dung lượng, kiểm tra MIME thật, đổi tên ngẫu nhiên, lưu ngoài vùng thực thi và dọn file orphan khi DB transaction lỗi.
+
+PATCH /api/v1/admin/products/{id}/images/reorder
+Mục đích
+Admin - sắp thứ tự ảnh
+FR / Owner
+FR-ADM-02 | Backend: TV2 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+images[{id,sort_order,is_primary}]
+Success
+HTTP 200 - ordered image[]
+Ví dụ request
+PATCH /api/v1/admin/products/101/images/reorder HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "name": "Cam Vinh loại 1",   "price": 48000,   "origin": "Nghệ An",   "status": "active" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - sắp thứ tự ảnh thành công.",   "data": [     {       "id": 81,       "url": "/storage/products/cam-1.webp",       "alt_text": "Cam Vinh",       "is_primary": true,       "sort_order": 1     }   ],   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+422
+INVALID_IMAGE_ORDER
+Xử lý theo error_code; không phụ thuộc message.
+Lưu ý upload: Chỉ nhận JPG/PNG/WebP, giới hạn dung lượng, kiểm tra MIME thật, đổi tên ngẫu nhiên, lưu ngoài vùng thực thi và dọn file orphan khi DB transaction lỗi.
+
+7.7 Quản trị đơn hàng
+GET /api/v1/admin/orders
+Mục đích
+Admin - danh sách đơn
+FR / Owner
+FR-ADM-03 | Backend: TV3 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+q, status, payment_status, from, to, page
+Success
+HTTP 200 - order[] + meta + links
+Ví dụ request
+GET /api/v1/admin/orders?status=pending&page=1&per_page=20 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - danh sách đơn thành công.",   "data": [     {       "id": 501,       "order_code": "NSX-20260902-0001",       "status": "pending",       "payment_status": "unpaid",       "payment_method": "cod",       "subtotal": 90000,       "discount": 0,       "shipping_fee": 30000,       "grand_total": 120000,       "created_at": "2026-09-02T10:35:00Z"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/admin/orders?page=1",     "last": "/api/v1/admin/orders?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+403
+FORBIDDEN
+Xử lý theo error_code; không phụ thuộc message.
+422
+INVALID_DATE_RANGE
+Xử lý theo error_code; không phụ thuộc message.
+GET /api/v1/admin/orders/{id}
+Mục đích
+Admin - chi tiết đơn
+FR / Owner
+FR-ADM-03 | Backend: TV3 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+id path
+Success
+HTTP 200 - order detail
+Ví dụ request
+GET /api/v1/admin/orders/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - chi tiết đơn thành công.",   "data": {     "id": 501,     "order_code": "NSX-20260902-0001",     "status": "pending",     "payment_status": "unpaid",     "payment_method": "cod",     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "created_at": "2026-09-02T10:35:00Z",     "items": [       {         "product_id": 101,         "product_name": "Cam Vinh",         "unit": "kg",         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "shipment": null   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+ORDER_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+PATCH /api/v1/admin/orders/{id}/status
+Mục đích
+Admin - cập nhật trạng thái đơn
+FR / Owner
+FR-ADM-03 | Backend: TV3 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+status, note?
+Success
+HTTP 200 - updated order
+Ví dụ request
+PATCH /api/v1/admin/orders/101/status HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "status": "confirmed",   "note": "Đã xác nhận với khách" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - cập nhật trạng thái đơn thành công.",   "data": {     "id": 501,     "order_code": "NSX-20260902-0001",     "status": "confirmed",     "payment_status": "unpaid",     "payment_method": "cod",     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "created_at": "2026-09-02T10:35:00Z",     "items": [       {         "product_id": 101,         "product_name": "Cam Vinh",         "unit": "kg",         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "shipment": null   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+INVALID_ORDER_TRANSITION
+Xử lý theo error_code; không phụ thuộc message.
+PATCH /api/v1/admin/orders/{id}/payment-status
+Mục đích
+Admin - cập nhật thanh toán
+FR / Owner
+FR-ADM-03 | Backend: TV3 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+payment_status, transaction_ref?
+Success
+HTTP 200 - order + payment
+Ví dụ request
+PATCH /api/v1/admin/orders/101/payment-status HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "payment_status": "paid",   "transaction_ref": "BANK-20260902-001" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - cập nhật thanh toán thành công.",   "data": {     "id": 501,     "order_code": "NSX-20260902-0001",     "status": "pending",     "payment_status": "paid",     "payment_method": "cod",     "subtotal": 90000,     "discount": 0,     "shipping_fee": 30000,     "grand_total": 120000,     "created_at": "2026-09-02T10:35:00Z",     "items": [       {         "product_id": 101,         "product_name": "Cam Vinh",         "unit": "kg",         "quantity": 2,         "unit_price": 45000,         "line_total": 90000       }     ],     "shipment": null,     "transaction_ref": "BANK-20260902-001"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+INVALID_PAYMENT_STATE
+Xử lý theo error_code; không phụ thuộc message.
+7.8 Quản trị nội dung
+GET /api/v1/admin/posts
+Mục đích
+Admin - danh sách bài viết
+FR / Owner
+FR-ADM-04 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+q, status, page
+Success
+HTTP 200 - post[] + meta
+Ví dụ request
+GET /api/v1/admin/posts HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - danh sách bài viết thành công.",   "data": [     {       "id": 9,       "title": "Cách chọn rau củ tươi",       "slug": "cach-chon-rau-cu-tuoi",       "excerpt": "Một số dấu hiệu dễ nhận biết.",       "status": "published",       "published_at": "2026-09-02T08:00:00Z"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/admin/posts?page=1",     "last": "/api/v1/admin/posts?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+403
+FORBIDDEN
+Xử lý theo error_code; không phụ thuộc message.
+Lưu ý XSS: content_html phải được sanitize theo whitelist ở server trước khi lưu/hiển thị; loại script, event handler và URL nguy hiểm.
+
+POST /api/v1/admin/posts
+Mục đích
+Admin - tạo bài viết
+FR / Owner
+FR-ADM-04 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+title, excerpt?, content_html, thumbnail?, status
+Success
+HTTP 201 - created post
+Ví dụ request
+POST /api/v1/admin/posts HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "title": "Cách chọn rau củ tươi",   "excerpt": "Một số dấu hiệu dễ nhận biết.",   "content_html": "<p>Ưu tiên rau có màu tự nhiên.</p>",   "status": "published" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - tạo bài viết thành công.",   "data": {     "id": 9,     "title": "Cách chọn rau củ tươi",     "slug": "cach-chon-rau-cu-tuoi",     "excerpt": "Một số dấu hiệu dễ nhận biết.",     "status": "published",     "published_at": "2026-09-02T08:00:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+SLUG_EXISTS
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+Lưu ý XSS: content_html phải được sanitize theo whitelist ở server trước khi lưu/hiển thị; loại script, event handler và URL nguy hiểm.
+
+PATCH /api/v1/admin/posts/{id}
+Mục đích
+Admin - cập nhật bài viết
+FR / Owner
+FR-ADM-04 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin
+Request
+Các field cần cập nhật
+Success
+HTTP 200 - updated post
+Ví dụ request
+PATCH /api/v1/admin/posts/101 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "title": "Cách chọn rau củ tươi ngon",   "excerpt": "Các dấu hiệu dễ nhận biết.",   "status": "published" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - cập nhật bài viết thành công.",   "data": {     "id": 9,     "title": "Cách chọn rau củ tươi",     "slug": "cach-chon-rau-cu-tuoi",     "excerpt": "Một số dấu hiệu dễ nhận biết.",     "status": "published",     "published_at": "2026-09-02T08:00:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+404
+POST_NOT_FOUND
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+Lưu ý XSS: content_html phải được sanitize theo whitelist ở server trước khi lưu/hiển thị; loại script, event handler và URL nguy hiểm.
+
+7.9 Quản trị người dùng
+GET /api/v1/admin/users
+Mục đích
+Admin - danh sách người dùng
+FR / Owner
+FR-ADM-05 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Admin
+Request
+q, role, status, page
+Success
+HTTP 200 - user[] + meta
+Ví dụ request
+GET /api/v1/admin/users HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - danh sách người dùng thành công.",   "data": [     {       "id": 12,       "full_name": "Nguyễn Văn An",       "email": "an@example.com",       "phone": "0901234567",       "role": "customer",       "status": "active",       "created_at": "2026-09-02T10:30:00Z"     }   ],   "meta": {     "current_page": 1,     "per_page": 20,     "total": 1,     "last_page": 1,     "from": 1,     "to": 1   },   "errors": null,   "links": {     "first": "/api/v1/admin/users?page=1",     "last": "/api/v1/admin/users?page=1",     "prev": null,     "next": null   } }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+403
+FORBIDDEN
+Xử lý theo error_code; không phụ thuộc message.
+PATCH /api/v1/admin/users/{id}/status
+Mục đích
+Admin - khóa/mở tài khoản
+FR / Owner
+FR-ADM-05 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Admin
+Request
+status=active|locked
+Success
+HTTP 200 - sanitized user
+Ví dụ request
+PATCH /api/v1/admin/users/101/status HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "status": "locked" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - khóa/mở tài khoản thành công.",   "data": {     "id": 12,     "full_name": "Nguyễn Văn An",     "email": "an@example.com",     "phone": "0901234567",     "role": "customer",     "status": "locked",     "created_at": "2026-09-02T10:30:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+CANNOT_LOCK_SELF
+Xử lý theo error_code; không phụ thuộc message.
+PATCH /api/v1/admin/users/{id}/role
+Mục đích
+Admin - thay đổi vai trò
+FR / Owner
+FR-ADM-05 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Admin
+Request
+role=customer|staff|admin
+Success
+HTTP 200 - sanitized user
+Ví dụ request
+PATCH /api/v1/admin/users/101/role HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token> Content-Type: application/json  {   "role": "staff" }
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - thay đổi vai trò thành công.",   "data": {     "id": 12,     "full_name": "Nguyễn Văn An",     "email": "an@example.com",     "phone": "0901234567",     "role": "staff",     "status": "active",     "created_at": "2026-09-02T10:30:00Z"   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+409
+CANNOT_CHANGE_SELF_ROLE
+Xử lý theo error_code; không phụ thuộc message.
+422
+VALIDATION_ERROR
+Xử lý theo error_code; không phụ thuộc message.
+7.10 Báo cáo
+GET /api/v1/admin/reports/summary
+Mục đích
+Admin - báo cáo tổng hợp
+FR / Owner
+FR-RPT-01 | Backend: TV1 | Frontend: TV5
+Authentication
+Required
+Role
+Staff/Admin theo quyền
+Request
+from, to
+Success
+HTTP 200 - kpis + revenue_series + top_products
+Ví dụ request
+GET /api/v1/admin/reports/summary?from=2026-09-01&to=2026-09-30 HTTP/1.1 Host: api.nongsanxanh.local Accept: application/json Authorization: Bearer <access_token>
+
+Ví dụ response thành công
+{   "success": true,   "message": "Admin - báo cáo tổng hợp thành công.",   "data": {     "kpis": {       "revenue": 15800000,       "orders": 126,       "average_order_value": 125397     },     "revenue_series": [       {         "date": "2026-09-01",         "revenue": 840000       }     ],     "top_products": [       {         "product_id": 101,         "name": "Cam Vinh",         "quantity_sold": 84,         "revenue": 3780000       }     ]   },   "meta": null,   "errors": null }
+
+Lỗi cần xử lý
+HTTP
+error_code
+Yêu cầu xử lý
+422
+INVALID_DATE_RANGE
+Xử lý theo error_code; không phụ thuộc message.
+8. Luồng nghiệp vụ xuyên suốt
+8.1 Luồng mua hàng
+1.  Khách đăng ký/đăng nhập và lấy trạng thái người dùng hiện tại.
+2.  Frontend gọi catalog để lọc, phân trang và mở chi tiết sản phẩm.
+3.  Khách thêm sản phẩm vào giỏ; Backend lấy giá và tồn kho từ database.
+4.  Checkout preview tính lại subtotal, discount, shipping_fee và grand_total.
+5.  Frontend gửi create order cùng Idempotency-Key; Backend chạy transaction và khóa tồn.
+6.  Khách nhận order_code; Admin xác nhận, chuyển shipping và delivered theo ma trận.
+7.  Sau delivered, khách được phép tạo một đánh giá cho mỗi order_item.
+8.2 Transaction tạo đơn
+BEGIN   SELECT inventory ... FOR UPDATE   VALIDATE product/status/quantity/coupon/address   CALCULATE subtotal/discount/shipping_fee/grand_total   INSERT orders   INSERT order_items (snapshot)   UPDATE inventory   INSERT payments (pending)   INSERT coupon_usages (nếu có)   DELETE cart_items COMMIT -- Bất kỳ lỗi nào: ROLLBACK toàn bộ
+
+8.3 Chuyển trạng thái đơn
+Từ
+Đến hợp lệ
+Actor
+Tác động
+pending
+confirmed, cancelled
+Staff/Admin; khách hủy
+Xác nhận hoặc hoàn tồn khi hủy
+confirmed
+shipping, cancelled
+Staff/Admin
+Tạo shipment hoặc hoàn tồn
+shipping
+delivered
+Staff/Admin
+Đánh dấu hoàn tất
+delivered
+returned
+Admin
+Quy trình trả hàng/hoàn tiền
+cancelled
+-
+-
+Trạng thái cuối
+returned
+-
+-
+Trạng thái cuối
+9. Quy tắc nghiệp vụ
+ID
+Quy tắc
+BR-01
+Giá chốt từ database tại lúc đặt; client không gửi giá quyết định.
+BR-02
+Số lượng là số dương, không vượt tồn khả dụng và giới hạn mua nếu có.
+BR-03
+Email duy nhất; tài khoản locked không thể đăng nhập.
+BR-04
+Coupon đúng thời gian, giá trị tối thiểu, lượt dùng và phạm vi.
+BR-05
+Tiền giảm không vượt subtotal; grand_total không âm.
+BR-06
+Khách chỉ xem/hủy đơn của chính mình.
+BR-07
+Chỉ pending hoặc confirmed chưa bàn giao mới được hủy.
+BR-08
+Delivered không quay lại shipping; hoàn trả đi qua returned.
+BR-09
+Sản phẩm đã có trong đơn không xóa vật lý; dùng soft delete/status.
+BR-10
+Một khách chỉ đánh giá một lần trên mỗi order_item của đơn delivered.
+BR-11
+Ảnh phải đúng MIME/size, tên ngẫu nhiên và không thực thi.
+BR-12
+Rich text được lọc HTML theo whitelist trước khi lưu/hiển thị.
+10. Bảo mật và vận hành
+Chủ đề
+Yêu cầu bắt buộc
+Input
+Form Request validation; whitelist sort/filter; giới hạn độ dài; không mass assignment ngoài fillable.
+SQL
+Eloquent/query builder hoặc prepared statement; tuyệt đối không nối input vào SQL.
+Authorization
+Middleware auth + role/policy + ownership scope; Admin route kiểm tra ở server.
+Secrets
+Không commit .env; không log password/token; key production nằm trong secret manager/environment.
+Response
+Không trả password_hash, remember_token, stack trace, SQL, đường dẫn nội bộ hoặc token không cần thiết.
+CORS/CSRF
+CORS whitelist origin; session flow dùng CSRF; cookie Secure/HttpOnly/SameSite phù hợp.
+Rate limit
+Login và thao tác nhạy cảm có throttle; trả 429 với error_code ổn định.
+Logging
+Mỗi lỗi có trace_id; log actor, route, status và thời gian; che dữ liệu nhạy cảm.
+Upload
+MIME whitelist, size limit, random filename, storage riêng và cleanup orphan.
+Backup
+Có schema + seed; backup trước migration; kiểm tra khả năng restore.
+11. Hiệu năng và database
+Eager load category, primary image và inventory khi trả catalog; kiểm tra không phát sinh N+1.
+Index foreign key và cột dùng filter/sort thực tế; dùng EXPLAIN cho products, orders và report.
+Pagination mặc định 12 cho storefront, 20 cho admin; per_page tối đa 100.
+Catalog lớn có thể chuyển sang cursor pagination theo id/created_at sau MVP.
+Transaction chỉ giữ lock trong thời gian ngắn; thống nhất thứ tự khóa để giảm deadlock.
+Report aggregate chỉ tính đơn hợp lệ và giới hạn khoảng ngày để tránh truy vấn không kiểm soát.
+12. Chiến lược kiểm thử
+12.1 Test pyramid
+Tầng
+Mục tiêu
+Ví dụ
+Unit
+Hàm tính tiền, coupon, transition
+Discount không vượt subtotal; trạng thái hợp lệ
+Feature/API
+Route, auth, validation, response contract
+201/401/403/404/409/422; JSON structure
+Database/transaction
+Rollback và cạnh tranh tồn kho
+Hai request mua cùng lượng tồn; không oversell
+Integration FE-BE
+Request/response thật
+Loading/error/empty; map error_code
+E2E demo
+Luồng khách và admin
+Catalog -> cart -> checkout -> order -> admin update
+12.2 Checklist contract cho mỗi endpoint
+Route/method/path đúng tài liệu; middleware và role đúng.
+Request hợp lệ trả đúng status và envelope; field dùng snake_case, kiểu dữ liệu đúng.
+Validation trả 422 + errors theo field; lỗi nghiệp vụ trả error_code ổn định.
+Không trả field nhạy cảm; user chỉ thấy resource trong scope của mình.
+Có Feature Test cho happy path, unauthenticated, forbidden, not found và conflict quan trọng.
+Tài liệu và ví dụ request/response được cập nhật cùng thay đổi code.
+12.3 Kịch bản nghiệm thu
+ID
+Điều kiện đạt
+AC-01
+Lọc, phân trang và mở chi tiết sản phẩm không lỗi
+AC-02
+Auth đầy đủ và chặn /admin sai role
+AC-03
+Giỏ cập nhật/xóa và tổng tiền đúng
+AC-04
+Đặt đơn tạo order/items và giảm tồn
+AC-05
+Đặt vượt tồn thất bại, không có dữ liệu dở dang
+AC-06
+Admin tạo sản phẩm, upload >=3 ảnh, sửa và ẩn
+AC-07
+Admin chỉ chuyển trạng thái đơn hợp lệ
+AC-08
+Editor loại script nguy hiểm
+AC-09
+Luồng chính dùng tốt ở 1440/768/360
+AC-10
+README cho phép cài và seed database
+13. Quy trình phát triển API từ đầu đến cuối
+1.  Chốt FR, business rule, actor, dữ liệu vào/ra và acceptance criteria.
+2.  Thiết kế migration, model, relation, index, enum/status và seed demo.
+3.  Chốt route, method, auth/role, request schema, response Resource và error_code trong tài liệu.
+4.  Viết Form Request, Policy/Middleware, Service và Controller mỏng.
+5.  Viết Feature Test trước hoặc song song; kiểm tra transaction và quyền.
+6.  Frontend tích hợp theo contract; xử lý loading/empty/error và validation theo field.
+7.  Review code, chạy test, kiểm tra query/N+1/security và cập nhật tài liệu.
+8.  Deploy staging, seed dữ liệu, chạy smoke test; sau đó mới demo/production.
+13.1 Definition of Done cho endpoint
+Chỉ đánh dấu Đã làm xong: Khi migration/model/service/controller/resource + validation + auth/role + test + tài liệu request/response/error + tích hợp UI đều đạt tiêu chí nghiệm thu.
+
+14. Versioning và quản lý thay đổi
+Non-breaking: thêm field nullable/optional, thêm endpoint, thêm error_code có tài liệu; vẫn cần thông báo FE.
+Breaking: đổi tên/xóa field, đổi kiểu dữ liệu, đổi nghĩa status, thay cấu trúc envelope; phải tạo /api/v2 hoặc có giai đoạn tương thích.
+Mọi Pull Request thay contract phải cập nhật tài liệu và test contract trong cùng nhánh.
+Có thể dùng header Deprecation/Sunset khi ngừng endpoint trong giai đoạn sau MVP.
+15. Checklist triển khai và bàn giao
+Nhóm
+Điều kiện bàn giao
+Cấu hình
+APP_ENV/APP_DEBUG đúng; APP_KEY; DB; mail/storage; CORS; session domain
+Database
+migrate --force; seed demo; backup; kiểm tra index và transaction
+Security
+HTTPS; debug=false; không lộ secret; quyền storage; rate limit
+API
+36 endpoint smoke test; auth/RBAC; JSON envelope; status/error_code
+File
+storage:link nếu cần; MIME/size; upload/delete/reorder; cleanup orphan
+Frontend
+Base URL đúng môi trường; 401/403/409/422; loading/empty/error
+Observability
+Log ghi được trace_id; không log token/password; log rotation
+Tài liệu
+README cài đặt; seed accounts; API spec; Postman collection nếu có
+Demo
+Dữ liệu ổn định; tài khoản customer/staff/admin; kịch bản 8-10 phút
+Phụ lục A. Ví dụ cấu trúc Laravel
+app/   Http/Controllers/Api/V1/   Http/Requests/   Http/Resources/   Models/   Policies/   Services/     AuthService.php     CatalogService.php     CartService.php     CheckoutService.php     OrderService.php     CouponService.php   Exceptions/Handler.php routes/api.php database/migrations/ database/seeders/ tests/Feature/Api/V1/
+
+Phụ lục B. Middleware gợi ý
+Route::prefix('v1')->group(function () {     Route::post('/auth/login', [AuthController::class, 'login']);      Route::middleware(['auth:sanctum'])->group(function () {         Route::get('/me', [AuthController::class, 'me']);         Route::apiResource('/cart/items', CartItemController::class);         Route::post('/orders', [OrderController::class, 'store']);          Route::prefix('admin')->middleware('role:staff,admin')->group(function () {             Route::apiResource('/products', AdminProductController::class);             Route::get('/orders', [AdminOrderController::class, 'index']);         });     }); });
+
+Phụ lục C. Quy ước dữ liệu demo
+Dữ liệu
+Số lượng tối thiểu
+Ghi chú
+Danh mục
+5
+Rau, củ, trái cây, gạo/hạt, đặc sản
+Sản phẩm
+30
+Có active/inactive, còn hàng/hết hàng, nhiều mức giá
+Ảnh sản phẩm
+>= 3/sản phẩm demo
+Có primary và sort_order
+Tài khoản
+3
+customer, staff, admin
+Đơn hàng
+>= 10
+Đủ pending/confirmed/shipping/delivered/cancelled
+Coupon
+>= 3
+Hợp lệ, hết hạn, hết lượt
+Đánh giá
+>= 5
+pending/approved
+Phụ lục D. Nguồn và phạm vi tham chiếu
+01_Project_Overview_Nong_San_Xanh (2).docx - Functional Requirements, Business Rules, Acceptance Criteria và roadmap.
+02_Design_System_Database_Nong_San_Xanh (2).docx - data dictionary, transaction, state transition, index và bảo mật.
+Phan_cong_5_thanh_vien_Nong_San_Xanh.xlsx - owner Backend/Frontend, 36 endpoint và quy chuẩn API.

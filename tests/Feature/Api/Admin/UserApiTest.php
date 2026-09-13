@@ -16,10 +16,26 @@ class UserApiTest extends TestCase
         $user = User::factory()->create(['status' => 'active']);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/admin/users/{$user->id}/lock");
+            ->patchJson("/api/v1/admin/users/{$user->id}/status", [
+                'status' => 'locked'
+            ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('user.status', 'locked');
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'locked');
+    }
+
+    public function test_admin_cannot_lock_self(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+
+        $response = $this->actingAs($admin, 'sanctum')
+            ->patchJson("/api/v1/admin/users/{$admin->id}/status", [
+                'status' => 'locked'
+            ]);
+
+        $response->assertStatus(409)
+            ->assertJsonPath('error_code', 'CANNOT_LOCK_SELF');
     }
 
     public function test_admin_can_change_user_role(): void
@@ -28,12 +44,13 @@ class UserApiTest extends TestCase
         $user = User::factory()->create(['role' => 'customer']);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/admin/users/{$user->id}/role", [
+            ->patchJson("/api/v1/admin/users/{$user->id}/role", [
                 'role' => 'admin',
             ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('user.role', 'admin');
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.role', 'admin');
     }
 
     public function test_customer_cannot_access_admin_routes(): void
@@ -42,8 +59,11 @@ class UserApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($customer, 'sanctum')
-            ->putJson("/api/admin/users/{$user->id}/lock");
+            ->patchJson("/api/v1/admin/users/{$user->id}/status", [
+                'status' => 'locked'
+            ]);
 
-        $response->assertStatus(403);
+        $response->assertStatus(403)
+            ->assertJsonPath('error_code', 'FORBIDDEN');
     }
 }

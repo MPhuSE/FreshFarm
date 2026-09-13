@@ -18,14 +18,15 @@ class ProfileApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->putJson('/api/user/profile', [
+            ->putJson('/api/v1/user/profile', [
                 'name' => 'New Name',
                 'phone' => '0987654321',
             ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('user.name', 'New Name')
-            ->assertJsonPath('user.phone', '0987654321');
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.name', 'New Name')
+            ->assertJsonPath('data.phone', '0987654321');
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
