@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens; // <--- 1. Thêm import này
+use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'status'])] // <--- 2. Bổ sung role và status vào Fillable
+ // <--- 1. Thêm import này
+
+#[Fillable(['name', 'email', 'password', 'phone', 'role', 'status'])] // <--- 2. Bổ sung role và status vào Fillable
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -24,5 +24,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
     }
 }

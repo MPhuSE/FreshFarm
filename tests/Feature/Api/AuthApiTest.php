@@ -28,7 +28,7 @@ class AuthApiTest extends TestCase
                 'data' => [
                     'user',
                     'token',
-                    'token_type'
+                    'token_type',
                 ],
                 'meta',
                 'errors',
@@ -58,7 +58,7 @@ class AuthApiTest extends TestCase
                 'data' => [
                     'user',
                     'token',
-                    'token_type'
+                    'token_type',
                 ],
             ]);
     }

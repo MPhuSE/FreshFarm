@@ -71,7 +71,7 @@ class AddressApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true);
-            
+
         $this->assertDatabaseMissing('user_addresses', ['id' => $address->id]);
     }
 }

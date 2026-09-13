@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\ApiException;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Exceptions\ApiException;
 
 /**
  * Middleware phân quyền theo role, dùng dạng tham số trên route:
@@ -15,7 +15,6 @@ use App\Exceptions\ApiException;
  * LUÔN đứng SAU 'auth:sanctum' trong route group, vì cần $request->user()
  * đã được resolve trước đó.
  */
-
 class CheckRole
 {
     // THÊM: string ...$roles vào tham số của hàm handle

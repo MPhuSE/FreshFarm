@@ -9,12 +9,7 @@ trait ApiResponse
     /**
      * Trả về response thành công.
      *
-     * @param mixed $data
-     * @param string $message
-     * @param int $code
-     * @param array|null $meta
-     * @param array|null $links
-     * @return JsonResponse
+     * @param  mixed  $data
      */
     protected function respondSuccess(
         $data = null,
@@ -41,12 +36,7 @@ trait ApiResponse
     /**
      * Trả về response lỗi.
      *
-     * @param string $message
-     * @param string|null $errorCode
-     * @param mixed $errors
-     * @param int $code
-     * @param string|null $traceId
-     * @return JsonResponse
+     * @param  mixed  $errors
      */
     protected function respondError(
         string $message = 'Có lỗi xảy ra',

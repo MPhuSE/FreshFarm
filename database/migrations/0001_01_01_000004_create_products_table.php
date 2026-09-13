@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,23 +12,27 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')
-                ->constrained('categories')->onUpdate('cascade')->onDelete('restrict');
-            $table->string('sku', 64)->unique('uq_products_sku');
+                ->constrained('categories')->restrictOnDelete();
+            $table->string('sku', 64)->unique();
             $table->string('name', 180);
-            $table->string('slug', 220)->unique('uq_products_slug');
+            $table->string('slug', 220)->unique();
             $table->string('unit', 30);
             $table->string('origin', 150)->nullable();
-            $table->decimal('price', 15, 2)->default(0);
+            $table->decimal('price', 15, 2);
             $table->decimal('compare_at_price', 15, 2)->nullable();
-            $table->text('description')->nullable();
-            $table->string('status', 20)->default('active');
+            $table->string('short_description', 500)->nullable();
+            $table->longText('description_html')->nullable();
+            $table->string('status', 20)->default('draft');
             $table->boolean('featured')->default(false);
-            $table->dateTime('created_at')->useCurrent();
-            $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();
-            $table->dateTime('deleted_at')->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->softDeletes();
 
-            $table->index(['category_id', 'status'], 'idx_products_category_status');
-            $table->index('featured', 'idx_products_featured');
+            $table->index(['category_id', 'status']);
+
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->fullText(['name', 'short_description']);
+            }
         });
     }
 

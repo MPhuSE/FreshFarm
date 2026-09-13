@@ -10,7 +10,6 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
@@ -50,7 +49,7 @@ class AuthController extends Controller
         return $this->respondSuccess([
             'user' => $user,
             'token' => $user->createToken('auth_token')->plainTextToken,
-            'token_type' => 'Bearer'
+            'token_type' => 'Bearer',
         ], 'Đăng ký tài khoản thành công.', 201);
     }
 
@@ -91,7 +90,7 @@ class AuthController extends Controller
         return $this->respondSuccess([
             'user' => $user,
             'token' => $user->createToken('auth_token')->plainTextToken,
-            'token_type' => 'Bearer'
+            'token_type' => 'Bearer',
         ], 'Đăng nhập thành công.');
     }
 

@@ -1,21 +1,21 @@
 <?php
 
-use App\Http\Controllers\Api\Admin\ReportController;
-use App\Http\Controllers\Api\Admin\UserController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\UserAddressController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\PostController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
+use App\Http\Controllers\Api\Admin\ReportController;
+use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Customer\CartController;
 use App\Http\Controllers\Api\Customer\CheckoutController;
 use App\Http\Controllers\Api\Customer\OrderController;
 use App\Http\Controllers\Api\Customer\ReviewController as CustomerReviewController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Public\CategoryController;
 use App\Http\Controllers\Api\Public\ProductController;
 use App\Http\Controllers\Api\Public\ReviewController;
+use App\Http\Controllers\Api\UserAddressController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -44,7 +44,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
     Route::get('/products/{id}/reviews', [ReviewController::class, 'index']);
-
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -78,7 +77,6 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/reviews', [CustomerReviewController::class, 'store']);
 
-
         /*
         |--------------------------------------------------------------------
         | ADMIN
@@ -109,7 +107,7 @@ Route::prefix('v1')->group(function () {
             // --- Người dùng ---
             Route::patch('/users/{user}/status', [UserController::class, 'lock']);
             Route::patch('/users/{user}/role', [UserController::class, 'changeRole']);
-            
+
             // --- Báo cáo ---
             Route::get('/reports/summary', [ReportController::class, 'summary']);
         });

@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Category;
-use App\Models\Product;
 use App\Models\Inventory;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class CartApiTest extends TestCase
 {
-    use RefreshDatabase; 
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -28,7 +28,7 @@ class CartApiTest extends TestCase
 
         $category = Category::create([
             'name' => 'Trái Cây',
-            'slug' => 'trai-cay'
+            'slug' => 'trai-cay',
         ]);
 
         $product = Product::create([
@@ -38,12 +38,12 @@ class CartApiTest extends TestCase
             'sku' => 'CAM-01',
             'price' => 45000,
             'unit' => 'kg',
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         Inventory::create([
             'product_id' => $product->id,
-            'quantity' => 100
+            'quantity_on_hand' => 100,
         ]);
     }
 
@@ -60,10 +60,10 @@ class CartApiTest extends TestCase
                 'data' => [
                     'id',
                     'items',
-                    'summary' => ['subtotal', 'discount', 'shipping_fee', 'grand_total']
+                    'summary' => ['subtotal', 'discount', 'shipping_fee', 'grand_total'],
                 ],
                 'meta',
-                'errors'
+                'errors',
             ]);
     }
 
@@ -73,14 +73,14 @@ class CartApiTest extends TestCase
         $product = Product::first(); // Lấy sản phẩm đầu tiên thay vì id = 1
 
         $response = $this->actingAs($user)->postJson('/api/v1/cart/items', [
-            'product_id' => $product->id, 
-            'quantity' => 2
+            'product_id' => $product->id,
+            'quantity' => 2,
         ]);
 
         $response->assertStatus(201)
             ->assertJson([
                 'success' => true,
-                'message' => 'Thêm sản phẩm vào giỏ thành công.'
+                'message' => 'Thêm sản phẩm vào giỏ thành công.',
             ]);
     }
 
@@ -91,13 +91,13 @@ class CartApiTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/api/v1/cart/items', [
             'product_id' => $product->id,
-            'quantity' => -5 
+            'quantity' => -5,
         ]);
 
         $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
-                'error_code' => 'VALIDATION_ERROR'
+                'error_code' => 'VALIDATION_ERROR',
             ]);
     }
 
@@ -108,22 +108,20 @@ class CartApiTest extends TestCase
 
         $addResponse = $this->actingAs($user)->postJson('/api/v1/cart/items', [
             'product_id' => $product->id,
-            'quantity' => 2
+            'quantity' => 2,
         ]);
-        
+
         $cartItemId = $addResponse->json('data.items.0.id');
 
         $response = $this->actingAs($user)->patchJson("/api/v1/cart/items/{$cartItemId}", [
-            'quantity' => 5
+            'quantity' => 5,
         ]);
-        $response->dump();
-
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.items.0.quantity', 5) 
+            ->assertJsonPath('data.items.0.quantity', 5)
             ->assertJson([
                 'success' => true,
-                'message' => 'Cập nhật số lượng trong giỏ thành công.'
+                'message' => 'Cập nhật số lượng trong giỏ thành công.',
             ]);
     }
 
@@ -134,9 +132,9 @@ class CartApiTest extends TestCase
 
         $addResponse = $this->actingAs($user)->postJson('/api/v1/cart/items', [
             'product_id' => $product->id,
-            'quantity' => 2
+            'quantity' => 2,
         ]);
-        
+
         $cartItemId = $addResponse->json('data.items.0.id');
 
         $response = $this->actingAs($user)->deleteJson("/api/v1/cart/items/{$cartItemId}");
@@ -144,7 +142,7 @@ class CartApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Xóa sản phẩm khỏi giỏ thành công.'
+                'message' => 'Xóa sản phẩm khỏi giỏ thành công.',
             ]);
     }
 }

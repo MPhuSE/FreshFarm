@@ -8,10 +8,9 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateCartItemRequest extends FormRequest
 {
-    
     public function authorize(): bool
     {
-        return true ; //cho request đi qua để validate
+        return true; // cho request đi qua để validate
     }
 
     public function rules(): array
@@ -20,6 +19,7 @@ class UpdateCartItemRequest extends FormRequest
             'quantity' => 'required|numeric|min:1', // >0
         ];
     }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
@@ -28,7 +28,7 @@ class UpdateCartItemRequest extends FormRequest
             'data' => null,
             'errors_code' => 'VALIDATION_ERROR',
             'errors' => $validator->errors(),
-            'trace_id' => 'req_' . uniqid(),
+            'trace_id' => 'req_'.uniqid(),
         ], 422));
     }
 }

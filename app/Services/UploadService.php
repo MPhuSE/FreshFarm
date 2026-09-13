@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 class UploadService
 {
     private const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+
     private const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
     /**

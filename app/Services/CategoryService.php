@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 class CategoryService
 {
     private const CACHE_KEY = 'catalog:categories:active';
+
     private const CACHE_TTL = 3600; // 1 giờ — danh mục ít thay đổi
 
     public function getPublicCategories(): Collection

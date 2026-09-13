@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Exceptions\ApiException;
-use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -19,8 +18,7 @@ class ProductImageService
     public function __construct(
         private readonly UploadService $uploadService,
         private readonly ProductService $productService,
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/v1/admin/products/{id}/images

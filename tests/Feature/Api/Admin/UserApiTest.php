@@ -17,7 +17,7 @@ class UserApiTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->patchJson("/api/v1/admin/users/{$user->id}/status", [
-                'status' => 'locked'
+                'status' => 'locked',
             ]);
 
         $response->assertStatus(200)
@@ -31,7 +31,7 @@ class UserApiTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->patchJson("/api/v1/admin/users/{$admin->id}/status", [
-                'status' => 'locked'
+                'status' => 'locked',
             ]);
 
         $response->assertStatus(409)
@@ -60,7 +60,7 @@ class UserApiTest extends TestCase
 
         $response = $this->actingAs($customer, 'sanctum')
             ->patchJson("/api/v1/admin/users/{$user->id}/status", [
-                'status' => 'locked'
+                'status' => 'locked',
             ]);
 
         $response->assertStatus(403)

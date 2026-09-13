@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CartItem extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'cart_id',
         'product_id',
@@ -18,9 +19,8 @@ class CartItem extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'float',  //decimal (13,2)
+        'quantity' => 'float',  // decimal (13,2)
     ];
-    
 
     public function cart(): BelongsTo
     {

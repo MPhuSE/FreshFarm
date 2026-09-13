@@ -7,10 +7,9 @@ use App\Http\Requests\AddToCartRequest;
 use App\Http\Requests\UpdateCartItemRequest;
 use App\Services\CartService;
 use App\Traits\ApiResponse;
-use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Exception;
 
 class CartController extends Controller
 {
@@ -26,6 +25,7 @@ class CartController extends Controller
     public function index(): JsonResponse
     {
         $data = $this->cartService->getCartDetails(Auth::id());
+
         return $this->respondSuccess($data, 'Lấy giỏ hàng hiện tại thành công.');
     }
 
@@ -37,6 +37,7 @@ class CartController extends Controller
                 (int) $request->validated('product_id'),
                 (float) $request->validated('quantity')
             );
+
             return $this->respondSuccess($data, 'Thêm sản phẩm vào giỏ thành công.', 201);
         } catch (Exception $e) {
             return $this->handleCartException($e);
@@ -51,6 +52,7 @@ class CartController extends Controller
                 (int) $id,
                 (float) $request->validated('quantity')
             );
+
             return $this->respondSuccess($data, 'Cập nhật số lượng trong giỏ thành công.');
         } catch (Exception $e) {
             return $this->handleCartException($e);
@@ -61,6 +63,7 @@ class CartController extends Controller
     {
         try {
             $this->cartService->removeItem(Auth::id(), (int) $id);
+
             return $this->respondSuccess(null, 'Xóa sản phẩm khỏi giỏ thành công.');
         } catch (Exception $e) {
             return $this->handleCartException($e);
@@ -71,11 +74,11 @@ class CartController extends Controller
     {
         $code = $e->getCode() ?: 400;
         $msg = match ($e->getMessage()) {
-            'PRODUCT_NOT_FOUND'    => 'Không tìm thấy sản phẩm.',
-            'OUT_OF_STOCK'         => 'Sản phẩm đã hết hàng.',
-            'INSUFFICIENT_STOCK'   => 'Số lượng vượt quá tồn kho khả dụng.',
-            'CART_ITEM_NOT_FOUND'  => 'Không tìm thấy sản phẩm trong giỏ hàng.',
-            default                => $e->getMessage(),
+            'PRODUCT_NOT_FOUND' => 'Không tìm thấy sản phẩm.',
+            'OUT_OF_STOCK' => 'Sản phẩm đã hết hàng.',
+            'INSUFFICIENT_STOCK' => 'Số lượng vượt quá tồn kho khả dụng.',
+            'CART_ITEM_NOT_FOUND' => 'Không tìm thấy sản phẩm trong giỏ hàng.',
+            default => $e->getMessage(),
         };
 
         return $this->respondError($msg, $e->getMessage(), $code);

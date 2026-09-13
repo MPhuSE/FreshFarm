@@ -8,17 +8,16 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class AddToCartRequest extends FormRequest
 {
-   
     public function authorize(): bool
     {
-        return true ; //cho request đi qua để validate
+        return true; // cho request đi qua để validate
     }
 
     public function rules(): array
     {
         return [
             'product_id' => 'required|integer',
-            'quantity' => 'required|numeric|min:1', // >0 
+            'quantity' => 'required|numeric|min:1', // >0
         ];
     }
 
@@ -30,7 +29,7 @@ class AddToCartRequest extends FormRequest
             'data' => null,
             'error_code' => 'VALIDATION_ERROR',
             'errors' => $validator->errors(),
-            'trace_id' => 'req_' . uniqid(),
+            'trace_id' => 'req_'.uniqid(),
         ], 422));
     }
 }

@@ -11,9 +11,7 @@ use Illuminate\Http\JsonResponse;
 
 class ProductImageController extends Controller
 {
-    public function __construct(private readonly ProductImageService $productImageService)
-    {
-    }
+    public function __construct(private readonly ProductImageService $productImageService) {}
 
     /** POST /api/v1/admin/products/{id}/images */
     public function store(ProductImageStoreRequest $request, int $id): JsonResponse
