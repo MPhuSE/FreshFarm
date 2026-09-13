@@ -10,13 +10,15 @@ class CheckoutRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return false;
+        return true; 
     }
 
     public function rules(): array
     {
         return [
-
+            'address_id' => ['required', 'integer'],
+            'payment_method' => ['required', 'string', 'in:cod,bank_transfer'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 }
