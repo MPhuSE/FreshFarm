@@ -64,4 +64,41 @@ trait ApiResponse
             'trace_id' => $traceId,
         ], $code);
     }
+
+    protected function success($data = null, string $message = 'Thành công', int $code = 200): JsonResponse
+    {
+        return $this->respondSuccess($data, $message, $code);
+    }
+
+    protected function created($data = null, string $message = 'Tạo mới thành công'): JsonResponse
+    {
+        return $this->respondSuccess($data, $message, 201);
+    }
+
+    protected function noContent(string $message = 'Thao tác thành công.'): JsonResponse
+    {
+        return $this->respondSuccess(null, $message, 200);
+    }
+
+    protected function successPaginated($resource, $paginator, string $message = 'Thành công'): JsonResponse
+    {
+        return $this->respondSuccess($resource, $message, 200, [
+            'current_page' => $paginator->currentPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'last_page' => $paginator->lastPage(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+        ], [
+            'first' => $paginator->url(1),
+            'last' => $paginator->url($paginator->lastPage()),
+            'prev' => $paginator->previousPageUrl(),
+            'next' => $paginator->nextPageUrl(),
+        ]);
+    }
+
+    protected function error(string $message, string $errorCode, int $status = 400, ?array $errors = null): JsonResponse
+    {
+        return $this->respondError($message, $errorCode, $errors, $status, request()->attributes->get('trace_id'));
+    }
 }
