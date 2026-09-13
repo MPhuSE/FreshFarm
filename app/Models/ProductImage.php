@@ -2,18 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['product_id', 'image_url', 'is_primary', 'sort_order'])]
 class ProductImage extends Model
 {
-    use HasFactory;
+ // Bảng chỉ có created_at, không có updated_at
+    public $timestamps = false;
+
+    protected $fillable = [
+        'product_id', 'file_path', 'alt_text', 'sort_order', 'is_primary',
+    ];
 
     protected $casts = [
         'is_primary' => 'boolean',
+        'sort_order' => 'integer',
+        'created_at' => 'datetime',
     ];
 
     public function product(): BelongsTo
