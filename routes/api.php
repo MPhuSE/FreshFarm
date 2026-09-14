@@ -17,7 +17,13 @@ use App\Http\Controllers\Api\Public\ProductController;
 use App\Http\Controllers\Api\Public\ReviewController;
 use App\Http\Controllers\Api\UserAddressController;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Controllers\Api\BenchmarkController;
 use Illuminate\Support\Facades\Route;
+
+// ==========================================
+// BENCHMARK & TEST ROUTES
+// ==========================================
+Route::get('/v1/benchmark/redis-vs-db', [BenchmarkController::class, 'redisVsDb']);
 
 Route::prefix('v1')->group(function () {
 
@@ -27,8 +33,8 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------
     */
     Route::prefix('auth')->group(function () {
-        Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
@@ -64,13 +70,13 @@ Route::prefix('v1')->group(function () {
         |----------------------------------------------------------------
         */
         Route::get('/cart', [CartController::class, 'index']);
-        Route::post('/cart/items', [CartController::class, 'store']);
+        Route::post('/cart/items', [CartController::class, 'store'])->middleware('throttle:cart');
         Route::patch('/cart/items/{id}', [CartController::class, 'update']);
         Route::delete('/cart/items/{id}', [CartController::class, 'destroy']);
 
         Route::post('/checkout/preview', [CheckoutController::class, 'preview']);
 
-        Route::post('/orders', [OrderController::class, 'store']);
+        Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:checkout');
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/orders/{order_code}', [OrderController::class, 'show']);
         Route::post('/orders/{order_code}/cancel', [OrderController::class, 'cancel']);

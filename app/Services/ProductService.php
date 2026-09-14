@@ -21,42 +21,47 @@ class ProductService
 
     public function paginatePublic(array $filters): LengthAwarePaginator
     {
-        $perPage = min((int) ($filters['per_page'] ?? 12), 100);
+        // Tạo unique cache key dựa trên filters
+        $cacheKey = 'catalog:products:paginate:' . md5(json_encode($filters));
 
-        $query = Product::query()
-            ->with(['category', 'inventory', 'primaryImage'])
-            ->active();
+        return Cache::tags(['products_paginate'])->remember($cacheKey, 3600, function () use ($filters) {
+            $perPage = min((int) ($filters['per_page'] ?? 12), 100);
 
-        if (! empty($filters['q'])) {
-            $query->whereFullText(['name', 'short_description'], $filters['q']);
-        }
+            $query = Product::query()
+                ->with(['category', 'inventory', 'primaryImage'])
+                ->active();
 
-        if (! empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
-        }
+            if (! empty($filters['q'])) {
+                $query->whereFullText(['name', 'short_description'], $filters['q']);
+            }
 
-        if (isset($filters['min_price'])) {
-            $query->where('price', '>=', $filters['min_price']);
-        }
+            if (! empty($filters['category_id'])) {
+                $query->where('category_id', $filters['category_id']);
+            }
 
-        if (isset($filters['max_price'])) {
-            $query->where('price', '<=', $filters['max_price']);
-        }
+            if (isset($filters['min_price'])) {
+                $query->where('price', '>=', $filters['min_price']);
+            }
 
-        if (array_key_exists('in_stock', $filters) && filter_var($filters['in_stock'], FILTER_VALIDATE_BOOLEAN)) {
-            $query->whereHas('inventory', function ($q) {
-                $q->whereColumn('quantity_on_hand', '>', 'quantity_reserved');
-            });
-        }
+            if (isset($filters['max_price'])) {
+                $query->where('price', '<=', $filters['max_price']);
+            }
 
-        match ($filters['sort'] ?? null) {
-            'price_asc' => $query->orderBy('price'),
-            'price_desc' => $query->orderByDesc('price'),
-            'name_asc' => $query->orderBy('name'),
-            default => $query->latest('created_at'),
-        };
+            if (array_key_exists('in_stock', $filters) && filter_var($filters['in_stock'], FILTER_VALIDATE_BOOLEAN)) {
+                $query->whereHas('inventory', function ($q) {
+                    $q->whereColumn('quantity_on_hand', '>', 'quantity_reserved');
+                });
+            }
 
-        return $query->paginate($perPage)->withQueryString();
+            match ($filters['sort'] ?? null) {
+                'price_asc' => $query->orderBy('price'),
+                'price_desc' => $query->orderByDesc('price'),
+                'name_asc' => $query->orderBy('name'),
+                default => $query->latest('created_at'),
+            };
+
+            return $query->paginate($perPage)->withQueryString();
+        });
     }
 
     public function findPublicBySlug(string $slug): Product
@@ -190,6 +195,8 @@ class ProductService
                 'reorder_level' => 0,
             ]);
 
+            Cache::tags(['products_paginate'])->flush();
+
             return $product->load(['category', 'images', 'inventory']);
         });
     }
@@ -252,6 +259,7 @@ class ProductService
             // Flush cache chi tiết sản phẩm — bắt buộc, nếu không Admin sửa
             // xong mà Client vẫn thấy dữ liệu cũ tới khi cache tự hết hạn (30 phút).
             $this->flushDetailCache($oldSlug);
+            Cache::tags(['products_paginate'])->flush();
 
             return $product->fresh(['category', 'images', 'inventory']);
         });
@@ -291,6 +299,7 @@ class ProductService
             }
 
             $this->flushDetailCache($product->slug);
+            Cache::tags(['products_paginate'])->flush();
 
             $product->delete(); // soft delete — deleted_at được set, không xóa vật lý
         });

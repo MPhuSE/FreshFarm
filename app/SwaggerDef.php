@@ -10,7 +10,6 @@ use OpenApi\Annotations as OA;
  *     version="1.0.0",
  *     description="Tài liệu API cho dự án Nông Sản Xanh."
  * )
- *
  * @OA\SecurityScheme(
  *     securityScheme="bearerAuth",
  *     type="http",

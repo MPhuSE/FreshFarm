@@ -10,6 +10,7 @@ use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Attributes as OA;
 
 class CartController extends Controller
 {
@@ -22,6 +23,13 @@ class CartController extends Controller
         $this->cartService = $cartService;
     }
 
+    #[OA\Get(
+        path: '/api/v1/cart',
+        summary: 'Lấy giỏ hàng',
+        security: [['bearerAuth' => []]],
+        tags: ['Cart']
+    )]
+    #[OA\Response(response: 200, description: 'Lấy giỏ hàng hiện tại thành công.')]
     public function index(): JsonResponse
     {
         $data = $this->cartService->getCartDetails(Auth::id());
@@ -29,6 +37,23 @@ class CartController extends Controller
         return $this->respondSuccess($data, 'Lấy giỏ hàng hiện tại thành công.');
     }
 
+    #[OA\Post(
+        path: '/api/v1/cart/items',
+        summary: 'Thêm sản phẩm vào giỏ',
+        security: [['bearerAuth' => []]],
+        tags: ['Cart']
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['product_id', 'quantity'],
+            properties: [
+                new OA\Property(property: 'product_id', type: 'integer', example: 1),
+                new OA\Property(property: 'quantity', type: 'number', example: 1)
+            ]
+        )
+    )]
+    #[OA\Response(response: 201, description: 'Thêm sản phẩm vào giỏ thành công.')]
     public function store(AddToCartRequest $request): JsonResponse
     {
         try {
@@ -44,6 +69,23 @@ class CartController extends Controller
         }
     }
 
+    #[OA\Patch(
+        path: '/api/v1/cart/items/{id}',
+        summary: 'Cập nhật số lượng sản phẩm trong giỏ',
+        security: [['bearerAuth' => []]],
+        tags: ['Cart']
+    )]
+    #[OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['quantity'],
+            properties: [
+                new OA\Property(property: 'quantity', type: 'number', example: 2)
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Cập nhật số lượng trong giỏ thành công.')]
     public function update(UpdateCartItemRequest $request, $id): JsonResponse
     {
         try {
@@ -59,6 +101,14 @@ class CartController extends Controller
         }
     }
 
+    #[OA\Delete(
+        path: '/api/v1/cart/items/{id}',
+        summary: 'Xóa sản phẩm khỏi giỏ',
+        security: [['bearerAuth' => []]],
+        tags: ['Cart']
+    )]
+    #[OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Response(response: 200, description: 'Xóa sản phẩm khỏi giỏ thành công.')]
     public function destroy($id): JsonResponse
     {
         try {
