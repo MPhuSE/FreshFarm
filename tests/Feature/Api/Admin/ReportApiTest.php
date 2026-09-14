@@ -20,13 +20,12 @@ class ReportApiTest extends TestCase
         Order::factory()->count(1)->create(['status' => 'pending', 'grand_total' => 50]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->getJson('/api/admin/reports/summary');
+            ->getJson('/api/v1/admin/reports/summary');
 
         $response->assertStatus(200)
-            ->assertJson([
-                'total_users' => User::count(),
-                'total_orders' => 4,
-                'total_revenue' => 300,
-            ]);
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.total_users', User::count())
+            ->assertJsonPath('data.total_orders', 4)
+            ->assertJsonPath('data.total_revenue', 300);
     }
 }

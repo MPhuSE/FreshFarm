@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
 class ReportController extends Controller
 {
+    use ApiResponse;
+
     #[OA\Get(
-        path: '/api/admin/reports/summary',
+        path: '/api/v1/admin/reports/summary',
         summary: 'Lấy báo cáo tổng quan',
         tags: ['Report'],
         security: [['bearerAuth' => []]],
@@ -36,10 +39,10 @@ class ReportController extends Controller
         $totalOrders = Order::count();
         $totalRevenue = Order::where('status', 'completed')->sum('grand_total');
 
-        return response()->json([
+        return $this->respondSuccess([
             'total_users' => $totalUsers,
             'total_orders' => $totalOrders,
             'total_revenue' => (float) $totalRevenue,
-        ]);
+        ], 'Admin - báo cáo tổng hợp thành công.');
     }
 }

@@ -11,17 +11,16 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('parent_id')->nullable()
-                ->constrained('categories')->onUpdate('cascade')->onDelete('set null');
+                ->constrained('categories')->nullOnDelete();
             $table->string('name', 120);
-            $table->string('slug', 160)->unique('uq_categories_slug');
+            $table->string('slug', 160)->unique();
             $table->text('description')->nullable();
-            $table->string('image_path', 255)->nullable();
+            $table->string('image_path')->nullable();
+            $table->integer('sort_order')->default(0);
             $table->string('status', 20)->default('active');
-            $table->dateTime('created_at')->useCurrent();
-            $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();
-            $table->dateTime('deleted_at')->nullable();
+            $table->softDeletes();
 
-            $table->index(['parent_id', 'status'], 'idx_categories_parent_status');
+            $table->index(['parent_id', 'status', 'sort_order']);
         });
     }
 

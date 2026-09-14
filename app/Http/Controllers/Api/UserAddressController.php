@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreAddressRequest;
 use App\Http\Requests\User\UpdateAddressRequest;
 use App\Models\UserAddress;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class UserAddressController extends Controller
 {
+    use ApiResponse;
+
     #[OA\Get(
-        path: '/api/user/addresses',
+        path: '/api/v1/user/addresses',
         summary: 'Lấy danh sách địa chỉ',
         tags: ['Address'],
         security: [['bearerAuth' => []]],
@@ -25,11 +28,11 @@ class UserAddressController extends Controller
     {
         $addresses = $request->user()->addresses()->orderBy('is_default', 'desc')->get();
 
-        return response()->json(['addresses' => $addresses]);
+        return $this->respondSuccess($addresses, 'Lấy danh sách địa chỉ thành công.');
     }
 
     #[OA\Post(
-        path: '/api/user/addresses',
+        path: '/api/v1/user/addresses',
         summary: 'Thêm địa chỉ giao hàng mới',
         tags: ['Address'],
         security: [['bearerAuth' => []]],
@@ -59,14 +62,11 @@ class UserAddressController extends Controller
 
         $address = $user->addresses()->create($request->validated());
 
-        return response()->json([
-            'message' => 'Address created successfully',
-            'address' => $address,
-        ], 201);
+        return $this->respondSuccess($address, 'Thêm địa chỉ giao hàng thành công.', 201);
     }
 
     #[OA\Put(
-        path: '/api/user/addresses/{address}',
+        path: '/api/v1/user/addresses/{address}',
         summary: 'Cập nhật địa chỉ giao hàng',
         tags: ['Address'],
         security: [['bearerAuth' => []]],
@@ -88,7 +88,7 @@ class UserAddressController extends Controller
     public function update(UpdateAddressRequest $request, UserAddress $address): JsonResponse
     {
         if ($address->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return $this->respondError('Không có quyền', 'FORBIDDEN', null, 403);
         }
 
         if ($request->validated('is_default')) {
@@ -97,14 +97,11 @@ class UserAddressController extends Controller
 
         $address->update($request->validated());
 
-        return response()->json([
-            'message' => 'Address updated successfully',
-            'address' => $address,
-        ]);
+        return $this->respondSuccess($address, 'Cập nhật địa chỉ giao hàng thành công.');
     }
 
     #[OA\Delete(
-        path: '/api/user/addresses/{address}',
+        path: '/api/v1/user/addresses/{address}',
         summary: 'Xóa địa chỉ giao hàng',
         tags: ['Address'],
         security: [['bearerAuth' => []]],
@@ -119,11 +116,11 @@ class UserAddressController extends Controller
     public function destroy(Request $request, UserAddress $address): JsonResponse
     {
         if ($address->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return $this->respondError('Không có quyền', 'FORBIDDEN', null, 403);
         }
 
         $address->delete();
 
-        return response()->json(['message' => 'Address deleted successfully']);
+        return $this->respondSuccess(null, 'Xóa địa chỉ giao hàng thành công.');
     }
 }
