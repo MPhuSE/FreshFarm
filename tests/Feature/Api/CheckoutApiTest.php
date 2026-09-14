@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Api;
 
 use Tests\TestCase;
 use App\Models\User;
@@ -55,7 +55,7 @@ class CheckoutApiTest extends TestCase
 
         Inventory::create([
             'product_id' => $this->product->id,
-            'quantity' => 100
+            'quantity_on_hand' => 100
         ]);
 
         // 4. Khởi tạo Giỏ hàng
@@ -63,14 +63,14 @@ class CheckoutApiTest extends TestCase
         CartItem::create([
             'cart_id' => $cart->id,
             'product_id' => $this->product->id,
-            'quantity' => 2
+            'quantity' => 2 
         ]);
     }
 
     public function test_checkout_preview_success()
     {
         $response = $this->actingAs($this->user)->postJson('/api/v1/checkout/preview', [
-            'address_id' => $this->address->id, // Truyền ID địa chỉ thật
+            'address_id' => $this->address->id,
             'payment_method' => 'cod',
             'coupon_code' => 'XANH10'
         ]);
@@ -125,9 +125,10 @@ class CheckoutApiTest extends TestCase
 
         $response->assertStatus(201);
 
-        $this->assertDatabaseHas('inventories', [
+        
+        $this->assertDatabaseHas('inventory', [
             'product_id' => $this->product->id,
-            'quantity' => 98
+            'quantity_on_hand' => 98
         ]);
 
         $this->assertDatabaseMissing('cart_items', [
@@ -143,7 +144,8 @@ class CheckoutApiTest extends TestCase
 
     public function test_place_order_fails_due_to_insufficient_stock()
     {
-        Inventory::where('product_id', $this->product->id)->update(['quantity' => 1]);
+        
+        Inventory::where('product_id', $this->product->id)->update(['quantity_on_hand' => 1]);
 
         $response = $this->actingAs($this->user)->postJson('/api/v1/orders', [
             'address_id' => $this->address->id,

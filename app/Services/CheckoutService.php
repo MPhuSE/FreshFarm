@@ -92,11 +92,11 @@ class CheckoutService
 
                 $inventory = Inventory::where('product_id', $productId)->lockForUpdate()->first();
 
-                if (!$inventory || $inventory->quantity < $quantity) {
+                if (!$inventory || $inventory->quantity_on_hand < $quantity) {
                     throw new Exception('Sản phẩm ' . $itemData['product']['name'] . ' không đủ số lượng.', 409);
                 }
 
-                $inventory->quantity -= $quantity;
+                $inventory->quantity_on_hand -= $quantity;
                 $inventory->save();
 
                 OrderItem::forceCreate([
