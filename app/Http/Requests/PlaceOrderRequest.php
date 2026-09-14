@@ -12,8 +12,8 @@ class PlaceOrderRequest extends FormRequest
     {
         return [
             'address_id' => ['required', 'integer'],
-            'payment_method' => ['required', 'string', 'in:cod,bank_transfer'],
-            'coupon_code' => ['nullable', 'string', 'max:50'], // Đã sửa ; thành :
+            'payment_method' => ['required', 'string', 'in:cod,bank_transfer,vnpay'],
+            'coupon_code' => ['nullable', 'string', 'max:50'], 
             'note' => ['nullable', 'string', 'max:500'],
             'idempotency_key' => ['required', 'string'],
         ];

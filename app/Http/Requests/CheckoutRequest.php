@@ -15,7 +15,7 @@ class CheckoutRequest extends FormRequest
     {
         return [
             'address_id' => ['required', 'integer'],
-            'payment_method' => ['required', 'string', 'in:cod,bank_transfer'],
+            'payment_method' => ['required', 'string', 'in:cod,bank_transfer,vnpay'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
         ];
     }
