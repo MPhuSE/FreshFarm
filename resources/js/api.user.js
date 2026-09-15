@@ -2,7 +2,6 @@ import {
     $,
     esc,
     url,
-    token,
     request,
     errorBox,
     showError,
@@ -17,13 +16,6 @@ async function account() {
         $('#live-main');
 
     if (!main) {
-        return;
-    }
-
-    if (!token()) {
-        location.href =
-            url('login');
-
         return;
     }
 
@@ -149,6 +141,12 @@ async function account() {
         );
 
     } catch (error) {
+        if (error.status === 401) {
+            location.href =
+                url('login');
+
+            return;
+        }
 
         showError(
             error,
@@ -166,13 +164,6 @@ async function addresses() {
         $('#live-main');
 
     if (!main) {
-        return;
-    }
-
-    if (!token()) {
-        location.href =
-            url('login');
-
         return;
     }
 
@@ -523,6 +514,12 @@ async function addresses() {
                 );
 
         } catch (error) {
+            if (error.status === 401) {
+                location.href =
+                    url('login');
+
+                return;
+            }
 
             showError(
                 error,

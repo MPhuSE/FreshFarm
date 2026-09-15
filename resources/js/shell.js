@@ -131,7 +131,7 @@ function header() {
                 <a
                     class="icon-btn"
                     aria-label="Đăng nhập"
-                    href="${FF.url('login')}"
+                    href="${FF.url('account')}"
                 >
                     ${icon('user')}
                 </a>
@@ -404,11 +404,66 @@ function accountNav() {
 
         <a
             href="${FF.url('login')}"
+            data-logout
         >
             ${icon('log-out')}
             Đăng xuất
         </a>
     `;
+}
+
+
+function initLogout() {
+    document.addEventListener(
+        'click',
+        async (event) => {
+            const link =
+                event.target.closest(
+                    '[data-logout]'
+                );
+
+            if (!link) {
+                return;
+            }
+
+            event.preventDefault();
+
+            try {
+                await fetch(
+                    FF.base +
+                    '/api/v1/auth/logout',
+                    {
+                        method: 'POST',
+                        credentials:
+                            'same-origin',
+                        headers: {
+                            Accept:
+                                'application/json'
+                        }
+                    }
+                );
+
+            } finally {
+                sessionStorage.removeItem(
+                    'access_token'
+                );
+
+                localStorage.removeItem(
+                    'access_token'
+                );
+
+                localStorage.removeItem(
+                    'current_user'
+                );
+
+                document.cookie =
+                    'freshfarm_auth=; Max-Age=0; path=/; SameSite=Lax';
+
+                location.href =
+                    FF.url('login');
+            }
+        }
+    );
 }
 
 
@@ -448,8 +503,10 @@ document.addEventListener(
     () => {
         header();
         footer();
+        accountNav();
         refreshIcons();
         initMobileMenu();
+        initLogout();
 
         const cartCount =
             document.querySelector(

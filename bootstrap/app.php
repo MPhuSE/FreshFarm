@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApiException;
 use App\Http\Middleware\AssignTraceId;
+use App\Http\Middleware\AuthenticateWithTokenCookie;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
     $middleware->api(prepend: [
         AssignTraceId::class,
+        AuthenticateWithTokenCookie::class,
     ]);
 
     $middleware->alias([

@@ -107,12 +107,25 @@
             <label>
                 Xác nhận mật khẩu
 
-                <input
-                    type="password"
-                    name="password_confirmation"
-                    placeholder="Nhập lại mật khẩu"
-                    required
-                    minlength="8">
+                <div class="password-field">
+
+                    <input
+                        type="password"
+                        name="password_confirmation"
+                        placeholder="Nhập lại mật khẩu"
+                        required
+                        minlength="8">
+
+                    <button
+                        type="button"
+                        data-toggle-password
+                        aria-label="Hiện mật khẩu">
+
+                        <i data-feather="eye"></i>
+
+                    </button>
+
+                </div>
             </label>
 
 

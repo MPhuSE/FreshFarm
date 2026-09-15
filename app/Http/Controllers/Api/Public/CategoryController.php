@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
 use App\Services\CategoryService;
 use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponse;
 use OpenApi\Attributes as OA;
 
 class CategoryController extends Controller
 {
+    use ApiResponse; 
     public function __construct(private readonly CategoryService $categoryService) {}
 
     #[OA\Get(
@@ -18,6 +20,7 @@ class CategoryController extends Controller
         tags: ['Catalog']
     )]
     #[OA\Response(response: 200, description: 'Lấy danh sách danh mục công khai thành công.')]
+    
     public function index(): JsonResponse
     {
         $categories = $this->categoryService->getPublicCategories();

@@ -35,14 +35,11 @@ export const cash = (value) => {
 export const url = FF.url;
 
 export const token = () => {
-    return (
-        sessionStorage.getItem(
-            'access_token'
-        ) ||
-        localStorage.getItem(
-            'access_token'
-        )
-    );
+    return document.cookie
+        .split('; ')
+        .some((cookie) =>
+            cookie === 'freshfarm_auth=1'
+        );
 };
 
 
@@ -117,6 +114,9 @@ export async function request(
                 path,
                 {
                     method,
+                    credentials:
+                        'same-origin',
+
                     signal:
                         controller.signal,
 
@@ -128,14 +128,6 @@ export async function request(
                             ? {
                                 'Content-Type':
                                     'application/json'
-                            }
-                            : {}),
-
-                        ...(token()
-                            ? {
-                                Authorization:
-                                    'Bearer ' +
-                                    token()
                             }
                             : {}),
 
@@ -190,17 +182,7 @@ export async function request(
                 response.status ===
                 401
             ) {
-                sessionStorage.removeItem(
-                    'access_token'
-                );
-
-                localStorage.removeItem(
-                    'access_token'
-                );
-
-                localStorage.removeItem(
-                    'current_user'
-                );
+                clearAuthStorage();
             }
 
             throw error;
@@ -225,6 +207,23 @@ export async function request(
     } finally {
         clearTimeout(timer);
     }
+}
+
+export function clearAuthStorage() {
+    sessionStorage.removeItem(
+        'access_token'
+    );
+
+    localStorage.removeItem(
+        'access_token'
+    );
+
+    localStorage.removeItem(
+        'current_user'
+    );
+
+    document.cookie =
+        'freshfarm_auth=; Max-Age=0; path=/; SameSite=Lax';
 }
 
 export function errorBox(error) {

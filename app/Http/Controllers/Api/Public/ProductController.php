@@ -8,10 +8,12 @@ use App\Http\Resources\ProductDetailResource;
 use App\Http\Resources\ProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponse;
 use OpenApi\Attributes as OA;
 
 class ProductController extends Controller
 {
+    use ApiResponse;
     public function __construct(private readonly ProductService $productService) {}
 
     #[OA\Get(

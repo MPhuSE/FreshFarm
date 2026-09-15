@@ -16,6 +16,10 @@ class AuthController extends Controller
 {
     use ApiResponse;
 
+    private const AUTH_COOKIE = 'freshfarm_token';
+    private const AUTH_MARKER_COOKIE = 'freshfarm_auth';
+    private const AUTH_COOKIE_MINUTES = 10080;
+
     #[OA\Post(
         path: '/api/v1/auth/register',
         summary: 'Đăng ký tài khoản',
@@ -46,11 +50,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->validated('password')),
         ]);
 
-        return $this->respondSuccess([
-            'user' => $user,
-            'token' => $user->createToken('auth_token')->plainTextToken,
-            'token_type' => 'Bearer',
-        ], 'Đăng ký tài khoản thành công.', 201);
+        return $this->respondAuthenticated($request, $user, 'Đăng ký tài khoản thành công.', 201);
     }
 
     #[OA\Post(
@@ -79,7 +79,6 @@ class AuthController extends Controller
         $user = User::where('email', $request->validated('email'))->first();
 
         if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
-            // Theo tài liệu spec lỗi này trả 401 INVALID_CREDENTIALS
             return $this->respondError('Tài khoản hoặc mật khẩu không chính xác.', 'INVALID_CREDENTIALS', null, 401);
         }
 
@@ -87,11 +86,45 @@ class AuthController extends Controller
             return $this->respondError('Tài khoản của bạn đã bị khóa.', 'ACCOUNT_LOCKED', null, 403);
         }
 
-        return $this->respondSuccess([
+        return $this->respondAuthenticated($request, $user, 'Đăng nhập thành công.');
+    }
+
+    private function respondAuthenticated(Request $request, User $user, string $message, int $status = 200): JsonResponse
+    {
+        $plainTextToken = $user->createToken('auth_token')->plainTextToken;
+
+        $data = [
             'user' => $user,
-            'token' => $user->createToken('auth_token')->plainTextToken,
             'token_type' => 'Bearer',
-        ], 'Đăng nhập thành công.');
+        ];
+
+        if (! $request->boolean('cookie_auth') && $request->header('X-Use-Cookie-Auth') !== '1') {
+            $data['token'] = $plainTextToken;
+        }
+
+        return $this->respondSuccess($data, $message, $status)
+            ->cookie(
+                self::AUTH_COOKIE,
+                $plainTextToken,
+                self::AUTH_COOKIE_MINUTES,
+                '/',
+                null,
+                $request->isSecure(),
+                true,
+                false,
+                'Lax'
+            )
+            ->cookie(
+                self::AUTH_MARKER_COOKIE,
+                '1',
+                self::AUTH_COOKIE_MINUTES,
+                '/',
+                null,
+                $request->isSecure(),
+                false,
+                false,
+                'Lax'
+            );
     }
 
     #[OA\Post(
@@ -105,9 +138,11 @@ class AuthController extends Controller
     )]
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()?->currentAccessToken()?->delete();
 
-        return $this->respondSuccess(null, 'Đăng xuất thành công.');
+        return $this->respondSuccess(null, 'Đăng xuất thành công.')
+            ->withoutCookie(self::AUTH_COOKIE)
+            ->withoutCookie(self::AUTH_MARKER_COOKIE);
     }
 
     #[OA\Get(

@@ -2,14 +2,9 @@ const ADMIN_API_BASE_URL = '/api/v1';
 
 function adminApiHeaders(json = false) {
 	const headers = { Accept: 'application/json' };
-	const token = window.localStorage.getItem('access_token');
 
 	if (json) {
 		headers['Content-Type'] = 'application/json';
-	}
-
-	if (token) {
-		headers.Authorization = `Bearer ${token}`;
 	}
 
 	return headers;
@@ -18,6 +13,7 @@ function adminApiHeaders(json = false) {
 async function adminApiRequest(path, options = {}) {
 	const response = await fetch(`${ADMIN_API_BASE_URL}${path}`, {
 		...options,
+		credentials: 'same-origin',
 		headers: {
 			...adminApiHeaders(options.body && !(options.body instanceof FormData)),
 			...(options.headers || {}),

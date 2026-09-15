@@ -3,50 +3,24 @@
 
 <head>
     <meta charset="utf-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield("title") | FreshFarm</title>
 
-    <link
-        rel="icon"
-        type="image/svg+xml"
-        href="{{ asset('tv4/assets/images/favicon.svg') }}"
-    >
+    <!-- Đã chuẩn hóa đường dẫn Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
 
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
-
-    <link
-        rel="stylesheet"
-        href="{{ asset('tv4/assets/css/style.css') }}"
-    >
-
-    <link
-        rel="stylesheet"
-        href="{{ asset('tv4/assets/css/layout-fixes.css') }}"
-    >
-
-    <link
-        rel="stylesheet"
-        href="{{ asset('tv4/assets/css/integration.css') }}"
-    >
+    <!-- Sử dụng Vite để nạp CSS chuẩn Laravel -->
+    @vite([
+        'resources/css/style.css',
+        'resources/css/layout-fixes.css',
+        'resources/css/integration.css',
+        'resources/js/app.js',
+        'resources/js/config.js'
+    ])
 </head>
 
 <body data-page="@yield('page')">
@@ -54,18 +28,12 @@
     @include('partials.storefront-header')
 
     @if($tv4Preview)
-
-        <div
-            class="preview-notice"
-            role="status"
-        >
+        <div class="preview-notice" role="status">
             Bản xem thử · Dữ liệu mẫu, không tạo đơn thật.
-
             <a href="{{ url()->current() }}">
                 Chuyển sang API
             </a>
         </div>
-
     @endif
 
     <div id="live-main">
@@ -74,48 +42,31 @@
 
     @include('partials.storefront-footer')
 
-    <div
-        id="toast"
-        class="toast"
-        role="status"
-        aria-live="polite"
-    ></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script>
         window.FF = {
             preview: @json($tv4Preview),
             staticPreview: false,
             base: @json(url('/')),
-            assetBase: @json(asset('tv4/assets')),
+            // Đã sửa assetBase để trỏ về thư mục public gốc
+            assetBase: @json(asset('')),
             slug: @json($slug ?? null),
             orderCode: @json($order_code ?? null)
         };
     </script>
 
-    <script
-        src="{{ asset('tv4/assets/vendor/feather/feather.min.js') }}"
-    ></script>
+    <!-- Thư viện ngoài nên đặt ở thư mục public/vendor -->
+    <script src="{{ asset('vendor/feather/feather.min.js') }}"></script>
 
-    <script
-        src="{{ asset('tv4/assets/js/config.js') }}"
-    ></script>
-
+    <!-- Sử dụng Vite để nạp JS -->
     @if($tv4Preview)
-
-        <script
-            src="{{ asset('tv4/assets/js/demo.js') }}"
-        ></script>
-
+        @vite(['resources/js/demo.js'])
     @else
-        {{-- Shell chạy trước API để cung cấp icon, toast, header... --}}
-        <script
-            src="{{ asset('tv4/assets/js/shell.js') }}"
-        ></script>
-        {{-- API đã tách thành ES Modules --}}
-        <script
-            type="module"
-            src="{{ asset('tv4/assets/js/api.js') }}"
-        ></script>
+        @vite([
+            'resources/js/shell.js',
+            'resources/js/api.js'
+        ])
     @endif
 </body>
 </html>

@@ -516,9 +516,6 @@
 
         function getAuthHeaders(includeContentType = false) {
 
-            const token =
-                localStorage.getItem('access_token');
-
             const headers = {
                 'Accept': 'application/json'
             };
@@ -526,11 +523,6 @@
             if (includeContentType) {
                 headers['Content-Type'] =
                     'application/json';
-            }
-
-            if (token) {
-                headers['Authorization'] =
-                    `Bearer ${token}`;
             }
 
             return headers;
@@ -645,6 +637,7 @@
                         `${API_BASE_URL}/admin/products/${productId}`,
                         {
                             method: 'GET',
+                            credentials: 'same-origin',
                             headers: getAuthHeaders()
                         }
                     );
@@ -1271,6 +1264,7 @@
                         `${API_BASE_URL}/admin/products/${productId}/images/reorder`,
                         {
                             method: 'PATCH',
+                            credentials: 'same-origin',
 
                             headers:
                                 getAuthHeaders(true),
@@ -1443,6 +1437,7 @@
                         `${API_BASE_URL}/admin/products/${productId}`,
                         {
                             method: 'PATCH',
+                            credentials: 'same-origin',
 
                             headers:
                                 getAuthHeaders(true),
@@ -1685,6 +1680,7 @@
                         `${API_BASE_URL}/admin/products/${productId}/images`,
                         {
                             method: 'POST',
+                            credentials: 'same-origin',
 
                             headers:
                                 getAuthHeaders(),
