@@ -1,12 +1,18 @@
 <!DOCTYPE html>
+
 <html lang="vi">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Quản lý bài viết</title>
+    @vite('resources/js/app.js')
 
     <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
 <body class="bg-gray-100">
@@ -14,38 +20,52 @@
 <div class="p-6">
 
     <!-- HEADER -->
+
     <div class="flex justify-between items-center mb-6">
 
         <div>
+
             <h1 class="text-2xl font-bold text-gray-800">
+
                 Quản lý bài viết
+
             </h1>
 
             <p class="text-gray-500 mt-1">
+
                 Quản lý danh sách và nội dung bài viết
+
             </p>
+
         </div>
 
         <button
             onclick="openCreateModal()"
             class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
         >
+
             + Thêm bài viết
+
         </button>
 
     </div>
 
 
+
     <!-- TÌM KIẾM + LỌC -->
+
     <div class="bg-white p-4 rounded-lg shadow mb-6">
 
         <div class="flex flex-wrap gap-4 items-end">
 
             <!-- q -->
+
             <div>
 
                 <label class="block text-sm font-medium mb-1">
+
                     Tìm kiếm
+
                 </label>
 
                 <input
@@ -58,11 +78,15 @@
             </div>
 
 
+
             <!-- status -->
+
             <div>
 
                 <label class="block text-sm font-medium mb-1">
+
                     Trạng thái
+
                 </label>
 
                 <select
@@ -71,15 +95,21 @@
                 >
 
                     <option value="">
+
                         Tất cả
+
                     </option>
 
                     <option value="published">
+
                         Published
+
                     </option>
 
                     <option value="draft">
+
                         Draft
+
                     </option>
 
                 </select>
@@ -87,11 +117,14 @@
             </div>
 
 
+
             <button
                 onclick="loadPosts(1)"
                 class="bg-green-600 text-white px-5 py-2 rounded-lg"
             >
+
                 Tìm kiếm
+
             </button>
 
         </div>
@@ -99,16 +132,21 @@
     </div>
 
 
+
     <!-- DANH SÁCH -->
+
     <div class="bg-white rounded-lg shadow overflow-hidden">
 
         <div class="p-5 border-b">
 
             <h2 class="text-lg font-bold">
+
                 Danh sách bài viết
+
             </h2>
 
         </div>
+
 
 
         <div class="overflow-x-auto">
@@ -120,36 +158,51 @@
                     <tr>
 
                         <th class="text-left px-5 py-3">
+
                             ID
+
                         </th>
 
                         <th class="text-left px-5 py-3">
+
                             Tiêu đề
+
                         </th>
 
                         <th class="text-left px-5 py-3">
+
                             Slug
+
                         </th>
 
                         <th class="text-left px-5 py-3">
+
                             Mô tả
+
                         </th>
 
                         <th class="text-left px-5 py-3">
+
                             Trạng thái
+
                         </th>
 
                         <th class="text-left px-5 py-3">
+
                             Ngày đăng
+
                         </th>
 
                         <th class="text-center px-5 py-3">
+
                             Thao tác
+
                         </th>
 
                     </tr>
 
                 </thead>
+
 
 
                 <tbody id="postsTable">
@@ -160,7 +213,9 @@
                             colspan="7"
                             class="text-center py-6 text-gray-500"
                         >
+
                             Đang tải dữ liệu...
+
                         </td>
 
                     </tr>
@@ -172,7 +227,9 @@
         </div>
 
 
+
         <!-- PHÂN TRANG -->
+
         <div
             id="pagination"
             class="p-4 border-t flex justify-between items-center"
@@ -181,6 +238,7 @@
     </div>
 
 </div>
+
 
 
 <div
@@ -194,8 +252,11 @@
             id="modalTitle"
             class="text-xl font-bold mb-5"
         >
+
             Thêm bài viết
+
         </h2>
+
 
 
         <input
@@ -204,11 +265,15 @@
         >
 
 
+
         <!-- TITLE -->
+
         <div class="mb-4">
 
             <label class="block text-sm font-medium mb-1">
+
                 Tiêu đề
+
             </label>
 
             <input
@@ -220,10 +285,13 @@
         </div>
 
 
+
         <div class="mb-4">
 
             <label class="block text-sm font-medium mb-1">
+
                 Mô tả ngắn
+
             </label>
 
             <textarea
@@ -235,10 +303,13 @@
         </div>
 
 
+
         <div class="mb-4">
 
             <label class="block text-sm font-medium mb-1">
+
                 Nội dung
+
             </label>
 
             <textarea
@@ -249,17 +320,21 @@
             ></textarea>
 
             <p class="text-xs text-gray-500 mt-1">
+
                 Nội dung HTML phải được server sanitize trước khi lưu.
+
             </p>
 
         </div>
 
 
-  
+
         <div class="mb-4">
 
             <label class="block text-sm font-medium mb-1">
+
                 Thumbnail
+
             </label>
 
             <input
@@ -276,7 +351,9 @@
         <div class="mb-5">
 
             <label class="block text-sm font-medium mb-1">
+
                 Trạng thái
+
             </label>
 
             <select
@@ -285,11 +362,15 @@
             >
 
                 <option value="draft">
+
                     Draft
+
                 </option>
 
                 <option value="published">
+
                     Published
+
                 </option>
 
             </select>
@@ -297,21 +378,25 @@
         </div>
 
 
-  
+
         <div class="flex justify-end gap-2">
 
             <button
                 onclick="closeModal()"
                 class="px-4 py-2 border rounded-lg"
             >
+
                 Hủy
+
             </button>
 
             <button
                 onclick="savePost()"
                 class="px-4 py-2 bg-green-600 text-white rounded-lg"
             >
+
                 Lưu
+
             </button>
 
         </div>
@@ -321,14 +406,12 @@
 </div>
 
 
+
 <script>
 
-const API_BASE_URL = 'http://api.nongsanxanh.local';
-
-const token = localStorage.getItem('access_token');
+const API_BASE_URL = '/api/v1';
 
 let currentPage = 1;
-
 
 
 
@@ -343,8 +426,9 @@ async function loadPosts(page = 1) {
         document.getElementById('statusFilter').value;
 
 
+
     let url =
-        `${API_BASE_URL}/api/v1/admin/posts?page=${page}`;
+        `${API_BASE_URL}/admin/posts?page=${page}`;
 
 
 
@@ -355,12 +439,15 @@ async function loadPosts(page = 1) {
 
     }
 
+
+
     if (status) {
 
         url +=
             `&status=${encodeURIComponent(status)}`;
 
     }
+
 
 
     try {
@@ -374,17 +461,16 @@ async function loadPosts(page = 1) {
                 'Accept':
                     'application/json',
 
-                'Authorization':
-                    `Bearer ${token}`
+                ...AdminApi.headers()
 
             }
 
         });
 
 
+
         const result =
             await response.json();
-
 
 
 
@@ -393,6 +479,7 @@ async function loadPosts(page = 1) {
             const errorCode =
                 result.errors?.error_code ||
                 result.error_code;
+
 
 
             if (errorCode === 'FORBIDDEN') {
@@ -410,6 +497,7 @@ async function loadPosts(page = 1) {
             }
 
             return;
+
         }
 
 
@@ -417,6 +505,7 @@ async function loadPosts(page = 1) {
         renderPosts(result.data || []);
 
         renderPagination(result.meta);
+
 
 
     } catch (error) {
@@ -432,12 +521,16 @@ async function loadPosts(page = 1) {
 }
 
 
+
 function renderPosts(posts) {
 
     const table =
         document.getElementById('postsTable');
 
+
+
     table.innerHTML = '';
+
 
 
     if (!posts.length) {
@@ -450,7 +543,9 @@ function renderPosts(posts) {
                     colspan="7"
                     class="text-center py-6 text-gray-500"
                 >
+
                     Không có bài viết
+
                 </td>
 
             </tr>
@@ -458,7 +553,9 @@ function renderPosts(posts) {
         `;
 
         return;
+
     }
+
 
 
     posts.forEach(post => {
@@ -468,19 +565,27 @@ function renderPosts(posts) {
             <tr class="border-t">
 
                 <td class="px-5 py-3">
+
                     ${post.id}
+
                 </td>
 
                 <td class="px-5 py-3 font-medium">
+
                     ${escapeHtml(post.title)}
+
                 </td>
 
                 <td class="px-5 py-3">
+
                     ${escapeHtml(post.slug)}
+
                 </td>
 
                 <td class="px-5 py-3">
+
                     ${escapeHtml(post.excerpt || '')}
+
                 </td>
 
                 <td class="px-5 py-3">
@@ -489,22 +594,33 @@ function renderPosts(posts) {
                         post.status === 'published'
 
                         ? `
+
                             <span class="px-2 py-1 rounded bg-green-100 text-green-700">
+
                                 Published
+
                             </span>
+
                         `
 
                         : `
+
                             <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">
+
                                 Draft
+
                             </span>
+
                         `
+
                     }
 
                 </td>
 
                 <td class="px-5 py-3">
+
                     ${formatDate(post.published_at)}
+
                 </td>
 
                 <td class="px-5 py-3 text-center">
@@ -513,7 +629,9 @@ function renderPosts(posts) {
                         onclick="editPost(${post.id})"
                         class="text-blue-600 hover:underline"
                     >
+
                         Sửa
+
                     </button>
 
                 </td>
@@ -527,10 +645,12 @@ function renderPosts(posts) {
 }
 
 
+
 function renderPagination(meta) {
 
     const pagination =
         document.getElementById('pagination');
+
 
 
     if (!meta || meta.last_page <= 1) {
@@ -538,7 +658,9 @@ function renderPagination(meta) {
         pagination.innerHTML = '';
 
         return;
+
     }
+
 
 
     pagination.innerHTML = `
@@ -546,13 +668,17 @@ function renderPagination(meta) {
         <div class="text-sm text-gray-500">
 
             Hiển thị
+
             ${meta.from || 0}
+
             -
+
             ${meta.to || 0}
 
             / ${meta.total || 0} bài viết
 
         </div>
+
 
 
         <div class="flex gap-2">
@@ -562,18 +688,25 @@ function renderPagination(meta) {
                 ${meta.current_page <= 1 ? 'disabled' : ''}
                 class="px-3 py-1 border rounded"
             >
+
                 Trước
+
             </button>
+
 
 
             <span class="px-3 py-1">
 
                 Trang
+
                 ${meta.current_page}
+
                 /
+
                 ${meta.last_page}
 
             </span>
+
 
 
             <button
@@ -581,7 +714,9 @@ function renderPagination(meta) {
                 ${meta.current_page >= meta.last_page ? 'disabled' : ''}
                 class="px-3 py-1 border rounded"
             >
+
                 Sau
+
             </button>
 
         </div>
@@ -589,6 +724,7 @@ function renderPagination(meta) {
     `;
 
 }
+
 
 
 function openCreateModal() {
@@ -610,12 +746,14 @@ function openCreateModal() {
         'draft';
 
 
+
     document
         .getElementById('postModal')
         .classList
         .remove('hidden');
 
 }
+
 
 
 // =================================================
@@ -635,68 +773,147 @@ function closeModal() {
 
 async function editPost(id) {
 
-    const response = await fetch(
-        `${API_BASE_URL}/api/v1/admin/posts?page=${currentPage}`,
-        {
-            method: 'GET',
+    try {
 
-            headers: {
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
+        /*
+         * API hiện tại không có:
+         * GET /api/v1/admin/posts/{id}
+         *
+         * Vì vậy lấy lại danh sách của trang hiện tại
+         * rồi tìm bài viết theo id.
+         */
+
+        const response = await fetch(
+
+            `${API_BASE_URL}/admin/posts?page=${currentPage}`,
+
+            {
+
+                method: 'GET',
+
+                headers: {
+
+                    'Accept': 'application/json',
+
+                    ...AdminApi.headers(true)
+
+                }
+
             }
-        }
-    );
 
-
-    const result =
-        await response.json();
-
-
-    const post =
-        (result.data || []).find(
-            item => item.id == id
         );
 
 
-    if (!post) {
+
+        const result =
+            await response.json();
+
+
+
+        if (!response.ok) {
+
+            const errorCode =
+                result.errors?.error_code ||
+                result.error_code;
+
+
+
+            if (errorCode === 'FORBIDDEN') {
+
+                alert(
+                    'Bạn không có quyền xem danh sách bài viết'
+                );
+
+            } else {
+
+                alert(
+                    'Không thể tải dữ liệu bài viết'
+                );
+
+            }
+
+            return;
+
+        }
+
+
+
+        const post =
+            (result.data || []).find(
+                item => item.id == id
+            );
+
+
+
+        if (!post) {
+
+            alert(
+                'Không tìm thấy bài viết'
+            );
+
+            return;
+
+        }
+
+
+
+        document.getElementById('modalTitle').textContent =
+            'Cập nhật bài viết';
+
+
+
+        document.getElementById('postId').value =
+            post.id;
+
+
+
+        document.getElementById('postTitle').value =
+            post.title || '';
+
+
+
+        document.getElementById('postExcerpt').value =
+            post.excerpt || '';
+
+
+
+        /*
+         * API GET danh sách hiện tại chỉ trả:
+         * id, title, slug, excerpt, status, published_at
+         *
+         * Không có content_html và thumbnail
+         * nên không tự đoán dữ liệu.
+         */
+
+        document.getElementById('postContent').value = '';
+
+        document.getElementById('postThumbnail').value = '';
+
+
+
+        document.getElementById('postStatus').value =
+            post.status || 'draft';
+
+
+
+        document
+            .getElementById('postModal')
+            .classList
+            .remove('hidden');
+
+
+
+    } catch (error) {
+
+        console.error(error);
 
         alert(
-            'Không tìm thấy bài viết'
+            'Không thể kết nối đến API'
         );
 
-        return;
     }
 
-
-    document.getElementById('modalTitle').textContent =
-        'Cập nhật bài viết';
-
-    document.getElementById('postId').value =
-        post.id;
-
-    document.getElementById('postTitle').value =
-        post.title || '';
-
-    document.getElementById('postExcerpt').value =
-        post.excerpt || '';
-
-
-
-    document.getElementById('postContent').value = '';
-
-    document.getElementById('postThumbnail').value = '';
-
-    document.getElementById('postStatus').value =
-        post.status || 'draft';
-
-
-    document
-        .getElementById('postModal')
-        .classList
-        .remove('hidden');
-
 }
-
 
 
 
@@ -706,21 +923,29 @@ async function savePost() {
         document.getElementById('postId').value;
 
 
+
     const title =
         document.getElementById('postTitle').value.trim();
+
+
 
     const excerpt =
         document.getElementById('postExcerpt').value.trim();
 
+
+
     const contentHtml =
         document.getElementById('postContent').value.trim();
+
+
 
     const thumbnail =
         document.getElementById('postThumbnail').value.trim();
 
+
+
     const status =
         document.getElementById('postStatus').value;
-
 
 
 
@@ -729,7 +954,9 @@ async function savePost() {
         alert('Vui lòng nhập tiêu đề');
 
         return;
+
     }
+
 
 
     if (!id && !contentHtml) {
@@ -737,12 +964,14 @@ async function savePost() {
         alert('Vui lòng nhập nội dung bài viết');
 
         return;
+
     }
+
 
 
     try {
 
-      
+
 
         if (!id) {
 
@@ -757,12 +986,14 @@ async function savePost() {
             };
 
 
-        
+
             if (excerpt) {
 
                 body.excerpt = excerpt;
 
             }
+
+
 
             if (thumbnail) {
 
@@ -770,9 +1001,11 @@ async function savePost() {
 
             }
 
+
+
             const response = await fetch(
 
-                `${API_BASE_URL}/api/v1/admin/posts`,
+                `${API_BASE_URL}/admin/posts`,
 
                 {
 
@@ -786,8 +1019,7 @@ async function savePost() {
                         'Content-Type':
                             'application/json',
 
-                        'Authorization':
-                            `Bearer ${token}`
+                        ...AdminApi.headers(true)
 
                     },
 
@@ -799,8 +1031,10 @@ async function savePost() {
             );
 
 
+
             const result =
                 await response.json();
+
 
 
             if (!response.ok) {
@@ -808,6 +1042,7 @@ async function savePost() {
                 const errorCode =
                     result.errors?.error_code ||
                     result.error_code;
+
 
 
                 if (
@@ -841,7 +1076,9 @@ async function savePost() {
                 }
 
                 return;
+
             }
+
 
 
             alert(
@@ -851,9 +1088,11 @@ async function savePost() {
         }
 
 
+
         else {
 
             const body = {};
+
 
 
             if (title) {
@@ -863,11 +1102,13 @@ async function savePost() {
             }
 
 
+
             if (excerpt) {
 
                 body.excerpt = excerpt;
 
             }
+
 
 
             if (contentHtml) {
@@ -878,12 +1119,14 @@ async function savePost() {
             }
 
 
+
             if (thumbnail) {
 
                 body.thumbnail =
                     thumbnail;
 
             }
+
 
 
             if (status) {
@@ -894,9 +1137,10 @@ async function savePost() {
             }
 
 
+
             const response = await fetch(
 
-                `${API_BASE_URL}/api/v1/admin/posts/${id}`,
+                `${API_BASE_URL}/admin/posts/${id}`,
 
                 {
 
@@ -911,7 +1155,7 @@ async function savePost() {
                             'application/json',
 
                         'Authorization':
-                            `Bearer ${token}`
+                            ...AdminApi.headers(true)
 
                     },
 
@@ -923,8 +1167,10 @@ async function savePost() {
             );
 
 
+
             const result =
                 await response.json();
+
 
 
             if (!response.ok) {
@@ -932,6 +1178,7 @@ async function savePost() {
                 const errorCode =
                     result.errors?.error_code ||
                     result.error_code;
+
 
 
                 if (
@@ -965,7 +1212,9 @@ async function savePost() {
                 }
 
                 return;
+
             }
+
 
 
             alert(
@@ -975,9 +1224,11 @@ async function savePost() {
         }
 
 
+
         closeModal();
 
         loadPosts(currentPage);
+
 
 
     } catch (error) {
@@ -997,13 +1248,19 @@ async function savePost() {
 function escapeHtml(value) {
 
     return String(value || '')
+
         .replace(/&/g, '&amp;')
+
         .replace(/</g, '&lt;')
+
         .replace(/>/g, '&gt;')
+
         .replace(/"/g, '&quot;')
+
         .replace(/'/g, '&#039;');
 
 }
+
 
 
 function formatDate(date) {
@@ -1014,22 +1271,30 @@ function formatDate(date) {
 
     }
 
+
+
     return new Date(date)
+
         .toLocaleDateString('vi-VN');
 
 }
 
 
+
 document.addEventListener(
+
     'DOMContentLoaded',
+
     function () {
 
         loadPosts(1);
 
     }
+
 );
 
 </script>
 
 </body>
+
 </html>

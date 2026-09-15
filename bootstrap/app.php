@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -29,15 +30,22 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Gắn trace_id cho toàn bộ route trong group "api"
-        $middleware->api(prepend: [
-            AssignTraceId::class,
-        ]);
-        // Alias middleware phân quyền role (Staff/Admin) dùng ở routes/api.php
-        $middleware->alias([
-            'role' => CheckRole::class,
-        ]);
-    })
+    $middleware->api(prepend: [
+        AssignTraceId::class,
+    ]);
+
+    $middleware->alias([
+        'role' => CheckRole::class,
+    ]);
+
+    $middleware->redirectGuestsTo(function (Request $request) {
+        if ($request->is('api/*')) {
+            return null;
+        }
+
+        return route('login');
+    });
+})
 
     ->withExceptions(function (Exceptions $exceptions): void {
         $isApiRequest = fn (Request $request) => $request->is('api/*') || $request->expectsJson();

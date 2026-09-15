@@ -413,8 +413,6 @@
 
 const API_BASE_URL = '/api/v1';
 
-const token = localStorage.getItem('access_token');
-
 const orderId = {{ $id ?? 'null' }};
 
 
@@ -434,9 +432,7 @@ async function loadOrderDetail() {
 
                 headers: {
 
-                    'Accept': 'application/json',
-
-                    'Authorization': 'Bearer ' + token
+                    ...AdminApi.headers()
 
                 }
 
@@ -583,55 +579,38 @@ function displayItems(items) {
 
     tbody.innerHTML = '';
 
+items.forEach(function(item) {
 
-    items.forEach(function(item) {
+    const row = document.createElement('tr');
 
-        const row =
-            document.createElement('tr');
+    const productName = document.createElement('td');
+    productName.className = 'px-4 py-3 font-medium';
+    productName.textContent = item.product_name ?? '';
 
+    const unit = document.createElement('td');
+    unit.className = 'px-4 py-3';
+    unit.textContent = item.unit ?? '';
 
-        row.innerHTML = `
+    const quantity = document.createElement('td');
+    quantity.className = 'px-4 py-3';
+    quantity.textContent = item.quantity ?? '';
 
-            <td class="px-4 py-3 font-medium">
+    const unitPrice = document.createElement('td');
+    unitPrice.className = 'px-4 py-3';
+    unitPrice.textContent = formatMoney(item.unit_price);
 
-                ${item.product_name}
+    const lineTotal = document.createElement('td');
+    lineTotal.className = 'px-4 py-3 font-medium';
+    lineTotal.textContent = formatMoney(item.line_total);
 
-            </td>
+    row.appendChild(productName);
+    row.appendChild(unit);
+    row.appendChild(quantity);
+    row.appendChild(unitPrice);
+    row.appendChild(lineTotal);
 
-            <td class="px-4 py-3">
-
-                ${item.unit}
-
-            </td>
-
-            <td class="px-4 py-3">
-
-                ${item.quantity}
-
-            </td>
-
-            <td class="px-4 py-3">
-
-                ${formatMoney(item.unit_price)}
-
-            </td>
-
-            <td class="px-4 py-3 font-medium">
-
-                ${formatMoney(item.line_total)}
-
-            </td>
-
-        `;
-
-
-        tbody.appendChild(row);
-
-    });
-
-}
-
-
+    tbody.appendChild(row);
+});
 
 async function updateOrderStatus() {
 
@@ -659,7 +638,7 @@ async function updateOrderStatus() {
 
                     'Content-Type': 'application/json',
 
-                    'Authorization': 'Bearer ' + token
+                    ...AdminApi.headers(true)
 
                 },
 
@@ -756,7 +735,7 @@ async function updatePaymentStatus() {
 
                     'Content-Type': 'application/json',
 
-                    'Authorization': 'Bearer ' + token
+                    ...AdminApi.headers(true)
 
                 },
 

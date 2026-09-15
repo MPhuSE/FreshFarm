@@ -221,10 +221,6 @@
 
 const API_BASE_URL = '/api/v1';
 
-const token = localStorage.getItem('access_token');
-
-
-
 async function loadOrders(page = 1) {
 
     const q =
@@ -268,8 +264,7 @@ async function loadOrders(page = 1) {
                 method: 'GET',
 
                 headers: {
-                    'Accept': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    ...AdminApi.headers()
                 }
             }
         );
@@ -381,78 +376,69 @@ function displayOrders(orders) {
 
         row.className = 'hover:bg-slate-50';
 
+const orderInfo = document.createElement('td');
+orderInfo.className = 'px-6 py-4';
 
-        row.innerHTML = `
+const orderCode = document.createElement('p');
+orderCode.className = 'font-medium';
+orderCode.textContent = order.order_code ?? '';
 
-            <td class="px-6 py-4">
+const orderId = document.createElement('p');
+orderId.className = 'text-xs text-slate-500';
+orderId.textContent = `ID: ${order.id}`;
 
-                <p class="font-medium">
-                    ${order.order_code ?? ''}
-                </p>
-
-                <p class="text-xs text-slate-500">
-                    ID: ${order.id}
-                </p>
-
-            </td>
-
-
-            <td class="px-6 py-4">
-
-                ${getOrderStatus(order.status)}
-
-            </td>
+orderInfo.appendChild(orderCode);
+orderInfo.appendChild(orderId);
 
 
-            <td class="px-6 py-4">
-
-                ${getPaymentStatus(order.payment_status)}
-
-            </td>
+const statusCell = document.createElement('td');
+statusCell.className = 'px-6 py-4';
+statusCell.innerHTML = getOrderStatus(order.status);
 
 
-            <td class="px-6 py-4">
-
-                ${order.payment_method ?? '-'}
-
-            </td>
+const paymentStatusCell = document.createElement('td');
+paymentStatusCell.className = 'px-6 py-4';
+paymentStatusCell.innerHTML = getPaymentStatus(order.payment_status);
 
 
-            <td class="px-6 py-4 font-medium">
-
-                ${formatMoney(order.grand_total)}
-
-            </td>
+const paymentMethod = document.createElement('td');
+paymentMethod.className = 'px-6 py-4';
+paymentMethod.textContent = order.payment_method ?? '-';
 
 
-            <td class="px-6 py-4">
-
-                ${formatDate(order.created_at)}
-
-            </td>
+const grandTotal = document.createElement('td');
+grandTotal.className = 'px-6 py-4 font-medium';
+grandTotal.textContent = formatMoney(order.grand_total);
 
 
-            <td class="px-6 py-4">
-
-                <button
-                    type="button"
-                    onclick="viewOrder(${order.id})"
-                    class="font-medium text-emerald-600 hover:text-emerald-700">
-
-                    Xem chi tiết
-
-                </button>
-
-            </td>
-
-        `;
+const createdAt = document.createElement('td');
+createdAt.className = 'px-6 py-4';
+createdAt.textContent = formatDate(order.created_at);
 
 
-        tbody.appendChild(row);
+const actionCell = document.createElement('td');
+actionCell.className = 'px-6 py-4';
 
-    });
+const viewButton = document.createElement('button');
+viewButton.type = 'button';
+viewButton.className = 'font-medium text-emerald-600 hover:text-emerald-700';
+viewButton.textContent = 'Xem chi tiết';
+viewButton.onclick = function () {
+    viewOrder(order.id);
+};
 
-}
+actionCell.appendChild(viewButton);
+
+
+row.appendChild(orderInfo);
+row.appendChild(statusCell);
+row.appendChild(paymentStatusCell);
+row.appendChild(paymentMethod);
+row.appendChild(grandTotal);
+row.appendChild(createdAt);
+row.appendChild(actionCell);
+
+tbody.appendChild(row);
 
 
 

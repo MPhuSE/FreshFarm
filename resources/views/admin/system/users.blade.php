@@ -6,6 +6,8 @@
 
     <title>Quản lý người dùng</title>
 
+    @vite('resources/js/app.js')
+
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -280,9 +282,7 @@
 
 <script>
 
-const API_BASE_URL = 'http://api.nongsanxanh.local';
-
-const token = localStorage.getItem('access_token');
+const API_BASE_URL = '/api/v1';
 
 let currentPage = 1;
 
@@ -304,7 +304,7 @@ async function loadUsers(page = 1) {
 
 
     let url =
-        `${API_BASE_URL}/api/v1/admin/users?page=${page}`;
+        `${API_BASE_URL}/admin/users?page=${page}`;
 
 
     // q
@@ -333,7 +333,7 @@ async function loadUsers(page = 1) {
 
             headers: {
                 'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...AdminApi.headers()
             }
 
         });
@@ -415,28 +415,30 @@ function renderUsers(users) {
 
     users.forEach(user => {
 
-        table.innerHTML += `
+        const row = document.createElement('tr');
+        row.className = 'border-t';
+        row.innerHTML = `
 
             <tr class="border-t">
 
                 <td class="px-5 py-3">
-                    ${user.id}
+                    ${escapeHtml(user.id)}
                 </td>
 
                 <td class="px-5 py-3 font-medium">
-                    ${user.full_name}
+                    ${escapeHtml(user.full_name)}
                 </td>
 
                 <td class="px-5 py-3">
-                    ${user.email}
+                    ${escapeHtml(user.email)}
                 </td>
 
                 <td class="px-5 py-3">
-                    ${user.phone || ''}
+                    ${escapeHtml(user.phone || '')}
                 </td>
 
                 <td class="px-5 py-3">
-                    ${user.role}
+                    ${escapeHtml(user.role)}
                 </td>
 
                 <td class="px-5 py-3">
@@ -460,7 +462,7 @@ function renderUsers(users) {
                 </td>
 
                 <td class="px-5 py-3">
-                    ${formatDate(user.created_at)}
+                    ${escapeHtml(formatDate(user.created_at))}
                 </td>
 
                 <td class="px-5 py-3 text-center">
@@ -482,6 +484,7 @@ function renderUsers(users) {
             </tr>
 
         `;
+        table.appendChild(row);
 
     });
 
@@ -497,6 +500,12 @@ function formatDate(date) {
 
     return new Date(date).toLocaleDateString('vi-VN');
 
+}
+
+function escapeHtml(value) {
+    const element = document.createElement('span');
+    element.textContent = String(value ?? '');
+    return element.innerHTML;
 }
 
 
@@ -625,7 +634,7 @@ async function updateUser() {
 
         const statusResponse = await fetch(
 
-            `${API_BASE_URL}/api/v1/admin/users/${id}/status`,
+            `${API_BASE_URL}/admin/users/${id}/status`,
 
             {
 
@@ -637,8 +646,7 @@ async function updateUser() {
 
                     'Content-Type': 'application/json',
 
-                    'Authorization':
-                        `Bearer ${token}`
+                    ...AdminApi.headers(true)
 
                 },
 
@@ -686,7 +694,7 @@ async function updateUser() {
 
         const roleResponse = await fetch(
 
-            `${API_BASE_URL}/api/v1/admin/users/${id}/role`,
+            `${API_BASE_URL}/admin/users/${id}/role`,
 
             {
 
@@ -699,8 +707,7 @@ async function updateUser() {
                     'Content-Type':
                         'application/json',
 
-                    'Authorization':
-                        `Bearer ${token}`
+                    ...AdminApi.headers(true)
 
                 },
 

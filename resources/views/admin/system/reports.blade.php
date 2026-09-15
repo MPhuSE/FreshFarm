@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Báo cáo</title>
+    @vite('resources/js/app.js')
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -104,14 +105,14 @@
         <!-- Giá trị đơn trung bình -->
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-gray-500 text-sm">
-                Giá trị đơn trung bình
+                Tổng người dùng 
             </p>
 
             <h2
-                id="averageOrderValue"
+                id="totalUsers"
                 class="text-2xl font-bold text-purple-600 mt-2"
             >
-                0 ₫
+                
             </h2>
         </div>
 
@@ -226,9 +227,7 @@
 
 <script>
 
-    const API_BASE_URL = 'http://api.nongsanxanh.local';
-
-    const token = localStorage.getItem('access_token');
+    const API_BASE_URL = '/api/v1';
 
 
     // Format tiền Việt Nam
@@ -269,13 +268,13 @@
         try {
 
             const response = await fetch(
-                `${API_BASE_URL}/api/v1/admin/reports/summary?from=${from}&to=${to}`,
+                `${API_BASE_URL}/admin/reports/summary?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
                 {
                     method: 'GET',
 
                     headers: {
                         'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        ...AdminApi.headers()
                     }
                 }
             );
@@ -324,19 +323,16 @@
             // KPI
             // =========================
 
-            const kpis = result.data?.kpis || {};
-
+            const data = result.data || {};
 
             document.getElementById('revenue').textContent =
-                formatMoney(kpis.revenue);
-
+                 formatMoney(data.total_revenue);
 
             document.getElementById('orders').textContent =
-                kpis.orders || 0;
+                 data.total_orders || 0;
 
-
-            document.getElementById('averageOrderValue').textContent =
-                formatMoney(kpis.average_order_value);
+            document.getElementById('totalUsers').textContent =
+                  data.total_users || 0;
 
 
             // =========================
@@ -375,7 +371,7 @@
                         <tr class="border-t">
 
                             <td class="px-5 py-3">
-                                ${item.date}
+                                ${escapeHtml(item.date)}
                             </td>
 
                             <td class="px-5 py-3">
@@ -426,11 +422,11 @@
                         <tr class="border-t">
 
                             <td class="px-5 py-3">
-                                ${product.product_id}
+                                ${escapeHtml(product.product_id)}
                             </td>
 
                             <td class="px-5 py-3">
-                                ${product.name}
+                                ${escapeHtml(product.name)}
                             </td>
 
                             <td class="px-5 py-3">
@@ -458,8 +454,12 @@
 
     }
 
+    function escapeHtml(value) {
+        const element = document.createElement('span');
+        element.textContent = String(value ?? '');
+        return element.innerHTML;
+    }
 
-    // Load báo cáo khi mở trang
     document.addEventListener('DOMContentLoaded', function () {
 
         loadReport();
