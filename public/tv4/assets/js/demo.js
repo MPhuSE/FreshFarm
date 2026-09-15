@@ -1,13 +1,8 @@
 (() => {
 
-    // =========================
-    // FORMAT TIỀN
-    // =========================
     const money = (n) =>
         new Intl.NumberFormat('vi-VN').format(n) + 'đ';
-    // =========================
-    // ICON
-    // =========================
+   
     const icon = (name) =>
         feather.icons[
             ({ cart: 'shopping-cart' }[name] || name)
@@ -26,10 +21,6 @@
         });
     }
 
-
-    // =========================
-    // HEADER
-    // =========================
     function header() {
 
         const page = document.body.dataset.page;
@@ -144,9 +135,6 @@
     }
 
 
-    // =========================
-    // FOOTER
-    // =========================
     function footer() {
 
         document.getElementById('site-footer').innerHTML = `
@@ -261,9 +249,6 @@
     }
 
 
-    // =========================
-    // THÔNG BÁO
-    // =========================
     function toast(message) {
 
         const t = document.getElementById('toast');
@@ -281,10 +266,6 @@
         }, 2200);
     }
 
-
-    // =========================
-    // MENU TÀI KHOẢN
-    // =========================
     function accountNav() {
 
         const target =
@@ -346,10 +327,6 @@
         `;
     }
 
-
-    // =========================
-    // CHECKOUT CHOICE
-    // =========================
     function setChoice(card) {
 
         const group =
@@ -365,9 +342,6 @@
     }
 
 
-    // =========================
-    // GALLERY
-    // =========================
     function setupGallery() {
 
         document
@@ -408,9 +382,6 @@
     }
 
 
-    // =========================
-    // TABS
-    // =========================
     function setupTabs() {
 
         document
@@ -448,9 +419,6 @@
     }
 
 
-    // =========================
-    // FILTER TRẠNG THÁI ĐƠN
-    // =========================
     function setupOrderFilter() {
 
         const filter =
@@ -496,10 +464,6 @@
 
     }
 
-
-    // =========================
-    // FORM
-    // =========================
     function setupForms() {
 
         // Form demo nếu có
@@ -576,9 +540,6 @@
     }
 
 
-    // =========================
-    // DOCUMENT READY
-    // =========================
     document.addEventListener(
         'DOMContentLoaded',
         () => {

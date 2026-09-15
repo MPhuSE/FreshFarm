@@ -1,88 +1,175 @@
-(()=>{
- 'use strict';
- const $=s=>document.querySelector(s);
- const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const cash=v=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND'}).format(Number(v)||0);
- const url=FF.url;
- const token=()=>sessionStorage.getItem('access_token')||localStorage.getItem('access_token');
- const statusLabel=s=>({pending:'Chờ xác nhận',confirmed:'Đã xác nhận',processing:'Đang chuẩn bị',shipping:'Đang giao',delivered:'Đã giao',completed:'Hoàn tất',cancelled:'Đã hủy',paid:'Đã thanh toán',unpaid:'Chưa thanh toán'}[s]||s||'—');
- function safeImage(value){if(typeof value==='string'&&value.trim()){try{const u=new URL(value,location.origin);if(['http:','https:'].includes(u.protocol))return esc(u.href);}catch{}}return FF.asset('images/favicon.svg');}
- async function request(path,{method='GET',body,headers={}}={}){
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
-  try{
-   const response=await fetch(FF.base+'/api/v1'+path,{method,signal:controller.signal,headers:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{}),...(token()?{Authorization:'Bearer '+token()}:{}),...headers},...(body?{body:JSON.stringify(body)}:{})});
-   let result;try{result=await response.json();}catch{throw new Error('Máy chủ không trả JSON hợp lệ. Kiểm tra API Laravel.');}
-   if(!response.ok || result.success===false){
-    const error=new Error(result.message||'Không thể hoàn tất yêu cầu.');error.status=response.status;error.fields=result.errors;error.code=result.error_code||result.errors_code;
-    if(response.status===401){sessionStorage.removeItem('access_token');localStorage.removeItem('access_token');localStorage.removeItem('current_user');}
-    throw error;
-   }
-   return result;
-  }catch(e){if(e.name==='AbortError')throw new Error('Yêu cầu quá thời gian. Vui lòng thử lại.');throw e;}finally{clearTimeout(timer);}
- }
- function errorBox(e){return `<div class="alert alert--error live-message" role="alert"><strong>${esc(e.status?'Lỗi '+e.status:'Không thể tải dữ liệu')}</strong><span>${esc(e.message)}</span>${e.fields?Object.entries(e.fields).map(([k,v])=>`<span>${esc(k)}: ${esc(Array.isArray(v)?v.join(' '):v)}</span>`).join(''):''}${e.status===401?`<a class="btn btn--outline" href="${url('login')}">Đăng nhập</a>`:''}</div>`;}
- function showError(e,container=$('#live-main')){container.innerHTML=errorBox(e)+`<button class="btn btn--outline" type="button" data-retry>Tải lại</button>`;container.querySelector('[data-retry]').onclick=()=>location.reload();}
- function heading(title,sub=''){return `<div class="live-heading"><div><h1>${esc(title)}</h1>${sub?`<p>${esc(sub)}</p>`:''}</div></div>`;}
- function message(text){return `<div class="alert alert--info">${esc(text)}</div>`;}
- function input(label,name,type='text',value='',required=true){return `<label>${esc(label)}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''}></label>`;}
- function onForm(form,handler){form.addEventListener('submit',async e=>{e.preventDefault();if(form.dataset.busy)return;form.dataset.busy='1';const data=new FormData(form);const controls=[...form.elements].map(n=>[n,n.disabled]);controls.forEach(([n])=>n.disabled=true);let box=form.querySelector('[data-feedback]');if(!box){box=document.createElement('div');box.dataset.feedback='';form.prepend(box);}box.innerHTML='';try{await handler(data,form);}catch(e){box.innerHTML=errorBox(e);}finally{delete form.dataset.busy;controls.forEach(([n,disabled])=>n.disabled=disabled);}});}
- function card(p){const quantity=Number(p.available_quantity);return `<article class="product-card"><a class="product-card__media" href="${url('product',p.slug)}"><img src="${safeImage(p.primary_image_url)}" alt="${esc(p.name)}" loading="lazy"></a><div class="product-card__body"><span class="product-card__cat">${esc(p.category?.name)}</span><h3><a href="${url('product',p.slug)}">${esc(p.name)}</a></h3><div class="product-card__row"><span class="price">${cash(p.price)} <small>/${esc(p.unit)}</small></span><button class="add-cart" type="button" data-add="${esc(p.id)}" ${quantity<=0?'disabled':''} aria-label="Thêm ${esc(p.name)} vào giỏ">${icon('plus')}</button></div><small>${quantity>0?`Còn ${esc(quantity)} ${esc(p.unit)}`:'Hết hàng'}</small></div></article>`;}
- function bindAdd(root){root.querySelectorAll('[data-add]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const quantity=Number(root.querySelector('[name=quantity]')?.value||1);if(!Number.isFinite(quantity)||quantity<1)throw new Error('Số lượng phải từ 1 theo API hiện tại.');const r=await request('/cart/items',{method:'POST',body:{product_id:Number(b.dataset.add),quantity}});updateCount(r.data);toast('Đã thêm vào giỏ hàng');}catch(e){const box=root.querySelector('[data-feedback]')||document.createElement('div');box.dataset.feedback='';box.innerHTML=errorBox(e);if(!box.parentNode)root.prepend(box);}finally{b.disabled=false;}});}
- function updateCount(cart){const count=(cart?.items||[]).length;document.querySelectorAll('[data-cart-count]').forEach(n=>n.textContent=count);}
- async function catalog(home=false){
-  const categories=await request('/categories');
-  const main=$('#live-main');
-  main.innerHTML=(home?`<section class="hero"><div class="hero__content"><span class="eyebrow">FreshFarm · Nông Sản Xanh</span><h1>Tươi từ vườn.<br><span>Lành mỗi ngày.</span></h1><p>Nông sản tươi sạch cho bữa ăn gia đình.</p><a class="btn btn--primary" href="${url('shop')}">Khám phá sản phẩm</a></div><div class="hero__visual"><img src="${FF.asset('images/hero.png')}" alt="Nông sản tươi"></div></section><div style="height:32px"></div>`:'')+heading(home?'Nông sản hôm nay':'Sản phẩm')+
-  `<form class="panel live-filter" id="catalog-filter">${input('Tìm sản phẩm','q','search','',false)}<label>Danh mục<select name="category_id"><option value="">Tất cả</option>${(categories.data||[]).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label><label>Sắp xếp<select name="sort"><option value="newest">Mới nhất</option><option value="price_asc">Giá tăng dần</option><option value="price_desc">Giá giảm dần</option><option value="name_asc">Tên A–Z</option></select></label>${input('Giá từ','min_price','number','',false)}${input('Giá đến','max_price','number','',false)}<label>Kho hàng<select name="in_stock"><option value="">Tất cả</option><option value="1">Còn hàng</option></select></label><button type="submit" class="btn btn--primary">Áp dụng</button></form><div id="catalog-results" aria-live="polite"></div>`;
-  const form=$('#catalog-filter');let sequence=0;
-  async function load(page=1){const seq=++sequence;const target=$('#catalog-results');target.innerHTML=message('Đang tải sản phẩm…');const params=new URLSearchParams();new FormData(form).forEach((v,k)=>{if(v!=='')params.set(k,v);});params.set('page',page);params.set('per_page',12);
-   try{const r=await request('/products?'+params);if(seq!==sequence)return;const items=r.data||[];target.innerHTML=items.length?`<p>${esc(r.meta?.total??items.length)} sản phẩm</p><div class="product-grid">${items.map(card).join('')}</div>`:message('Không tìm thấy sản phẩm phù hợp.');
-    if(r.meta?.last_page>1){target.innerHTML+=`<nav class="live-pagination"><button class="btn btn--outline" data-prev ${page<=1?'disabled':''}>Trước</button><span>Trang ${page} / ${esc(r.meta.last_page)}</span><button class="btn btn--outline" data-next ${page>=r.meta.last_page?'disabled':''}>Sau</button></nav>`;target.querySelector('[data-prev]').onclick=()=>load(page-1);target.querySelector('[data-next]').onclick=()=>load(page+1);}bindAdd(target);
-   }catch(e){if(seq===sequence)showError(e,target);}
-  }
-  form.onsubmit=e=>{e.preventDefault();load();};await load();
- }
- async function product(){
-  const r=await request('/products/'+encodeURIComponent(FF.slug));const p=r.data;const main=$('#live-main');
-  main.innerHTML=`<nav class="breadcrumbs"><a href="${url('shop')}">Sản phẩm</a><span>/</span>${esc(p.name)}</nav><section class="live-product"><img id="main-product-image" src="${safeImage(p.primary_image_url||p.images?.[0]?.url)}" alt="${esc(p.name)}"><div><span class="eyebrow">${esc(p.category?.name)}</span><h1>${esc(p.name)}</h1><p class="product-price"><strong>${cash(p.price)}</strong> / ${esc(p.unit)}</p><p>${esc(p.short_description)}</p><p>Nguồn gốc: ${esc(p.origin||'Đang cập nhật')}</p><p>Còn ${esc(p.available_quantity)} ${esc(p.unit)}</p><div class="live-actions"><label>Số lượng<input name="quantity" aria-label="Số lượng" type="number" min="1" max="${esc(p.available_quantity)}" step="0.001" value="1"></label><button class="btn btn--primary" data-add="${esc(p.id)}" ${Number(p.available_quantity)<1?'disabled':''}>${icon('shopping-cart')} Thêm vào giỏ</button></div><div data-feedback></div></div></section><section class="section"><h2>Thông tin sản phẩm</h2><div class="live-description" id="description"></div></section><section><h2>Đánh giá sản phẩm</h2><div id="product-reviews">Đang tải…</div></section>`;
-  // Strip backend rich HTML to text; never insert untrusted HTML into the active document.
-  const doc=new DOMParser().parseFromString(p.description_html||p.description||'','text/html');doc.querySelectorAll('script,style').forEach(n=>n.remove());$('#description').textContent=doc.body.textContent;bindAdd(main);
-  if(p.images?.length){const gallery=document.createElement('div');gallery.className='gallery__thumbs';gallery.style.cssText='flex-direction:row;flex-wrap:wrap;margin-top:16px';gallery.innerHTML=p.images.map(i=>`<button type="button" style="width:64px" aria-label="Xem ảnh sản phẩm"><img src="${safeImage(i.url)}" alt="${esc(p.name)}"></button>`).join('');main.querySelector('.live-product>div').append(gallery);gallery.querySelectorAll('button').forEach(b=>b.onclick=()=>$('#main-product-image').src=b.querySelector('img').src);}
-  try{const reviews=await request('/products/'+encodeURIComponent(p.id)+'/reviews');$('#product-reviews').innerHTML=(reviews.data||[]).map(x=>`<article class="panel"><strong>${esc(x.user?.full_name||x.user?.name||'Khách hàng')}</strong><p>${esc(x.rating)} / 5 sao</p><p>${esc(x.comment)}</p></article>`).join('')||message('Chưa có đánh giá.');}catch(e){$('#product-reviews').innerHTML=errorBox(e);}
- }
- function totals(s={}){return `<dl><div class="live-row"><dt>Tạm tính</dt><dd>${cash(s.subtotal)}</dd></div><div class="live-row"><dt>Giảm giá</dt><dd>${cash(s.discount)}</dd></div><div class="live-row"><dt>Phí giao hàng</dt><dd>${cash(s.shipping_fee)}</dd></div><div class="live-row order-total"><dt>Tổng cộng</dt><dd>${cash(s.grand_total)}</dd></div></dl>`;}
- async function cart(){
-  const r=await request('/cart');const c=r.data;updateCount(c);const main=$('#live-main');
-  main.innerHTML=heading('Giỏ hàng của bạn')+(!(c.items||[]).length?message('Giỏ hàng đang trống.')+`<div class="live-actions"><a class="btn btn--primary" href="${url('shop')}">Chọn sản phẩm</a></div>`:
-   `<div data-feedback></div><div class="cart-layout"><div class="live-stack">${c.items.map(i=>`<article class="panel live-row"><img src="${safeImage(i.product?.primary_image_url)}" alt="${esc(i.product?.name)}"><div><a href="${url('product',i.product?.slug)}"><strong>${esc(i.product?.name)}</strong></a><p>${cash(i.unit_price)} / ${esc(i.product?.unit)}</p><button class="link-button link-button--danger" data-remove="${esc(i.id)}">Xóa</button></div><label>Số lượng<input type="number" min="1" step="0.001" value="${esc(i.quantity)}" data-quantity="${esc(i.id)}" aria-label="Số lượng ${esc(i.product?.name)}"></label><strong>${cash(i.line_total)}</strong></article>`).join('')}</div><aside class="panel order-summary"><h2>Tổng giỏ hàng</h2>${totals(c.summary)}<a class="btn btn--primary btn--block" href="${url('checkout')}">Thanh toán</a></aside></div>`);
-  const mutate=async(b,path,options)=>{b.disabled=true;try{await request(path,options);await cart();}catch(e){if(e.status===409){try{await cart();}catch{}}const feedback=$('#live-main [data-feedback]');if(feedback)feedback.innerHTML=errorBox(e);else showError(e);}finally{b.disabled=false;}};
-  main.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>mutate(b,'/cart/items/'+encodeURIComponent(b.dataset.remove),{method:'DELETE'}));
-  main.querySelectorAll('[data-quantity]').forEach(b=>b.onchange=()=>{if(!b.checkValidity()){b.reportValidity();return;}mutate(b,'/cart/items/'+encodeURIComponent(b.dataset.quantity),{method:'PATCH',body:{quantity:Number(b.value)}});});
- }
- async function auth(register=false){
-  const main=$('#live-main');main.innerHTML=heading(register?'Tạo tài khoản':'Đăng nhập')+`<form class="panel live-form" id="auth-form">${register?input('Họ và tên','full_name')+input('Số điện thoại','phone','tel'):''}${input('Email','email','email')}${input('Mật khẩu','password','password')}${register?input('Nhập lại mật khẩu','password_confirmation','password'):''}<button type="submit" class="btn btn--primary">${register?'Đăng ký':'Đăng nhập'}</button><a class="text-link" href="${url(register?'login':'register')}">${register?'Đã có tài khoản? Đăng nhập':'Chưa có tài khoản? Đăng ký'}</a></form>`;
-  onForm($('#auth-form'),async data=>{const body=Object.fromEntries(data);if(register&&body.password!==body.password_confirmation)throw new Error('Hai mật khẩu chưa khớp.');const r=await request('/auth/'+(register?'register':'login'),{method:'POST',body});if(r.data?.token){sessionStorage.setItem('access_token',r.data.token);localStorage.removeItem('access_token');location.href=url('account');}else if(register){location.href=url('login');}else{throw new Error('API chưa trả token đăng nhập. Vui lòng kiểm tra contract.');}});
- }
- async function account(){const r=await request('/me');const u=r.data?.user||r.data;const main=$('#live-main');main.innerHTML=heading('Tài khoản của tôi')+`<div class="account-layout"><aside data-account-nav></aside><section class="panel live-stack"><div class="profile-top"><span class="avatar avatar--large">${esc((u.full_name||u.name||'KH').slice(0,2).toUpperCase())}</span><div><h2>${esc(u.full_name||u.name)}</h2><p>${esc(u.email)}</p></div></div><p>Số điện thoại: ${esc(u.phone||'Chưa cập nhật')}</p>${message('Hồ sơ hiện chỉ xem được. API cập nhật hồ sơ chưa có trong bản backend này.')}<button id="logout" class="btn btn--outline">Đăng xuất</button></section></div>`;accountNav();refreshIcons();main.querySelector('[data-account-nav] a:last-child').remove();$('#logout').onclick=async e=>{e.currentTarget.disabled=true;try{await request('/auth/logout',{method:'POST'});sessionStorage.removeItem('access_token');localStorage.removeItem('access_token');localStorage.removeItem('current_user');location.href=url('login');}catch(err){showError(err);}};}
- async function checkout(){
-  const c=(await request('/cart')).data;updateCount(c);if(!c.items?.length){$('#live-main').innerHTML=heading('Thanh toán')+message('Giỏ hàng trống. Hãy thêm sản phẩm trước.');return;}
-  $('#live-main').innerHTML=heading('Thanh toán')+`<div class="checkout-layout"><form class="panel live-form" id="checkout-live">${message('Backend hiện nhận address_id. Nhập ID địa chỉ đã có của tài khoản; sổ địa chỉ chưa có API trong bản nhóm gửi.')}${input('ID địa chỉ nhận hàng','address_id','number')}<label>Phương thức thanh toán<select name="payment_method"><option value="cod">Thanh toán khi nhận hàng</option><option value="bank_transfer">Chuyển khoản ngân hàng</option></select></label>${input('Mã giảm giá','coupon_code','text','',false)}<label>Ghi chú<textarea name="note" rows="3"></textarea></label><button type="submit" class="btn btn--primary">Kiểm tra đơn hàng</button></form><aside id="checkout-summary" class="panel order-summary"><h2>Tạm tính từ giỏ hàng</h2>${totals(c.summary)}<div id="checkout-preview"></div></aside></div>`;
-  const form=$('#checkout-live');form.elements.address_id.min=1;form.elements.address_id.step=1;let key=null;let payload=null;
-  form.oninput=()=>{if(!form.dataset.busy){$('#checkout-preview').innerHTML='';key=null;payload=null;}};
-  onForm(form,async data=>{const body=Object.fromEntries(data);body.address_id=Number(body.address_id);if(!body.coupon_code)delete body.coupon_code;const r=await request('/checkout/preview',{method:'POST',body});payload=body;key=crypto.randomUUID();const p=r.data;$('#checkout-summary').innerHTML=`<h2>Xác nhận đơn hàng</h2>${totals(p.summary||p)}<div id="checkout-preview"><p>${esc(p.address?.full_address||p.address?.address_line||'Vui lòng kiểm tra thông tin địa chỉ trong hệ thống.')}</p><button class="btn btn--primary btn--block" id="place-order">Xác nhận đặt hàng</button><div data-feedback></div></div>`;
-   $('#place-order').onclick=async e=>{const b=e.currentTarget;b.disabled=true;const controls=[...form.elements];controls.forEach(x=>x.disabled=true);try{const result=await request('/orders',{method:'POST',body:{...payload,idempotency_key:key},headers:{'Idempotency-Key':key}});const order=result.data?.order||result.data;if(order?.order_code)location.href=url('order-detail',order.order_code);else location.href=url('orders');}catch(err){$('#checkout-preview [data-feedback]').innerHTML=errorBox(err);if(err.status===409){b.remove();key=null;payload=null;}}finally{b.disabled=false;controls.forEach(x=>x.disabled=false);}};
-  });
- }
- async function orders(){const main=$('#live-main');main.innerHTML=heading('Đơn hàng của tôi')+`<form id="order-filter-form" class="panel live-filter"><label>Trạng thái<select name="status"><option value="">Tất cả</option>${['pending','confirmed','shipping','delivered','cancelled'].map(s=>`<option value="${s}">${statusLabel(s)}</option>`).join('')}</select></label><button class="btn btn--primary" type="submit">Lọc đơn hàng</button></form><div id="orders-result"></div>`;let seq=0;
-  async function load(page=1){const requestId=++seq;const target=$('#orders-result');target.innerHTML=message('Đang tải đơn hàng…');const params=new URLSearchParams(new FormData($('#order-filter-form')));if(!params.get('status'))params.delete('status');params.set('page',page);
-   try{const r=await request('/orders?'+params);if(requestId!==seq)return;target.innerHTML=`<div class="live-stack">${(r.data||[]).map(o=>`<article class="panel live-row"><div><a class="text-link" href="${url('order-detail',o.order_code)}">${esc(o.order_code)}</a><p>${esc(o.created_at)}</p></div><span class="status-badge status-badge--muted">${esc(statusLabel(o.status))}</span><strong>${cash(o.grand_total)}</strong><a class="btn btn--outline" href="${url('order-detail',o.order_code)}">Xem đơn</a></article>`).join('')||message('Chưa có đơn hàng.')}</div>`;if(r.meta?.last_page>1){target.innerHTML+=`<nav class="live-pagination"><button data-prev class="btn btn--outline" ${page<=1?'disabled':''}>Trước</button><span>${page} / ${esc(r.meta.last_page)}</span><button data-next class="btn btn--outline" ${page>=r.meta.last_page?'disabled':''}>Sau</button></nav>`;target.querySelector('[data-prev]').onclick=()=>load(page-1);target.querySelector('[data-next]').onclick=()=>load(page+1);}}catch(e){if(requestId===seq)showError(e,target);}}
-  $('#order-filter-form').onsubmit=e=>{e.preventDefault();load();};await load();
- }
- async function order(){const r=await request('/orders/'+encodeURIComponent(FF.orderCode));const o=r.data?.order||r.data;const main=$('#live-main');main.innerHTML=heading('Đơn '+o.order_code,statusLabel(o.status))+`<div class="detail-layout"><div class="live-stack"><section class="panel"><h2>Sản phẩm</h2>${(o.items||[]).map(i=>`<article class="order-line"><img src="${safeImage(i.product?.primary_image_url)}" alt=""><div><strong>${esc(i.product?.name||i.product_name)}</strong><small>${esc(i.quantity)} × ${cash(i.unit_price)}</small></div><strong>${cash(i.line_total)}</strong>${['delivered','completed'].includes(o.status)?`<a class="text-link" href="${url('review')}?order_item_id=${encodeURIComponent(i.id)}">Đánh giá</a>`:''}</article>`).join('')}</section><section class="panel"><h2>Giao hàng</h2><p>${esc(o.address?.full_address||o.shipping_address?.full_address||o.shipping_address||'Đang cập nhật')}</p><p>${esc(o.note)}</p></section></div><aside class="panel order-summary"><h2>Thanh toán</h2>${totals(o.summary||o)}${['pending','confirmed'].includes(o.status)?'<button class="btn btn--outline" id="cancel-order">Hủy đơn</button>':''}<div data-feedback></div></aside></div>`;
-  $('#cancel-order')?.addEventListener('click',async e=>{if(!confirm('Bạn muốn hủy đơn hàng này?'))return;const b=e.currentTarget;b.disabled=true;try{await request('/orders/'+encodeURIComponent(FF.orderCode)+'/cancel',{method:'POST',body:{reason:'Khách hàng yêu cầu hủy'}});await order();}catch(err){main.querySelector('[data-feedback]').innerHTML=errorBox(err);}finally{b.disabled=false;}});
- }
- async function review(){const id=new URLSearchParams(location.search).get('order_item_id')||'';$('#live-main').innerHTML=heading('Đánh giá sản phẩm')+`<form class="panel live-form" id="review-live">${input('Mã dòng sản phẩm trong đơn hàng','order_item_id','number',id)}<label>Số sao<select name="rating">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} sao</option>`).join('')}</select></label><label>Nội dung<textarea name="comment" required maxlength="2000" rows="5"></textarea></label><button type="submit" class="btn btn--primary">Gửi đánh giá</button></form>`;$('#review-live').elements.order_item_id.min=1;onForm($('#review-live'),async data=>{await request('/reviews',{method:'POST',body:{order_item_id:Number(data.get('order_item_id')),rating:Number(data.get('rating')),comment:data.get('comment')}});$('#live-main').innerHTML=heading('Đã gửi đánh giá')+message('Hệ thống đã tiếp nhận đánh giá của bạn.');});}
- document.addEventListener('DOMContentLoaded',async()=>{const main=$('#live-main');if(!main)return;try{const page=document.body.dataset.page;const handlers={home:()=>catalog(true),shop:catalog,product,cart,checkout,orders,'order-detail':order,login:()=>auth(false),register:()=>auth(true),account,review,addresses:async()=>{main.innerHTML=heading('Địa chỉ giao hàng')+message('API quản lý địa chỉ chưa có trong bản backend hiện tại. Chưa thể thêm hoặc sửa địa chỉ.');},'ui-states':async()=>{main.innerHTML=heading('Trạng thái kết nối')+message('Các màn hình API hiển thị trạng thái tải, rỗng và lỗi theo phản hồi máy chủ. Dùng ?preview=1 trong môi trường local để xem các mẫu giao diện.');}};await (handlers[page]||handlers.shop)();refreshIcons();}catch(e){showError(e);}});
- // Exposed for focused contract tests without requiring the Laravel backend.
- window.TV4={request,esc,safeImage};
-})();
+import {
+    auth
+} from './api.auth.js';
+
+import {
+    catalog,
+    product
+} from './api.catalog.js';
+
+import {
+    cart
+} from './api.cart.js';
+
+import {
+    checkout
+} from './api.checkout.js';
+
+import {
+    orders,
+    order
+} from './api.order.js';
+
+import {
+    review
+} from './api.review.js';
+
+import {
+    account,
+    addresses
+} from './api.user.js';
+
+import {
+    showError,
+    request,
+    esc,
+    safeImage
+} from './api.core.js';
+
+
+// =========================
+// PAGE HANDLERS
+// =========================
+
+const handlers = {
+
+    home: () =>
+        catalog(true),
+
+    shop:
+        catalog,
+
+    product:
+        product,
+
+    cart:
+        cart,
+
+    checkout:
+        checkout,
+
+    orders:
+        orders,
+
+    'order-detail':
+        order,
+
+    login:
+        () =>
+            auth(false),
+
+    register:
+        () =>
+            auth(true),
+
+    account:
+        account,
+
+    review:
+        review,
+
+    addresses:
+        addresses,
+
+    'ui-states':
+        async () => {
+
+            const main =
+                document.querySelector(
+                    '#live-main'
+                );
+
+            if (!main) {
+                return;
+            }
+
+            main.innerHTML = `
+                <div class="live-heading">
+                    <div>
+                        <h1>
+                            Trạng thái kết nối
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="alert alert--info">
+                    Các màn hình API hiển thị
+                    trạng thái tải, rỗng và lỗi
+                    theo phản hồi máy chủ.
+                </div>
+            `;
+        }
+};
+
+
+// =========================
+// START APPLICATION
+// =========================
+
+async function startTV4() {
+
+    try {
+
+        const page =
+            document.body.dataset.page;
+
+        const handler =
+            handlers[page] ||
+            handlers.shop;
+
+        await handler();
+
+        if (
+            typeof refreshIcons ===
+            'function'
+        ) {
+            refreshIcons();
+        }
+
+    } catch (error) {
+
+        showError(error);
+    }
+}
+
+
+// =========================
+// DOM READY
+// =========================
+
+if (
+    document.readyState ===
+    'loading'
+) {
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        startTV4
+    );
+
+} else {
+
+    startTV4();
+}
+
+
+// =========================
+// EXPOSE FOR TESTING
+// =========================
+
+window.TV4 = {
+    startTV4,
+    request,
+    esc,
+    safeImage
+};
