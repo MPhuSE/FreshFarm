@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\PostController;
@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\UserAddressController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Controllers\Api\BenchmarkController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\PaymentController;
 
 // ==========================================
 // BENCHMARK & TEST ROUTES
@@ -50,6 +51,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
     Route::get('/products/{id}/reviews', [ReviewController::class, 'index']);
+
+
+    //vnpay ipn
+    Route::get('/payment/vnpay/ipn', [PaymentController::class, 'vnpayIpn']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -117,5 +122,7 @@ Route::prefix('v1')->group(function () {
             // --- Báo cáo ---
             Route::get('/reports/summary', [ReportController::class, 'summary']);
         });
+        //vnpay 
+            Route::post('/payment/vnpay/{order_code}', [PaymentController::class, 'createPaymentUrl']);
     });
 });

@@ -16,7 +16,17 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
+   
     use HasApiTokens, HasFactory, Notifiable; // <--- 3. Thêm HasApiTokens vào đây
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'phone',
+        'role',
+        'status',
+    ];
 
     protected function casts(): array
     {

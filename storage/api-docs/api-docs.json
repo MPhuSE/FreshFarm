@@ -6,6 +6,181 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/admin/orders": {
+            "get": {
+                "tags": [
+                    "Admin Orders"
+                ],
+                "summary": "Admin - danh sách đơn hàng",
+                "operationId": "b3c2959ec596b635f90b13a394653101",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "payment_status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách đơn thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/orders/{order_code}": {
+            "get": {
+                "tags": [
+                    "Admin Orders"
+                ],
+                "summary": "Admin - chi tiết đơn hàng",
+                "operationId": "55441705bbf9723db94fe0eed18570bc",
+                "parameters": [
+                    {
+                        "name": "order_code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/orders/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Orders"
+                ],
+                "summary": "Admin - cập nhật trạng thái đơn",
+                "operationId": "3285266b3e4c5fb7b8bae91fa5c03661",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "confirmed"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Khách đã chuyển khoản"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "409": {
+                        "description": "Trạng thái không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/orders/{id}/payment-status": {
+            "patch": {
+                "tags": [
+                    "Admin Orders"
+                ],
+                "summary": "Admin - cập nhật thanh toán",
+                "operationId": "0929e6855fb23ac690884a56fc9ee034",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "payment_status": {
+                                        "type": "string",
+                                        "example": "paid"
+                                    },
+                                    "transaction_ref": {
+                                        "type": "string",
+                                        "example": "VCB-123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thanh toán thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/products": {
             "get": {
                 "tags": [
@@ -772,6 +947,263 @@
                 ]
             }
         },
+        "/api/v1/orders": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Danh sách đơn hàng của khách",
+                "operationId": "591b3512976d029e5f537a68ccb0be16",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "pending"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách đơn của khách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Tạo đơn hàng mới",
+                "operationId": "b5f5facf006669fdf90db16bc712f486",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "address_id",
+                                    "payment_method",
+                                    "idempotency_key"
+                                ],
+                                "properties": {
+                                    "address_id": {
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "example": "cod"
+                                    },
+                                    "coupon_code": {
+                                        "type": "string",
+                                        "example": "XANH10",
+                                        "nullable": true
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Giao giờ hành chính",
+                                        "nullable": true
+                                    },
+                                    "idempotency_key": {
+                                        "type": "string",
+                                        "example": "41d3345c-8731-4ca6-8b8d-22c899b5a100"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo đơn hàng thành công"
+                    },
+                    "409": {
+                        "description": "Sản phẩm hết hàng / Lỗi giỏ hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/orders/{order_code}": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Chi tiết đơn hàng của khách",
+                "operationId": "40252b5c0de4d20d40d808a6158a3f87",
+                "parameters": [
+                    {
+                        "name": "order_code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/orders/{order_code}/cancel": {
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Khách tự hủy đơn hàng",
+                "operationId": "c735cd844643ed021f8e3778065a7d3e",
+                "parameters": [
+                    {
+                        "name": "order_code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Tôi muốn thay đổi sản phẩm"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Khách hủy đơn thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    },
+                    "409": {
+                        "description": "Trạng thái đơn không cho phép hủy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/payment/vnpay/{order_code}": {
+            "post": {
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Tạo URL thanh toán VNPay",
+                "operationId": "4d09347022dfc7fb41429806eff56995",
+                "parameters": [
+                    {
+                        "name": "order_code",
+                        "in": "path",
+                        "description": "Mã đơn hàng cần thanh toán",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tạo URL thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "payment_url": {
+                                            "type": "string",
+                                            "example": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Đơn hàng đã được thanh toán"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/payment/vnpay/ipn": {
+            "get": {
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "VNPay IPN Webhook (Hệ thống VNPay tự động gọi, FE không cần quan tâm)",
+                "operationId": "b5bf49fe4b8c0569b03f151f3595a081",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công"
+                    }
+                }
+            }
+        },
         "/api/v1/user/profile": {
             "put": {
                 "tags": [
@@ -1057,6 +1489,10 @@
     },
     "tags": [
         {
+            "name": "Admin Orders",
+            "description": "Admin Orders"
+        },
+        {
             "name": "Admin Products",
             "description": "Admin Products"
         },
@@ -1075,6 +1511,14 @@
         {
             "name": "Cart",
             "description": "Cart"
+        },
+        {
+            "name": "Orders",
+            "description": "Orders"
+        },
+        {
+            "name": "Payment",
+            "description": "Payment"
         },
         {
             "name": "Profile",
