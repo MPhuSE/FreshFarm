@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\Inventory;
 use App\Models\CartItem;
 use App\Models\UserAddress; 
+use App\Jobs\CancelUnpaidOrderJob;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -115,6 +116,9 @@ class CheckoutService
             })->delete();
 
             DB::commit();
+            if ($data['payment_method'] === 'vnpay') {
+                CancelUnpaidOrderJob::dispatch($order->id)->delay(now()->addMinutes(10));
+            }
 
             return [
                 'id' => $order->id,
@@ -134,4 +138,32 @@ class CheckoutService
             throw $e;
         }
     }
+
+    public function cancelOrder(int $orderId, string $note = 'Hệ thống tự động hủy do quá hạn thanh toán'): bool
+    {
+        return DB::transaction(function () use ($orderId, $note) {
+            $order = Order::with('items')->lockForUpdate()->find($orderId);
+
+            if (!$order || $order->status === 'cancelled' || $order->payment_status === 'paid') {
+                return false; //đã thanh toán hoặc đã hủy thì bỏ qua
+            }
+
+            //cập nhật trạng thái
+            $order->status = 'cancelled';
+            $order->note = rtrim($order->note . " ($note)");
+            $order->save();
+
+            //hoàn tồn kho
+            foreach ($order->items as $item) {
+                $inventory = Inventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                if ($inventory) {
+                    //cộng lại số lượng vào quantity_on_hand
+                    $inventory->quantity_on_hand += $item->quantity;
+                    $inventory->save();
+                }
+            }
+
+            return true;
+        });
+    }    
 }
