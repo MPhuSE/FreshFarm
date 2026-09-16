@@ -46,9 +46,9 @@ class BenchmarkController extends Controller
                 'database_time_ms' => $dbTimeMs,
                 'redis_time_ms' => $redisTimeMs,
                 'difference_ms' => round($dbTimeMs - $redisTimeMs, 2),
-                'speedup_factor' => $redisTimeMs > 0 ? round($dbTimeMs / $redisTimeMs, 2) . 'x' : 'N/A'
+                'speedup_factor' => $redisTimeMs > 0 ? round($dbTimeMs / $redisTimeMs, 2).'x' : 'N/A',
             ],
-            'message' => 'Benchmark completed successfully.'
+            'message' => 'Benchmark completed successfully.',
         ]);
     }
 }

@@ -7,19 +7,19 @@ use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BenchmarkController;
 use App\Http\Controllers\Api\Customer\CartController;
 use App\Http\Controllers\Api\Customer\CheckoutController;
 use App\Http\Controllers\Api\Customer\OrderController;
 use App\Http\Controllers\Api\Customer\ReviewController as CustomerReviewController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Public\CategoryController;
 use App\Http\Controllers\Api\Public\ProductController;
 use App\Http\Controllers\Api\Public\ReviewController;
 use App\Http\Controllers\Api\UserAddressController;
 use App\Http\Middleware\EnsureUserIsAdmin;
-use App\Http\Controllers\Api\BenchmarkController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\PaymentController;
 
 // ==========================================
 // BENCHMARK & TEST ROUTES
@@ -52,8 +52,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/products/{slug}', [ProductController::class, 'show']);
     Route::get('/products/{id}/reviews', [ReviewController::class, 'index']);
 
-
-    //vnpay ipn
+    // vnpay ipn
     Route::get('/payment/vnpay/ipn', [PaymentController::class, 'vnpayIpn']);
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -122,7 +121,7 @@ Route::prefix('v1')->group(function () {
             // --- Báo cáo ---
             Route::get('/reports/summary', [ReportController::class, 'summary']);
         });
-        //vnpay 
-            Route::post('/payment/vnpay/{order_code}', [PaymentController::class, 'createPaymentUrl']);
+        // vnpay
+        Route::post('/payment/vnpay/{order_code}', [PaymentController::class, 'createPaymentUrl']);
     });
 });

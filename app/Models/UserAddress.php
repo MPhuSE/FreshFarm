@@ -11,11 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class UserAddress extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'user_id', 
-        'recipient_name', 
-        'phone', 'address', 
-        'is_default'
+        'user_id',
+        'recipient_name',
+        'phone', 'address',
+        'is_default',
     ];
 
     protected $casts = [

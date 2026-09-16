@@ -33,7 +33,7 @@ class ProductImageController extends Controller
                         property: 'images[]',
                         type: 'array',
                         items: new OA\Items(type: 'string', format: 'binary')
-                    )
+                    ),
                 ]
             )
         )
@@ -71,10 +71,10 @@ class ProductImageController extends Controller
                     items: new OA\Items(
                         properties: [
                             new OA\Property(property: 'id', type: 'integer'),
-                            new OA\Property(property: 'sort_order', type: 'integer')
+                            new OA\Property(property: 'sort_order', type: 'integer'),
                         ]
                     )
-                )
+                ),
             ]
         )
     )]

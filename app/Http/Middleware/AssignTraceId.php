@@ -14,7 +14,7 @@ class AssignTraceId
     {
         $traceId = $request->header('X-Request-ID') ?: (string) Str::uuid();
         $request->attributes->set('trace_id', $traceId);
-        
+
         // Cấu hình ghi log có chứa context chuẩn (Mục 5: Logging và Tracking)
         Context::add('trace_id', $traceId);
         Context::add('url', $request->url());

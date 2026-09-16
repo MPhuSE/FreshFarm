@@ -22,7 +22,7 @@ class ProductService
     public function paginatePublic(array $filters): LengthAwarePaginator
     {
         // Tạo unique cache key dựa trên filters
-        $cacheKey = 'catalog:products:paginate:' . md5(json_encode($filters));
+        $cacheKey = 'catalog:products:paginate:'.md5(json_encode($filters));
 
         return Cache::tags(['products_paginate'])->remember($cacheKey, 3600, function () use ($filters) {
             $perPage = min((int) ($filters['per_page'] ?? 12), 100);

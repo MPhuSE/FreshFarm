@@ -1,10 +1,11 @@
 <?php
+
 namespace Tests\Feature\Api\Admin;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AdminOrderApiTest extends TestCase
 {
@@ -23,7 +24,7 @@ class AdminOrderApiTest extends TestCase
         $order = Order::factory()->create(['status' => 'pending']);
 
         $response = $this->actingAs($admin)->patchJson("/api/v1/admin/orders/{$order->id}/status", [
-            'status' => 'confirmed'
+            'status' => 'confirmed',
         ]);
 
         $response->assertStatus(200)->assertJsonPath('data.status', 'confirmed');
@@ -36,7 +37,7 @@ class AdminOrderApiTest extends TestCase
 
         // Cố tình đẩy thẳng lên delivered từ pending
         $response = $this->actingAs($admin)->patchJson("/api/v1/admin/orders/{$order->id}/status", [
-            'status' => 'delivered'
+            'status' => 'delivered',
         ]);
 
         $response->assertStatus(409)->assertJsonPath('error_code', 'INVALID_ORDER_TRANSITION');

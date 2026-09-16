@@ -1,10 +1,15 @@
 <?php
+
 namespace App\Http\Requests\Admin;
+
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateOrderStatusRequest extends FormRequest
 {
-    public function authorize(): bool { return true; } // Đã check role ở Middleware
+    public function authorize(): bool
+    {
+        return true;
+    } // Đã check role ở Middleware
 
     public function rules(): array
     {

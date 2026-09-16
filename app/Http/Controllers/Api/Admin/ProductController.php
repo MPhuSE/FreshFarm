@@ -59,7 +59,7 @@ class ProductController extends Controller
                 new OA\Property(property: 'price', type: 'number', example: 100000),
                 new OA\Property(property: 'category_id', type: 'integer', example: 1),
                 new OA\Property(property: 'description', type: 'string', example: 'Mô tả sản phẩm'),
-                new OA\Property(property: 'stock', type: 'integer', example: 10)
+                new OA\Property(property: 'stock', type: 'integer', example: 10),
             ]
         )
     )]
@@ -109,7 +109,7 @@ class ProductController extends Controller
                 new OA\Property(property: 'price', type: 'number', example: 120000),
                 new OA\Property(property: 'category_id', type: 'integer', example: 1),
                 new OA\Property(property: 'description', type: 'string', example: 'Mô tả sản phẩm đã cập nhật'),
-                new OA\Property(property: 'stock', type: 'integer', example: 15)
+                new OA\Property(property: 'stock', type: 'integer', example: 15),
             ]
         )
     )]

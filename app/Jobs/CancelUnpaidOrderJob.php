@@ -22,7 +22,7 @@ class CancelUnpaidOrderJob implements ShouldQueue
 
     public function handle(CheckoutService $checkoutService)
     {
-        //gọi Service để thực hiện giao dịch hủy đơn và hoàn kho an toàn
+        // gọi Service để thực hiện giao dịch hủy đơn và hoàn kho an toàn
         $checkoutService->cancelOrder($this->orderId);
     }
 }

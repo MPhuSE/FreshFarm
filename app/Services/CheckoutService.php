@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
+use App\Jobs\CancelUnpaidOrderJob;
+use App\Models\CartItem;
+use App\Models\Inventory;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Inventory;
-use App\Models\CartItem;
-use App\Models\UserAddress; 
-use App\Jobs\CancelUnpaidOrderJob;
-use Illuminate\Support\Facades\DB;
+use App\Models\UserAddress;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class CheckoutService
 {
@@ -25,12 +25,12 @@ class CheckoutService
         $cartDetails = $this->cartService->getCartDetails($userId);
 
         if (empty($cartDetails['items'])) {
-            throw new Exception('Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.', 400); 
+            throw new Exception('Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.', 400);
         }
 
         // THỰC TẾ: Truy vấn địa chỉ trong DB, đảm bảo địa chỉ này thuộc về User đang thao tác
         $address = UserAddress::where('id', $addressId)->where('user_id', $userId)->first();
-        if (!$address) {
+        if (! $address) {
             throw new Exception('Địa chỉ giao hàng không tồn tại hoặc không hợp lệ.', 404);
         }
 
@@ -54,13 +54,13 @@ class CheckoutService
                 'id' => $address->id,
                 'recipient_name' => $address->recipient_name,
                 'phone' => $address->phone,
-                'full_address' => $address->address
+                'full_address' => $address->address,
             ],
             'subtotal' => $subtotal,
             'discount' => $discountAmount,
             'shipping_fee' => $shippingFee,
             'grand_total' => $grandTotal,
-            'coupon' => $couponData
+            'coupon' => $couponData,
         ];
     }
 
@@ -69,11 +69,11 @@ class CheckoutService
         DB::beginTransaction();
         try {
             $previewData = $this->preview($userId, $data['address_id'], $data['payment_method'], $data['coupon_code'] ?? null);
-            
+
             $order = Order::forceCreate([
-                'order_code' => 'NSX-' . date('Ymd') . '-' . rand(1000, 9999),
+                'order_code' => 'NSX-'.date('Ymd').'-'.rand(1000, 9999),
                 'user_id' => $userId,
-                'coupon_id' => null, 
+                'coupon_id' => null,
                 'status' => 'pending',
                 'payment_method' => $data['payment_method'],
                 'payment_status' => 'unpaid',
@@ -93,8 +93,8 @@ class CheckoutService
 
                 $inventory = Inventory::where('product_id', $productId)->lockForUpdate()->first();
 
-                if (!$inventory || $inventory->quantity_on_hand < $quantity) {
-                    throw new Exception('Sản phẩm ' . $itemData['product']['name'] . ' không đủ số lượng.', 409);
+                if (! $inventory || $inventory->quantity_on_hand < $quantity) {
+                    throw new Exception('Sản phẩm '.$itemData['product']['name'].' không đủ số lượng.', 409);
                 }
 
                 $inventory->quantity_on_hand -= $quantity;
@@ -111,7 +111,7 @@ class CheckoutService
                 ]);
             }
 
-            CartItem::whereHas('cart', function($q) use ($userId) {
+            CartItem::whereHas('cart', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })->delete();
 
@@ -144,20 +144,20 @@ class CheckoutService
         return DB::transaction(function () use ($orderId, $note) {
             $order = Order::with('items')->lockForUpdate()->find($orderId);
 
-            if (!$order || $order->status === 'cancelled' || $order->payment_status === 'paid') {
-                return false; //đã thanh toán hoặc đã hủy thì bỏ qua
+            if (! $order || $order->status === 'cancelled' || $order->payment_status === 'paid') {
+                return false; // đã thanh toán hoặc đã hủy thì bỏ qua
             }
 
-            //cập nhật trạng thái
+            // cập nhật trạng thái
             $order->status = 'cancelled';
-            $order->note = rtrim($order->note . " ($note)");
+            $order->note = rtrim($order->note." ($note)");
             $order->save();
 
-            //hoàn tồn kho
+            // hoàn tồn kho
             foreach ($order->items as $item) {
                 $inventory = Inventory::where('product_id', $item->product_id)->lockForUpdate()->first();
                 if ($inventory) {
-                    //cộng lại số lượng vào quantity_on_hand
+                    // cộng lại số lượng vào quantity_on_hand
                     $inventory->quantity_on_hand += $item->quantity;
                     $inventory->save();
                 }
@@ -165,5 +165,5 @@ class CheckoutService
 
             return true;
         });
-    }    
+    }
 }

@@ -49,7 +49,7 @@ class CartController extends Controller
             required: ['product_id', 'quantity'],
             properties: [
                 new OA\Property(property: 'product_id', type: 'integer', example: 1),
-                new OA\Property(property: 'quantity', type: 'number', example: 1)
+                new OA\Property(property: 'quantity', type: 'number', example: 1),
             ]
         )
     )]
@@ -81,7 +81,7 @@ class CartController extends Controller
         content: new OA\JsonContent(
             required: ['quantity'],
             properties: [
-                new OA\Property(property: 'quantity', type: 'number', example: 2)
+                new OA\Property(property: 'quantity', type: 'number', example: 2),
             ]
         )
     )]
