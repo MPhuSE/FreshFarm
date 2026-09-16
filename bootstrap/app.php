@@ -31,22 +31,22 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-    $middleware->api(prepend: [
-        AssignTraceId::class,
-    ]);
+        $middleware->api(prepend: [
+            AssignTraceId::class,
+        ]);
 
-    $middleware->alias([
-        'role' => CheckRole::class,
-    ]);
+        $middleware->alias([
+            'role' => CheckRole::class,
+        ]);
 
-    $middleware->redirectGuestsTo(function (Request $request) {
-        if ($request->is('api/*')) {
-            return null;
-        }
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('api/*')) {
+                return null;
+            }
 
-        return route('login');
-    });
-})
+            return route('login');
+        });
+    })
 
     ->withExceptions(function (Exceptions $exceptions): void {
         $isApiRequest = fn (Request $request) => $request->is('api/*') || $request->expectsJson();
