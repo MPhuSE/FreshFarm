@@ -12,7 +12,6 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-
         User::updateOrCreate(
             ['email' => 'admin@nongsanxanh.com'],
             [
@@ -34,5 +33,11 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        // Thêm 2 dòng này — dữ liệu catalog cho việc test luồng mua hàng
+        $this->call([
+            CategorySeeder::class,
+            ProductSeeder::class,
+        ]);
     }
 }
