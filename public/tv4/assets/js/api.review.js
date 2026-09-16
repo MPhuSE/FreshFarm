@@ -6,10 +6,16 @@ import {
     heading,
     message,
     input,
-    onForm
+    onForm,
+    token
 } from './api.core.js';
 
 export async function review() {
+    if (!token()) {
+        location.href = url('login');
+        return;
+    }
+
     const id =
         new URLSearchParams(
             location.search
@@ -18,6 +24,12 @@ export async function review() {
         ) || '';
 
     $('#live-main').innerHTML =
+        `
+        <div class="container section">
+        `
+
+        +
+
         heading(
             'Đánh giá sản phẩm'
         )
@@ -78,6 +90,7 @@ export async function review() {
                 </button>
 
             </form>
+        </div>
         `;
 
     $('#review-live')
@@ -119,6 +132,10 @@ export async function review() {
 
             $('#live-main')
                 .innerHTML =
+                `
+                <div class="container section">
+                `
+                +
                 heading(
                     'Đã gửi đánh giá'
                 )
@@ -128,7 +145,9 @@ export async function review() {
                 message(
                     'Hệ thống đã tiếp nhận ' +
                     'đánh giá của bạn.'
-                );
+                )
+                +
+                `</div>`;
         }
     );
 }

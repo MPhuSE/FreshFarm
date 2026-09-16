@@ -15,4 +15,7 @@ use OpenApi\Attributes as OA;
     bearerFormat: 'JWT',
     scheme: 'bearer'
 )]
-abstract class Controller {}
+abstract class Controller
+{
+    use \App\Traits\ApiResponse;
+}

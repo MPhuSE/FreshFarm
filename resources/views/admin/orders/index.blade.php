@@ -1,35 +1,15 @@
-<!DOCTYPE html>
+@extends('layouts.admin')
 
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@section('title', 'Quản lý đơn hàng')
 
-    <title>Quản lý đơn hàng</title>
+@section('page-header')
+    <p class="text-sm font-medium text-emerald-600">Admin Order</p>
+    <h1 class="mt-1 text-3xl font-bold">Quản lý đơn hàng</h1>
+    <p class="mt-2 text-slate-500">Quản lý danh sách đơn hàng trong hệ thống</p>
+@endsection
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-
-<body class="min-h-screen bg-slate-100 text-slate-800">
-
-<main class="mx-auto max-w-7xl px-6 py-10">
-
-    <div class="mb-8">
-        <p class="text-sm font-medium text-emerald-600">
-            Admin Order
-        </p>
-
-        <h1 class="mt-1 text-3xl font-bold">
-            Quản lý đơn hàng
-        </h1>
-
-        <p class="mt-2 text-slate-500">
-            Quản lý danh sách đơn hàng trong hệ thống
-        </p>
-    </div>
-
-
-   
+@section('content')
+ 
     <section class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
         <h2 class="mb-4 font-semibold">
@@ -214,9 +194,9 @@
         class="mt-6 flex justify-center gap-2">
     </div>
 
-</main>
+@endsection
 
-
+@push('scripts')
 <script>
 
 const API_BASE_URL = '/api/v1';
@@ -264,7 +244,8 @@ async function loadOrders(page = 1) {
                 method: 'GET',
 
                 headers: {
-                    ...AdminApi.headers()
+                    'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
+                    'Accept': 'application/json'
                 }
             }
         );
@@ -607,6 +588,4 @@ function displayPagination(meta) {
 loadOrders();
 
 </script>
-
-</body>
-</html>
+@endpush

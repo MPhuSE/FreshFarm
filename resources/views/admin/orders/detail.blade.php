@@ -1,40 +1,21 @@
-<!DOCTYPE html>
+@extends('layouts.admin')
 
-<html lang="vi">
+@section('title', 'Chi tiết đơn hàng')
 
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Chi tiết đơn hàng</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-</head>
-
-
-<body class="min-h-screen bg-slate-100 text-slate-800">
-
-<main class="mx-auto max-w-5xl px-6 py-10">
-
-
-
-    <div class="mb-8">
-
-        <p class="text-sm font-medium text-emerald-600">
-            Admin Order
-        </p>
-
-        <h1 class="mt-1 text-3xl font-bold">
-            Chi tiết đơn hàng
-        </h1>
-
+@section('page-header')
+    <div class="flex items-center gap-4">
+        <a href="{{ route('admin.orders.index') }}" class="text-slate-400 hover:text-emerald-600">
+            <i data-feather="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+            <p class="text-sm font-medium text-emerald-600">Admin Order</p>
+            <h1 class="mt-1 text-3xl font-bold">Chi tiết đơn hàng</h1>
+        </div>
     </div>
+@endsection
 
+@section('content')
 
-   
 
     <section
         class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
@@ -406,9 +387,9 @@
 
     </section>
 
-</main>
+@endsection
 
-
+@push('scripts')
 <script>
 
 const API_BASE_URL = '/api/v1';
@@ -431,9 +412,8 @@ async function loadOrderDetail() {
                 method: 'GET',
 
                 headers: {
-
-                    ...AdminApi.headers()
-
+                    'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
+                    'Accept': 'application/json'
                 }
 
             }
@@ -638,7 +618,7 @@ async function updateOrderStatus() {
 
                     'Content-Type': 'application/json',
 
-                    ...AdminApi.headers(true)
+                    'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token'))
 
                 },
 
@@ -735,7 +715,7 @@ async function updatePaymentStatus() {
 
                     'Content-Type': 'application/json',
 
-                    ...AdminApi.headers(true)
+                    'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token'))
 
                 },
 
@@ -904,7 +884,4 @@ function formatDate(value) {
 loadOrderDetail();
 
 </script>
-
-</body>
-
-</html>
+@endpush

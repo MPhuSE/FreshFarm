@@ -9,7 +9,8 @@ import {
     heading,
     message,
     safeImage,
-    statusLabel
+    statusLabel,
+    token
 } from './api.core.js';
 
 import {
@@ -25,7 +26,18 @@ async function orders() {
         return;
     }
 
+    if (!token()) {
+        location.href = url('login');
+        return;
+    }
+
     main.innerHTML =
+        `
+        <div class="container section">
+        `
+
+        +
+
         heading(
             'Đơn hàng của tôi'
         ) +
@@ -82,6 +94,7 @@ async function orders() {
             <div
                 id="orders-result"
             ></div>
+        </div>
         `;
 
     let sequence = 0;
@@ -315,6 +328,11 @@ async function orders() {
 
 
 async function order() {
+    if (!token()) {
+        location.href = url('login');
+        return;
+    }
+
     const response =
         await request(
             '/orders/' +
@@ -335,6 +353,12 @@ async function order() {
     }
 
     main.innerHTML =
+        `
+        <div class="container section">
+        `
+
+        +
+
         heading(
             'Đơn ' +
             orderData.order_code,
@@ -506,6 +530,7 @@ async function order() {
                 </aside>
 
             </div>
+        </div>
         `;
 
 

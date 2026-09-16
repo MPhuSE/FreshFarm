@@ -47,6 +47,16 @@
         rel="stylesheet"
         href="{{ asset('tv4/assets/css/integration.css') }}"
     >
+
+    <link
+        rel="stylesheet"
+        href="{{ asset('tv4/assets/css/premium.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ asset('tv4/assets/css/shop.css') }}"
+    >
 </head>
 
 <body data-page="@yield('page')">

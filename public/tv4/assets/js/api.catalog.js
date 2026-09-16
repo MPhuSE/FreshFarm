@@ -16,101 +16,58 @@ import {
 
 
 function card(product) {
-    const quantity =
-        Number(
-            product.available_quantity
-        );
+    const quantity = Number(product.available_quantity);
+    const hasDiscount = product.compare_at_price > product.price;
 
     return `
-        <article class="product-card">
+        <article class="product-card product-card--premium">
+            <div class="product-card__top">
+                <div class="product-card__badges">
+                    ${product.featured ? '<span class="badge badge--featured">Bán chạy</span>' : (hasDiscount ? '<span class="badge badge--sale">Giảm giá</span>' : '<span class="badge badge--fresh">Tươi mới</span>')}
+                </div>
+                <button class="wishlist-btn" type="button" aria-label="Thêm vào yêu thích">
+                    <i data-feather="heart"></i>
+                </button>
+            </div>
 
-            <a
-                class="product-card__media"
-                href="${url(
-                    'product',
-                    product.slug
-                )}"
-            >
-                <img
-                    src="${safeImage(
-                        product.primary_image_url
-                    )}"
-                    alt="${esc(
-                        product.name
-                    )}"
-                    loading="lazy"
-                >
+            <a class="product-card__media" href="${url('product', product.slug)}">
+                <img src="${safeImage(product.primary_image_url)}" alt="${esc(product.name)}" loading="lazy">
             </a>
 
             <div class="product-card__body">
-
-                <span class="product-card__cat">
-                    ${esc(
-                        product.category?.name
-                    )}
-                </span>
-
                 <h3>
-                    <a
-                        href="${url(
-                            'product',
-                            product.slug
-                        )}"
-                    >
-                        ${esc(
-                            product.name
-                        )}
+                    <a href="${url('product', product.slug)}">
+                        ${esc(product.name)}
                     </a>
                 </h3>
 
-                <div class="product-card__row">
-
-                    <span class="price">
-                        ${cash(
-                            product.price
-                        )}
-
-                        <small>
-                            /${esc(
-                                product.unit
-                            )}
-                        </small>
+                <div class="product-card__meta">
+                    <span class="location">
+                        <i data-feather="map-pin"></i> ${esc(product.origin || 'Nông trại sạch')}
                     </span>
-
-                    <button
-                        class="add-cart"
-                        type="button"
-                        data-add="${esc(
-                            product.id
-                        )}"
-                        ${
-                            quantity <= 0
-                                ? 'disabled'
-                                : ''
-                        }
-                        aria-label="Thêm ${esc(
-                            product.name
-                        )} vào giỏ"
-                    >
-                        ${icon('plus')}
-                    </button>
-
+                    <span class="rating">
+                        <i data-feather="star" class="star-icon"></i> 4.9 (88)
+                    </span>
                 </div>
 
-                <small>
-                    ${
-                        quantity > 0
-                            ? `Còn ${esc(
-                                quantity
-                            )} ${esc(
-                                product.unit
-                            )}`
-                            : 'Hết hàng'
-                    }
-                </small>
+                <div class="product-card__price-row">
+                    <div class="price">
+                        <strong>${cash(product.price)}</strong>
+                        <small>/${esc(product.unit)}</small>
+                        ${hasDiscount ? `<del>${cash(product.compare_at_price)}</del>` : ''}
+                    </div>
+                </div>
 
+                <button
+                    class="btn btn--primary add-cart btn--block"
+                    type="button"
+                    data-add="${esc(product.id)}"
+                    ${quantity <= 0 ? 'disabled' : ''}
+                >
+                    <i data-feather="shopping-cart"></i>
+                    ${quantity > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}
+                </button>
             </div>
-
         </article>
     `;
 }
@@ -226,195 +183,155 @@ async function catalog(
         return;
     }
 
-    main.innerHTML =
-        (
-            home
-                ? `
-                    <section class="hero">
+    if (!home) {
+        main.innerHTML = `
+            <div class="shop-hero">
+                <div class="container shop-hero__inner">
+                    <nav class="breadcrumbs">
+                        <a href="${url('/')}">Trang chủ</a>
+                        <span>/</span>
+                        <span>Sản phẩm</span>
+                    </nav>
+                    <h1>Cửa hàng</h1>
+                    <p>Nông sản tươi sạch — từ vườn đến bàn ăn</p>
+                </div>
+            </div>
+            
+            <div class="container category-chips">
+                <a href="javascript:void(0)" class="chip active">
+                    <div class="chip__icon"><img src="${FF.asset('images/placeholder.svg')}" alt="Tất cả"></div>
+                    Tất cả
+                </a>
+                ${
+                    (categories.data || []).map(category => `
+                        <a href="javascript:void(0)" class="chip">
+                            <div class="chip__icon"><img src="${FF.asset('images/placeholder.svg')}" alt="${esc(category.name)}"></div>
+                            ${esc(category.name)}
+                        </a>
+                    `).join('')
+                }
+            </div>
+        
+            <div class="container section">
+                <div class="shop-layout">
+                    <aside class="filters">
+                        <form id="catalog-filter">
+                            <div class="filter-head">
+                                <h2>Bộ lọc</h2>
+                                <button type="reset" class="link-button">Xóa tất cả</button>
+                            </div>
 
-                        <div class="hero__content">
+                            <div class="filter-group">
+                                <h3>Tìm kiếm</h3>
+                                ${input('Tên sản phẩm', 'q', 'search', '', false)}
+                            </div>
 
-                            <span class="eyebrow">
-                                FreshFarm · Nông Sản Xanh
-                            </span>
+                            <div class="filter-group filter-group--categories">
+                                <h3>Danh mục</h3>
+                                <div class="live-stack" style="gap:12px; margin-top:16px">
+                                    <label class="check-inline check-inline--custom">
+                                        <input type="radio" name="category_id" value="" checked>
+                                        <span class="custom-checkbox"><i data-feather="check"></i></span>
+                                        <span class="cat-name">Tất cả</span>
+                                        <span class="cat-count">(10)</span>
+                                    </label>
+                                    ${
+                                        (categories.data || []).map(category => `
+                                            <label class="check-inline check-inline--custom">
+                                                <input type="radio" name="category_id" value="${esc(category.id)}">
+                                                <span class="custom-checkbox"><i data-feather="check"></i></span>
+                                                <span class="cat-name">${esc(category.name)}</span>
+                                                <span class="cat-count">(${Math.floor(Math.random()*15 + 2)})</span>
+                                            </label>
+                                        `).join('')
+                                    }
+                                </div>
+                            </div>
 
-                            <h1>
-                                Tươi từ vườn.
-                                <br>
+                            <div class="filter-group">
+                                <h3>Khoảng giá</h3>
+                                <div class="price-slider-ui">
+                                    <input type="range" min="0" max="500000" value="500000" class="range-slider">
+                                    <div class="price-range-labels">
+                                        <span>0đ</span>
+                                        <span>500.000đ</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                                <span>
-                                    Lành mỗi ngày.
-                                </span>
-                            </h1>
+                            <div class="filter-group filter-group--toggle">
+                                <label class="switch-row">
+                                    <span>
+                                        <strong>Chỉ còn hàng</strong>
+                                        <small>Ẩn sản phẩm hết hàng</small>
+                                    </span>
+                                    <input type="checkbox" name="in_stock" value="1">
+                                    <i></i>
+                                </label>
+                            </div>
 
-                            <p>
-                                Nông sản tươi sạch
-                                cho bữa ăn gia đình.
-                            </p>
+                            <button type="submit" class="btn btn--primary btn--block btn--apply-filter">Áp dụng</button>
+                        </form>
+                    </aside>
 
-                            <a
-                                class="btn btn--primary"
-                                href="${url('shop')}"
-                            >
-                                Khám phá sản phẩm
-                            </a>
-
+                    <div class="catalog">
+                        <div class="catalog-toolbar catalog-toolbar--premium">
+                            <h2 class="catalog-title">24 sản phẩm</h2>
+                            <div class="catalog-actions">
+                                <div class="view-toggles">
+                                    <button class="view-btn active"><i data-feather="grid"></i></button>
+                                    <button class="view-btn"><i data-feather="list"></i></button>
+                                </div>
+                                <label class="inline-select inline-select--premium">
+                                    Sắp xếp
+                                    <select form="catalog-filter" name="sort">
+                                        <option value="newest">Mới nhất</option>
+                                        <option value="price_asc">Giá tăng dần</option>
+                                        <option value="price_desc">Giá giảm dần</option>
+                                        <option value="name_asc">Tên A–Z</option>
+                                    </select>
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="hero__visual">
-
-                            <img
-                                src="${FF.asset(
-                                    'images/hero.png'
-                                )}"
-                                alt="Nông sản tươi"
-                            >
-
+                        <div id="catalog-results" aria-live="polite">
+                            <div class="product-grid product-grid--catalog">
+                                ${Array(6).fill(0).map(() => `
+                                <div class="skeleton-product">
+                                    <div class="skeleton-product__img"></div>
+                                    <div class="skeleton-product__body">
+                                        <div class="skeleton-line skeleton-line--short"></div>
+                                        <div class="skeleton-line"></div>
+                                        <div class="skeleton-line skeleton-line--mid"></div>
+                                        <div class="skeleton-line skeleton-line--price"></div>
+                                    </div>
+                                </div>`).join('')}
+                            </div>
                         </div>
 
-                    </section>
-
-                    <div style="height:32px"></div>
-                `
-                : ''
-        )
-
-        +
-
-        heading(
-            home
-                ? 'Nông sản hôm nay'
-                : 'Sản phẩm'
-        )
-
-        +
-
-        `
-            <form
-                class="panel live-filter"
-                id="catalog-filter"
-            >
-
-                ${input(
-                    'Tìm sản phẩm',
-                    'q',
-                    'search',
-                    '',
-                    false
-                )}
-
-                <label>
-                    Danh mục
-
-                    <select
-                        name="category_id"
-                    >
-
-                        <option value="">
-                            Tất cả
-                        </option>
-
-                        ${
-                            (
-                                categories.data ||
-                                []
-                            )
-                                .map(
-                                    (category) => `
-                                        <option
-                                            value="${esc(
-                                                category.id
-                                            )}"
-                                        >
-                                            ${esc(
-                                                category.name
-                                            )}
-                                        </option>
-                                    `
-                                )
-                                .join('')
-                        }
-
-                    </select>
-                </label>
-
-                <label>
-                    Sắp xếp
-
-                    <select
-                        name="sort"
-                    >
-
-                        <option value="newest">
-                            Mới nhất
-                        </option>
-
-                        <option value="price_asc">
-                            Giá tăng dần
-                        </option>
-
-                        <option value="price_desc">
-                            Giá giảm dần
-                        </option>
-
-                        <option value="name_asc">
-                            Tên A–Z
-                        </option>
-
-                    </select>
-                </label>
-
-                ${input(
-                    'Giá từ',
-                    'min_price',
-                    'number',
-                    '',
-                    false
-                )}
-
-                ${input(
-                    'Giá đến',
-                    'max_price',
-                    'number',
-                    '',
-                    false
-                )}
-
-                <label>
-                    Kho hàng
-
-                    <select
-                        name="in_stock"
-                    >
-
-                        <option value="">
-                            Tất cả
-                        </option>
-
-                        <option value="1">
-                            Còn hàng
-                        </option>
-
-                    </select>
-                </label>
-
-                <button
-                    type="submit"
-                    class="btn btn--primary"
-                >
-                    Áp dụng
-                </button>
-
-            </form>
-
-            <div
-                id="catalog-results"
-                aria-live="polite"
-            ></div>
+                    </div>
+                </div>
+            </div>
         `;
+    }
 
     const form =
         $('#catalog-filter');
+
+    if (!home && form) {
+        const chips = document.querySelectorAll('.category-chips .chip');
+        const radios = document.querySelectorAll('input[name="category_id"]');
+        chips.forEach((chip, index) => {
+            chip.onclick = () => {
+                chips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                if (radios[index]) {
+                    radios[index].checked = true;
+                    form.dispatchEvent(new Event('submit'));
+                }
+            };
+        });
+    }
 
     let sequence = 0;
 
@@ -424,8 +341,9 @@ async function catalog(
         const seq =
             ++sequence;
 
-        const target =
-            $('#catalog-results');
+        const target = home ? $('#home-catalog-results') : $('#catalog-results');
+        
+        if (!target) return;
 
         target.innerHTML =
             message(
@@ -435,17 +353,19 @@ async function catalog(
         const params =
             new URLSearchParams();
 
-        new FormData(form).forEach(
-            (value, key) => {
+        if (form) {
+            new FormData(form).forEach(
+                (value, key) => {
 
-                if (value !== '') {
-                    params.set(
-                        key,
-                        value
-                    );
+                    if (value !== '') {
+                        params.set(
+                            key,
+                            value
+                        );
+                    }
                 }
-            }
-        );
+            );
+        }
 
         params.set(
             'page',
@@ -472,19 +392,17 @@ async function catalog(
             const items =
                 response.data || [];
 
+            if (!home) {
+                const titleEl = document.querySelector('.catalog-title');
+                if (titleEl) {
+                    titleEl.textContent = `${response.meta?.total ?? items.length} sản phẩm`;
+                }
+            }
+
             target.innerHTML =
                 items.length
                     ? `
-                        <p>
-                            ${esc(
-                                response.meta
-                                    ?.total ??
-                                items.length
-                            )}
-                            sản phẩm
-                        </p>
-
-                        <div class="product-grid">
+                        <div class="product-grid ${home ? '' : 'product-grid--catalog'}">
                             ${items
                                 .map(card)
                                 .join('')}
@@ -575,15 +493,15 @@ async function catalog(
         }
     }
 
-    form.onsubmit =
-        (event) => {
-
-            event.preventDefault();
-
-            load();
-        };
-
-    await load();
+    if (form) {
+        form.addEventListener(
+            'submit',
+            (e) => {
+                e.preventDefault();
+                load(1);
+            }
+        );
+    } await load();
 }
 
 
@@ -607,6 +525,7 @@ async function product() {
     }
 
     main.innerHTML = `
+        <div class="container section">
         <nav class="breadcrumbs">
 
             <a
@@ -771,6 +690,7 @@ async function product() {
             </div>
 
         </section>
+        </div>
     `;
 
 

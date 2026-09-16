@@ -9,7 +9,8 @@ import {
     heading,
     message,
     safeImage,
-    updateCount
+    updateCount,
+    token
 } from './api.core.js';
 
 
@@ -67,6 +68,11 @@ function totals(summary = {}) {
 // =========================
 
 async function cart() {
+    if (!token()) {
+        location.href = url('login');
+        return;
+    }
+
     const response =
         await request('/cart');
 
@@ -83,6 +89,12 @@ async function cart() {
     }
 
     main.innerHTML =
+        `
+        <div class="container section">
+        `
+
+        +
+
         heading(
             'Giỏ hàng của bạn'
         )
@@ -243,6 +255,7 @@ async function cart() {
                         </aside>
 
                     </div>
+                </div>
                 `
         );
 

@@ -21,10 +21,11 @@ class ProductService
 
     public function paginatePublic(array $filters): LengthAwarePaginator
     {
-        // Tạo unique cache key dựa trên filters
-        $cacheKey = 'catalog:products:paginate:'.md5(json_encode($filters));
+        // Dùng cache version thay vì Cache::tags() để tương thích với database driver
+        $version = Cache::get('products_paginate_version', 1);
+        $cacheKey = "catalog:products:paginate:{$version}:".md5(json_encode($filters));
 
-        return Cache::tags(['products_paginate'])->remember($cacheKey, 3600, function () use ($filters) {
+        return Cache::remember($cacheKey, 3600, function () use ($filters) {
             $perPage = min((int) ($filters['per_page'] ?? 12), 100);
 
             $query = Product::query()
@@ -195,7 +196,7 @@ class ProductService
                 'reorder_level' => 0,
             ]);
 
-            Cache::tags(['products_paginate'])->flush();
+            Cache::increment('products_paginate_version');
 
             return $product->load(['category', 'images', 'inventory']);
         });
@@ -259,7 +260,7 @@ class ProductService
             // Flush cache chi tiết sản phẩm — bắt buộc, nếu không Admin sửa
             // xong mà Client vẫn thấy dữ liệu cũ tới khi cache tự hết hạn (30 phút).
             $this->flushDetailCache($oldSlug);
-            Cache::tags(['products_paginate'])->flush();
+            Cache::increment('products_paginate_version');
 
             return $product->fresh(['category', 'images', 'inventory']);
         });
@@ -299,7 +300,7 @@ class ProductService
             }
 
             $this->flushDetailCache($product->slug);
-            Cache::tags(['products_paginate'])->flush();
+            Cache::increment('products_paginate_version');
 
             $product->delete(); // soft delete — deleted_at được set, không xóa vật lý
         });

@@ -13,9 +13,26 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@nongsanxanh.com'],
+            [
+                'name' => 'Chủ Hệ Thống',
+                'password' => \Illuminate\Support\Facades\Hash::make('123456'),
+                'phone' => '0999999999',
+                'role' => 'admin',
+                'status' => 'active',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'user@nongsanxanh.com'],
+            [
+                'name' => 'Tên User',
+                'password' => \Illuminate\Support\Facades\Hash::make('123456'),
+                'phone' => '0888888888',
+                'role' => 'customer',
+                'status' => 'active',
+            ]
+        );
     }
 }

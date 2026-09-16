@@ -4,8 +4,8 @@ use App\Http\Controllers\Admin\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return 'Admin Dashboard';
-});
+    return view('admin.dashboard.index');
+})->name('admin.dashboard.index');
 
 Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
 Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');

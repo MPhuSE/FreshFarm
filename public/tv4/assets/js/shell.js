@@ -25,6 +25,41 @@ function refreshIcons() {
 }
 
 
+/* =============================================
+   AUTH HELPERS
+   ============================================= */
+
+function getCurrentUser() {
+    try {
+        const raw = localStorage.getItem('current_user');
+        if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return null;
+}
+
+function getToken() {
+    return sessionStorage.getItem('access_token') ||
+           localStorage.getItem('access_token');
+}
+
+function isLoggedIn() {
+    return !!getToken();
+}
+
+function userInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+}
+
+
+/* =============================================
+   HEADER
+   ============================================= */
+
 function header() {
     const page =
         document.body.dataset.page;
@@ -38,18 +73,35 @@ function header() {
         return;
     }
 
+    const user = getCurrentUser();
+    const loggedIn = isLoggedIn();
+
+    // Auth-aware actions
+    const userAction = loggedIn && user
+        ? `<a class="user-pill" href="${FF.url('account')}">
+               <span class="avatar">${userInitials(user.full_name || user.name)}</span>
+               <span>${(user.full_name || user.name || 'Tài khoản').split(' ').pop()}</span>
+           </a>`
+        : `<a class="icon-btn" aria-label="Đăng nhập" href="${FF.url('login')}">
+               ${icon('user')}
+           </a>`;
+
     headerElement.innerHTML = `
         <div class="topbar">
 
             <div class="container topbar__inner">
 
                 <span>
-                    ${icon('map-pin')}
-                    Giao hàng tại TP.HCM
+                    ${icon('feather')}
+                    Nông sản tươi mỗi ngày từ nông trại Việt
+                    <span style="opacity: 0.5; margin: 0 8px;">|</span>
+                    ${icon('truck')}
+                    Giao nhanh 2-4h tại TP.HCM
                 </span>
 
                 <span>
-                    Hotline: 0901 234 567 · 7:00–21:00
+                    ${icon('phone')}
+                    Hotline: 0901 234 567 (7:00–22:00)
                 </span>
 
             </div>
@@ -98,57 +150,48 @@ function header() {
                 </a>
 
                 <a
-                    class="${[
-                        'orders',
-                        'order-detail',
-                        'review'
-                    ].includes(page)
-                        ? 'is-active'
-                        : ''
-                    }"
-                    href="${FF.url('orders')}"
+                    class=""
+                    href="#"
                 >
-                    Đơn hàng
+                    Giới thiệu
                 </a>
 
                 <a
-                    class="${[
-                        'account',
-                        'addresses'
-                    ].includes(page)
-                        ? 'is-active'
-                        : ''
-                    }"
-                    href="${FF.url('account')}"
+                    class=""
+                    href="#"
                 >
-                    Tài khoản
+                    Tin tức
                 </a>
 
             </nav>
 
+            <div class="nav__search">
+                <form action="${FF.url('shop')}" class="search-form">
+                    <button type="submit" aria-label="Tìm kiếm">${icon('search')}</button>
+                    <input type="search" name="q" placeholder="Tìm kiếm nông sản, danh mục...">
+                </form>
+            </div>
+
             <div class="nav__actions">
 
-                <a
-                    class="icon-btn"
-                    aria-label="Đăng nhập"
-                    href="${FF.url('login')}"
-                >
-                    ${icon('user')}
-                </a>
+                ${loggedIn && user && user.role === 'admin' ? 
+                    `<a class="icon-btn" style="color: var(--green-600)" title="Trang quản trị" href="/admin">
+                        ${icon('settings')}
+                    </a>` : ''
+                }
+
+                ${userAction}
 
                 <a
-                    class="icon-btn"
-                    aria-label="Giỏ hàng"
+                    class="icon-btn cart-btn"
                     href="${FF.url('cart')}"
+                    aria-label="Giỏ hàng"
                 >
-                    ${icon('cart')}
-
+                    ${icon('shopping-cart')}
                     <span
                         class="cart-count"
                         data-cart-count
-                    >
-                        0
-                    </span>
+                    >0</span>
                 </a>
 
                 <button
@@ -168,6 +211,10 @@ function header() {
 }
 
 
+/* =============================================
+   FOOTER
+   ============================================= */
+
 function footer() {
     const footerElement =
         document.getElementById(
@@ -185,7 +232,7 @@ function footer() {
 
                 <div class="footer-grid">
 
-                    <div>
+                    <div class="footer-col-main">
 
                         <a
                             class="logo"
@@ -197,110 +244,84 @@ function footer() {
 
                             <span>
                                 Nông Sản Xanh
+                                <br><small style="font-size: 12px; font-weight: normal; opacity: 0.8;">Tươi từ thiên nhiên Việt</small>
                             </span>
                         </a>
 
-                        <p>
-                            Nông sản Việt tươi sạch,
-                            minh bạch nguồn gốc và
-                            giao đến tận cửa nhà bạn.
+                        <p style="margin-top: 16px; opacity: 0.8; line-height: 1.5; font-size: 14px;">
+                            Nông sản Việt tươi sạch, minh bạch nguồn gốc
+                            và giao đến tận cửa nhà bạn.
                         </p>
 
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            Mua sắm
-                        </h3>
-
-                        <a
-                            href="${FF.url('shop')}"
-                        >
-                            Tất cả sản phẩm
-                        </a>
-
-                        <a
-                            href="${FF.url('shop')}"
-                        >
-                            Rau củ theo mùa
-                        </a>
-
-                        <a
-                            href="${FF.url('cart')}"
-                        >
-                            Giỏ hàng
-                        </a>
+                        <div class="social-icons" style="display: flex; gap: 12px; margin-top: 16px;">
+                            <a href="#" style="color: #fff; opacity: 0.8;">${icon('facebook')}</a>
+                            <a href="#" style="color: #fff; opacity: 0.8;">${icon('instagram')}</a>
+                            <a href="#" style="color: #fff; opacity: 0.8;">${icon('youtube')}</a>
+                        </div>
 
                     </div>
 
                     <div>
 
                         <h3>
-                            Tài khoản
+                            Liên kết nhanh
                         </h3>
 
-                        <a
-                            href="${FF.url('login')}"
-                        >
-                            Đăng nhập
-                        </a>
-
-                        <a
-                            href="${FF.url('account')}"
-                        >
-                            Hồ sơ
-                        </a>
-
-                        <a
-                            href="${FF.url('orders')}"
-                        >
-                            Lịch sử đơn
-                        </a>
+                        <a href="${FF.url('index')}">Trang chủ</a>
+                        <a href="${FF.url('shop')}">Sản phẩm</a>
+                        <a href="#">Giới thiệu</a>
+                        <a href="#">Tin tức</a>
 
                     </div>
 
                     <div>
 
                         <h3>
-                            Hỗ trợ
+                            Hỗ trợ khách hàng
                         </h3>
 
-                        <a href="#">
-                            Chính sách giao hàng
-                        </a>
+                        <a href="#">Hướng dẫn mua hàng</a>
+                        <a href="#">Chính sách giao hàng</a>
+                        <a href="#">Chính sách đổi trả</a>
+                        <a href="#">Câu hỏi thường gặp</a>
 
-                        <a href="#">
-                            Đổi trả sản phẩm
-                        </a>
+                    </div>
 
-                        <a href="#">
+                    <div>
+
+                        <h3>
                             Liên hệ
-                        </a>
+                        </h3>
 
+                        <div style="font-size: 14px; opacity: 0.8; display: flex; flex-direction: column; gap: 8px;">
+                            <span style="display: flex; gap: 8px;">${icon('map-pin')} TP. Thủ Đức, TP. Hồ Chí Minh</span>
+                            <span style="display: flex; gap: 8px;">${icon('phone')} 0902 234 567 (7:00 - 22:00)</span>
+                            <span style="display: flex; gap: 8px;">${icon('mail')} hello@nongsanxanh.vn</span>
+                        </div>
+
+                    </div>
+                    
+                    <div class="footer-col-newsletter">
+                        <h3>Đăng ký nhận tin</h3>
+                        <p style="font-size: 14px; opacity: 0.8; margin-bottom: 12px;">Cập nhật ưu đãi và nông sản mới nhất</p>
+                        <form class="newsletter-form" style="display: flex; background: #fff; border-radius: 4px; overflow: hidden;">
+                            <input type="email" placeholder="Nhập email của bạn" style="flex: 1; border: none; padding: 10px 16px; outline: none;">
+                            <button type="submit" style="background: var(--green-600); color: #fff; border: none; padding: 0 16px; cursor: pointer;">
+                                ${icon('arrow-right')}
+                            </button>
+                        </form>
                     </div>
 
                 </div>
 
                 <div class="footer-bottom">
 
-                    <span>
-                        © 2026 Nông Sản Xanh
+                    <span style="opacity: 0.7;">
+                        © 2024 Nông Sản Xanh. Tất cả quyền được bảo lưu.
                     </span>
 
-                    <span>
-                        Đồ án Laravel ·
-
-                        <a
-                            href="${
-                                FF.staticPreview
-                                    ? 'LICENSE.txt'
-                                    : FF.base +
-                                      '/tv4/LICENSE.txt'
-                            }"
-                        >
-                            MIT assets notice
-                        </a>
+                    <span style="opacity: 0.7;">
+                        <a href="#">Điều khoản sử dụng</a> | <a href="#">Chính sách bảo mật</a>
                     </span>
 
                 </div>
@@ -312,6 +333,9 @@ function footer() {
 }
 
 
+/* =============================================
+   TOAST
+   ============================================= */
 
 function toast(message) {
     const toastElement =
@@ -337,9 +361,13 @@ function toast(message) {
             toastElement.classList.remove(
                 'is-visible'
             );
-        }, 2200);
+        }, 2800);
 }
 
+
+/* =============================================
+   ACCOUNT NAV
+   ============================================= */
 
 function accountNav() {
     const target =
@@ -356,6 +384,8 @@ function accountNav() {
 
     target.className =
         'account-nav';
+
+    const loggedIn = isLoggedIn();
 
     target.innerHTML = `
         <a
@@ -403,14 +433,34 @@ function accountNav() {
         </a>
 
         <a
-            href="${FF.url('login')}"
+            href="#"
+            data-logout
         >
             ${icon('log-out')}
             Đăng xuất
         </a>
     `;
+
+    // Logout handler
+    const logoutBtn = target.querySelector('[data-logout]');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            sessionStorage.removeItem('access_token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('current_user');
+            toast('Đã đăng xuất');
+            setTimeout(() => {
+                location.href = FF.url('login');
+            }, 600);
+        });
+    }
 }
 
+
+/* =============================================
+   MOBILE MENU
+   ============================================= */
 
 function initMobileMenu() {
     const toggle =
@@ -441,24 +491,187 @@ function initMobileMenu() {
             'aria-expanded',
             String(isOpen)
         );
+
+        // Change icon
+        toggle.innerHTML = isOpen
+            ? icon('x')
+            : icon('menu');
     };
 }
+
+
+/* =============================================
+   STICKY HEADER
+   ============================================= */
+
+function initStickyHeader() {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+
+    let lastScroll = 0;
+
+    const onScroll = () => {
+        const scrollY = window.scrollY;
+
+        if (scrollY > 40) {
+            header.classList.add('is-scrolled');
+        } else {
+            header.classList.remove('is-scrolled');
+        }
+
+        lastScroll = scrollY;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // Check initial state
+}
+
+
+/* =============================================
+   SCROLL-TO-TOP BUTTON
+   ============================================= */
+
+function initScrollToTop() {
+    // Create the button
+    const btn = document.createElement('button');
+    btn.className = 'scroll-top';
+    btn.setAttribute('aria-label', 'Lên đầu trang');
+    btn.innerHTML = icon('chevron-up');
+    document.body.appendChild(btn);
+
+    const onScroll = () => {
+        if (window.scrollY > 400) {
+            btn.classList.add('is-visible');
+        } else {
+            btn.classList.remove('is-visible');
+        }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+
+/* =============================================
+   SCROLL REVEAL (IntersectionObserver)
+   ============================================= */
+
+function initScrollReveal() {
+    const elements = document.querySelectorAll('.reveal');
+    if (!elements.length) return;
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        },
+        {
+            threshold: 0.12,
+            rootMargin: '0px 0px -40px 0px'
+        }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+}
+
+
+/* =============================================
+   AUTO-REVEAL SECTIONS
+   ============================================= */
+
+function autoAddRevealClasses() {
+    // Add reveal to main sections that benefit from it
+    const selectors = [
+        '.benefits',
+        '.section',
+        '.story-strip',
+        '.page-hero',
+        '.panel',
+        '.auth-card'
+    ];
+
+    // Only add to elements that are NOT already visible
+    // (below the fold)
+    selectors.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((el) => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top > window.innerHeight * 0.85) {
+                el.classList.add('reveal');
+            }
+        });
+    });
+}
+
+
+/* =============================================
+   LIVE CART COUNT
+   ============================================= */
+
+function updateCartBadge(count) {
+    document.querySelectorAll('[data-cart-count]').forEach((el) => {
+        const oldCount = parseInt(el.textContent) || 0;
+        el.textContent = count;
+
+        if (count !== oldCount) {
+            el.classList.remove('is-bouncing');
+            // Force reflow
+            void el.offsetWidth;
+            el.classList.add('is-bouncing');
+        }
+    });
+}
+
+// Try to load cart count on page load if logged in
+async function loadCartCount() {
+    if (!isLoggedIn()) return;
+
+    try {
+        const token = getToken();
+        const res = await fetch(FF.base + '/api/v1/cart', {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const items = data?.data?.items || [];
+            updateCartBadge(items.length);
+        }
+    } catch {
+        // Silently fail — cart count will show 0
+    }
+}
+
+
+/* =============================================
+   DOM READY — BOOT EVERYTHING
+   ============================================= */
+
 document.addEventListener(
     'DOMContentLoaded',
     () => {
         header();
         footer();
+        accountNav();
         refreshIcons();
         initMobileMenu();
+        initStickyHeader();
+        initScrollToTop();
+        loadCartCount();
 
-        const cartCount =
-            document.querySelector(
-                '[data-cart-count]'
-            );
-
-        if (cartCount) {
-            cartCount.textContent =
-                '0';
-        }
+        // Delay reveal setup to allow page content to render
+        requestAnimationFrame(() => {
+            autoAddRevealClasses();
+            initScrollReveal();
+        });
     }
 );

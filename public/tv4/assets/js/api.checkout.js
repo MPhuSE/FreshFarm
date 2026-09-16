@@ -104,6 +104,12 @@ async function checkout() {
 
 
     $('#live-main').innerHTML =
+        `
+        <div class="container section">
+        `
+
+        +
+
         heading(
             'Thanh toán'
         ) +
@@ -249,6 +255,7 @@ async function checkout() {
                 </aside>
 
             </div>
+        </div>
         `;
 
     const form =

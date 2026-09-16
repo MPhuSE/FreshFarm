@@ -1,51 +1,26 @@
-<!DOCTYPE html>
+@extends('layouts.admin')
 
 @php
     use Illuminate\Support\Facades\Storage;
     use Illuminate\Support\Facades\Route;
 @endphp
 
-<html lang="vi">
+@section('title', 'Quản lý sản phẩm')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Quản lý sản phẩm</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-
-<body class="min-h-screen bg-slate-100 text-slate-800">
-
-    <main class="w-full px-5 py-10">
-
-        <div class="mb-8 flex items-center justify-between">
-
-            <div>
-                <p class="text-sm font-medium text-emerald-600">
-                    Admin Catalog
-                </p>
-
-                <h1 class="mt-1 text-3xl font-bold">
-                    Quản lý sản phẩm
-                </h1>
-
-                <p class="mt-2 text-slate-500">
-                    Quản lý thông tin sản phẩm trong hệ thống
-                </p>
-            </div>
-
-            <a
-                href="{{ route('admin.products.create') }}"
-                class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700"
-            >
-                + Thêm sản phẩm
-            </a>
-
+@section('page-header')
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-emerald-600">Admin Catalog</p>
+            <h1 class="mt-1 text-3xl font-bold">Quản lý sản phẩm</h1>
+            <p class="mt-2 text-slate-500">Quản lý thông tin sản phẩm trong hệ thống</p>
         </div>
+        <a href="{{ route('admin.products.create') }}" class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+            + Thêm sản phẩm
+        </a>
+    </div>
+@endsection
 
-
+@section('content')
         <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
 
             <div class="border-b border-slate-200 px-6 py-4">
@@ -117,10 +92,10 @@
 
         </section>
 
-    </main>
+@endsection
 
-
-    <script>
+@push('scripts')
+<script>
     const API_BASE_URL = '/api/v1';
 
 
@@ -555,6 +530,4 @@
         }
     );
 </script>
-</body>
-
-</html>
+@endpush
