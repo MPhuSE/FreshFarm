@@ -18,7 +18,7 @@ class AdminRouteContractTest extends TestCase
         $routes = app('router')->getRoutes();
 
         $this->assertNotNull($routes->getByName('admin.products.index'));
-        $this->assertNotNull($routes->getByAction('App\\Http\\Controllers\\Api\\V1\\Admin\\UserController@index'));
-        $this->assertNotNull($routes->getByAction('App\\Http\\Controllers\\Api\\V1\\Admin\\ReportController@summary'));
+        $this->assertNotNull($routes->getByAction('App\\Http\\Controllers\\Api\\Admin\\UserController@lock'));
+        $this->assertNotNull($routes->getByAction('App\\Http\\Controllers\\Api\\Admin\\ReportController@summary'));
     }
 }
