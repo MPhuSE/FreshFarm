@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -23,17 +24,29 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            Route::middleware('web')
+                ->prefix('admin')
+                ->group(base_path('routes/admin.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Gắn trace_id cho toàn bộ route trong group "api"
-        $middleware->api(prepend: [
-            AssignTraceId::class,
-        ]);
-        // Alias middleware phân quyền role (Staff/Admin) dùng ở routes/api.php
-        $middleware->alias([
-            'role' => CheckRole::class,
-        ]);
-    })
+    $middleware->api(prepend: [
+        AssignTraceId::class,
+    ]);
+
+    $middleware->alias([
+        'role' => CheckRole::class,
+    ]);
+
+    $middleware->redirectGuestsTo(function (Request $request) {
+        if ($request->is('api/*')) {
+            return null;
+        }
+
+        return route('login');
+    });
+})
 
     ->withExceptions(function (Exceptions $exceptions): void {
         $isApiRequest = fn (Request $request) => $request->is('api/*') || $request->expectsJson();
@@ -55,7 +68,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 1. Lỗi nghiệp vụ tự throw từ Service (ApiException)
         $exceptions->render(function (ApiException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, $e->getMessage(), $e->getErrorCode(), $e->getStatusCode(), $e->getErrorsDetail());
@@ -64,7 +81,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 2. Lỗi validate Form Request
         $exceptions->render(function (ValidationException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Dữ liệu không hợp lệ.', 'VALIDATION_ERROR', 422, $e->errors());
@@ -73,16 +94,27 @@ return Application::configure(basePath: dirname(__DIR__))
         // 3. Chưa đăng nhập / token hết hạn
         $exceptions->render(function (AuthenticationException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Chưa đăng nhập hoặc token đã hết hạn.', 'UNAUTHENTICATED', 401);
         });
 
+<<<<<<< HEAD
         // 4. Đã đăng nhập nhưng thiếu quyền (Policy/Gate hoặc Middleware)
         $exceptions->render(function (Throwable $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
                 return null;
+=======
+        // 4. Đã đăng nhập nhưng thiếu quyền (Policy/Gate)
+        $exceptions->render(function (AuthorizationException $e, Request $request) use ($envelope, $isApiRequest) {
+            if (! $isApiRequest($request)) {
+                    return null;
+>>>>>>> thu
             }
 
             if ($e instanceof AuthorizationException || $e instanceof AccessDeniedHttpException) {
@@ -95,7 +127,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 5. Model::findOrFail() không tìm thấy
         $exceptions->render(function (ModelNotFoundException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Không tìm thấy dữ liệu yêu cầu.', 'NOT_FOUND', 404);
@@ -104,7 +140,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 6. Route không tồn tại
         $exceptions->render(function (NotFoundHttpException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Không tìm thấy endpoint yêu cầu.', 'NOT_FOUND', 404);
@@ -113,7 +153,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 7. Sai HTTP method (vd: gọi DELETE vào route chỉ có GET)
         $exceptions->render(function (MethodNotAllowedHttpException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Phương thức HTTP không được hỗ trợ cho endpoint này.', 'METHOD_NOT_ALLOWED', 405);
@@ -122,7 +166,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 8. Vượt rate limit (throttle)
         $exceptions->render(function (TooManyRequestsHttpException $e, Request $request) use ($envelope, $isApiRequest) {
             if (! $isApiRequest($request)) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Bạn đã thực hiện quá nhiều yêu cầu, vui lòng thử lại sau.', 'TOO_MANY_ATTEMPTS', 429);
@@ -154,7 +202,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Ở local (APP_DEBUG=true) trả về null để Laravel hiện lỗi chi tiết, dễ debug
             if (config('app.debug')) {
+<<<<<<< HEAD
                 return null;
+=======
+                    return null;
+>>>>>>> thu
             }
 
             return $envelope($request, 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.', 'INTERNAL_SERVER_ERROR', 500);

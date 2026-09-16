@@ -32,12 +32,10 @@ Route::get('/orders/{order_code}', function ($order_code) {
 })->name('storefront.order-detail');
 
 Route::get('/login', function () {
-    // Merge AThu's login view layout if needed, but for now we map to standard auth.login
     return view('auth.login', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
 })->name('storefront.login');
 
 Route::get('/register', function () {
-    // Merge AThu's register view
     return view('auth.register', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
 })->name('storefront.register');
 
@@ -56,3 +54,23 @@ Route::get('/reviews', function () {
 Route::get('/ui-states', function () {
     return view('ui-states', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
 })->name('storefront.ui-states');
+
+Route::get('/admin/orders', function () {
+    return view('admin.orders.index');
+})->name('admin.orders.index');
+
+Route::get('/admin/system/permissions', function () {
+    return view('admin.system.permissions');
+})->name('admin.system.permissions');
+
+Route::get('/admin/system/reports', function () {
+    return view('admin.system.reports');
+})->name('admin.system.reports');
+
+Route::get('/admin/system/users', function () {
+    return view('admin.system.users');
+})->name('admin.system.users');
+
+Route::get('/admin/orders/{id}', function ($id) {
+    return view('admin.orders.detail', ['id' => $id]);
+})->name('admin.orders.detail');
