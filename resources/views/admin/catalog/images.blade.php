@@ -1,20 +1,15 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Quản lý hình ảnh sản phẩm</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@extends('layouts.admin')
 
-<body class="min-h-screen bg-slate-100 text-slate-800">
-<main class="mx-auto max-w-6xl px-6 py-10">
+@section('title', 'Quản lý hình ảnh sản phẩm')
 
+@section('page-header')
     <div class="mb-8">
         <p class="text-sm font-medium text-emerald-600">Admin Catalog</p>
         <h1 class="mt-1 text-3xl font-bold">Quản lý hình ảnh sản phẩm</h1>
     </div>
+@endsection
+
+@section('content')
 
     @if (!isset($product))
         <div class="rounded-xl bg-red-50 p-4 text-red-700">
@@ -119,12 +114,12 @@
             </div>
         </section>
     @endif
-</main>
+@endsection
 
 @if (isset($product))
+@push('scripts')
 <script>
 const productId = @json($product->id);
-const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const apiUrl = `/api/v1/admin/products/${productId}/images`;
 
 function showMessage(message, success = true) {
@@ -144,10 +139,7 @@ document.getElementById('uploadForm')?.addEventListener('submit', async function
 
     const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
+        headers: window.AdminApi ? window.AdminApi.headers() : { 'Accept': 'application/json' },
         body: formData
     });
 
@@ -196,11 +188,7 @@ document.getElementById('saveOrder')?.addEventListener('click', async function (
 
     const response = await fetch(`${apiUrl}/reorder`, {
         method: 'PATCH',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
+        headers: window.AdminApi ? window.AdminApi.headers(true) : { 'Accept': 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify({ images })
     });
 
@@ -212,7 +200,5 @@ document.getElementById('saveOrder')?.addEventListener('click', async function (
     );
 });
 </script>
+@endpush
 @endif
-
-</body>
-</html>

@@ -63,7 +63,7 @@
 
     @include('partials.storefront-header')
 
-    @if($tv4Preview)
+    @if($tv4Preview ?? false)
 
         <div
             class="preview-notice"
@@ -93,7 +93,7 @@
 
     <script>
         window.FF = {
-            preview: @json($tv4Preview),
+            preview: @json($tv4Preview ?? false),
             staticPreview: false,
             base: @json(url('/')),
             assetBase: @json(asset('tv4/assets')),
@@ -110,7 +110,7 @@
         src="{{ asset('tv4/assets/js/config.js') }}"
     ></script>
 
-    @if($tv4Preview)
+    @if($tv4Preview ?? false)
 
         <script
             src="{{ asset('tv4/assets/js/demo.js') }}"
@@ -119,12 +119,12 @@
     @else
         {{-- Shell chạy trước API để cung cấp icon, toast, header... --}}
         <script
-            src="{{ asset('tv4/assets/js/shell.js') }}"
+            src="{{ asset('tv4/assets/js/shell.js?v=3') }}"
         ></script>
         {{-- API đã tách thành ES Modules --}}
         <script
             type="module"
-            src="{{ asset('tv4/assets/js/api.js') }}"
+            src="{{ asset('tv4/assets/js/api.js?v=3') }}"
         ></script>
     @endif
 </body>

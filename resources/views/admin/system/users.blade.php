@@ -1,30 +1,21 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts.admin')
 
-    <title>Quản lý người dùng</title>
+@section('title', 'Quản lý người dùng')
 
-    @vite('resources/js/app.js')
-
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-
-<body class="bg-gray-100">
-
-<div class="p-6">
-
-  
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">
-            Quản lý người dùng
-        </h1>
-
-        <p class="text-gray-500 mt-1">
-            Quản lý tài khoản, trạng thái và vai trò người dùng
-        </p>
+@section('page-header')
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                Quản lý người dùng
+            </h1>
+            <p class="text-gray-500 mt-1">
+                Quản lý tài khoản, trạng thái và vai trò người dùng
+            </p>
+        </div>
     </div>
+@endsection
+
+@section('content')
 
 
   
@@ -279,7 +270,9 @@
 
 </div>
 
+@endsection
 
+@push('scripts')
 <script>
 
 const API_BASE_URL = '/api/v1';
@@ -426,7 +419,7 @@ function renderUsers(users) {
                 </td>
 
                 <td class="px-5 py-3 font-medium">
-                    ${escapeHtml(user.full_name)}
+                    ${escapeHtml(user.name)}
                 </td>
 
                 <td class="px-5 py-3">
@@ -470,7 +463,7 @@ function renderUsers(users) {
                     <button
                         onclick="openModal(
                             ${user.id},
-                            '${escapeString(user.full_name)}',
+                            '${escapeString(user.name)}',
                             '${user.status}',
                             '${user.role}'
                         )"
@@ -796,6 +789,4 @@ document.addEventListener(
 );
 
 </script>
-
-</body>
-</html>
+@endpush

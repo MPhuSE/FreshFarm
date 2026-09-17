@@ -13,6 +13,8 @@ class CategoryResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'description' => $this->description,
+            'image_path' => $this->image_path ? url($this->image_path) : null,
             'status' => $this->status,
         ];
     }

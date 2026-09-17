@@ -2,7 +2,7 @@ const ADMIN_API_BASE_URL = '/api/v1';
 
 function adminApiHeaders(json = false) {
 	const headers = { Accept: 'application/json' };
-	const token = window.localStorage.getItem('access_token');
+	const token = window.sessionStorage.getItem('access_token') || window.localStorage.getItem('access_token');
 
 	if (json) {
 		headers['Content-Type'] = 'application/json';

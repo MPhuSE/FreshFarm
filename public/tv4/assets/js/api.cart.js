@@ -243,13 +243,21 @@ async function cart() {
                                 cartData.summary
                             )}
 
+                            <div style="display:flex;gap:8px;margin-top:16px;margin-bottom:8px;">
+                                <input id="cart-coupon-input" type="text" placeholder="M\u00e3 gi\u1ea3m gi\u00e1" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:10px 14px;font-size:14px;outline:none;">
+                                <button type="button" id="cart-coupon-btn" class="btn btn--outline" style="white-space:nowrap;">
+                                    \u00c1p d\u1ee5ng
+                                </button>
+                            </div>
+                            <div id="cart-coupon-msg" style="font-size:13px;margin-bottom:12px;display:none;"></div>
+
                             <a
                                 class="btn btn--primary btn--block"
                                 href="${url(
                                     'checkout'
                                 )}"
                             >
-                                Thanh toán
+                                Thanh to\u00e1n
                             </a>
 
                         </aside>
@@ -388,6 +396,47 @@ async function cart() {
                     };
             }
         );
+
+    // Coupon apply - validates via checkout preview endpoint
+    const couponBtn = main.querySelector('#cart-coupon-btn');
+    if (couponBtn) {
+        couponBtn.onclick = async () => {
+            const input = main.querySelector('#cart-coupon-input');
+            const msg = main.querySelector('#cart-coupon-msg');
+            const code = input?.value?.trim();
+            if (!code) return;
+
+            couponBtn.disabled = true;
+            if (msg) { msg.style.display = 'none'; }
+
+            try {
+                // Use checkout preview to validate coupon
+                const defaultAddr = null; // coupon validation doesn't need address
+                const res = await request('/checkout/preview', {
+                    method: 'POST',
+                    body: { address_id: 1, payment_method: 'cod', coupon_code: code }
+                });
+                const discount = res.data?.summary?.discount || 0;
+                if (msg) {
+                    msg.textContent = discount > 0
+                        ? `✅ Áp dụng thành công! Giảm ${new Intl.NumberFormat('vi-VN').format(discount)}đ`
+                        : `✅ Mã hợp lệ nhưng không có giảm giá thêm.`;
+                    msg.style.color = '#16a34a';
+                    msg.style.display = 'block';
+                }
+                // Save coupon to sessionStorage for checkout page
+                sessionStorage.setItem('applied_coupon', code);
+            } catch (err) {
+                if (msg) {
+                    msg.textContent = `❌ Mã không hợp lệ: ${err.message || 'Không thể áp dụng'}`;
+                    msg.style.color = '#dc2626';
+                    msg.style.display = 'block';
+                }
+            } finally {
+                couponBtn.disabled = false;
+            }
+        };
+    }
 }
 
 export {

@@ -41,6 +41,10 @@ async function checkout() {
     if (!cartData.items?.length) {
 
         $('#live-main').innerHTML =
+            `
+            <div class="container section" style="padding-top: 40px; padding-bottom: 80px;">
+            `
+            +
             heading(
                 'Thanh toán'
             ) +
@@ -48,7 +52,8 @@ async function checkout() {
             message(
                 'Giỏ hàng trống. ' +
                 'Hãy thêm sản phẩm trước.'
-            );
+            ) +
+            `</div>`;
 
         return;
     }
@@ -66,6 +71,10 @@ async function checkout() {
     if (!addresses.length) {
 
         $('#live-main').innerHTML =
+            `
+            <div class="container section" style="padding-top: 40px; padding-bottom: 80px;">
+            `
+            +
             heading(
                 'Thanh toán'
             ) +
@@ -76,7 +85,7 @@ async function checkout() {
             ) +
 
             `
-                <div class="live-actions">
+                <div class="live-actions" style="margin-top: 24px;">
 
                     <a
                         class="btn btn--primary"
@@ -86,6 +95,7 @@ async function checkout() {
                     </a>
 
                 </div>
+            </div>
             `;
 
         return;
@@ -204,6 +214,10 @@ async function checkout() {
                                 Chuyển khoản ngân hàng
                             </option>
 
+                            <option value="vnpay">
+                                Thanh toán qua VNPay
+                            </option>
+
                         </select>
 
                     </label>
@@ -276,6 +290,14 @@ async function checkout() {
         }
     };
 
+    // Auto-fill coupon code if applied from cart page
+    const savedCoupon = sessionStorage.getItem('applied_coupon');
+    if (savedCoupon) {
+        const couponInput = form.querySelector('[name="coupon_code"]');
+        if (couponInput) {
+            couponInput.value = savedCoupon;
+        }
+    }
 
 
     form.addEventListener(
@@ -431,6 +453,14 @@ async function checkout() {
                                 result.data
                                     ?.order ||
                                 result.data;
+
+                            if (order?.payment_method === 'vnpay' && order?.order_code) {
+                                const vnpayResult = await request('/payment/vnpay/' + order.order_code, { method: 'POST' });
+                                if (vnpayResult.data?.payment_url) {
+                                    location.href = vnpayResult.data.payment_url;
+                                    return;
+                                }
+                            }
 
                             if (
                                 order?.order_code

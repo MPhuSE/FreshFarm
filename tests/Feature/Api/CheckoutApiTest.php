@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\User;
@@ -66,6 +67,14 @@ class CheckoutApiTest extends TestCase
             'cart_id' => $cart->id,
             'product_id' => $this->product->id,
             'quantity' => 2,
+        ]);
+
+        // 5. Tạo Coupon XANH10 (10% giảm giá)
+        Coupon::create([
+            'code' => 'XANH10',
+            'type' => 'percent',
+            'value' => 10,
+            'status' => 'active',
         ]);
     }
 

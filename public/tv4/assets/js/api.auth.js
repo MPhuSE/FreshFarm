@@ -5,6 +5,30 @@ import {
 } from './api.core.js';
 
 async function auth(register = false) {
+    // Redirect if already logged in
+    if (localStorage.getItem('access_token') || sessionStorage.getItem('access_token')) {
+        location.href = url('shop');
+        return;
+    }
+    // Password toggle logic
+    document.querySelectorAll('[data-toggle-password]').forEach(button => {
+        button.addEventListener('click', () => {
+            const container = button.closest('.password-field');
+            const input = container ? container.querySelector('input') : null;
+            if (input) {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                
+                // Update icon if feather is used
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-feather', type === 'password' ? 'eye' : 'eye-off');
+                    if (window.feather) window.feather.replace();
+                }
+            }
+        });
+    });
+
     if (register) {
 
         const form =
@@ -107,8 +131,15 @@ async function auth(register = false) {
                             'access_token'
                         );
 
+                        if (response.data?.user) {
+                            localStorage.setItem(
+                                'current_user',
+                                JSON.stringify(response.data.user)
+                            );
+                        }
+
                         location.href =
-                            url('account');
+                            url('shop');
 
                         return;
                     }
@@ -222,14 +253,23 @@ async function auth(register = false) {
                     response.data?.token
                 ) {
 
-                    sessionStorage.setItem(
-                        'access_token',
-                        response.data.token
-                    );
-
-                    localStorage.removeItem(
-                        'access_token'
-                    );
+                    if (data.get('remember')) {
+                        localStorage.setItem(
+                            'access_token',
+                            response.data.token
+                        );
+                        sessionStorage.removeItem(
+                            'access_token'
+                        );
+                    } else {
+                        sessionStorage.setItem(
+                            'access_token',
+                            response.data.token
+                        );
+                        localStorage.removeItem(
+                            'access_token'
+                        );
+                    }
 
                     // Có thể lưu user nếu backend trả về
                     if (
@@ -245,7 +285,7 @@ async function auth(register = false) {
                     }
 
                     location.href =
-                        url('account');
+                        url('shop');
 
                     return;
                 }

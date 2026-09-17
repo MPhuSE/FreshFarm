@@ -3,9 +3,17 @@
 @section('title', 'Quản lý đơn hàng')
 
 @section('page-header')
-    <p class="text-sm font-medium text-emerald-600">Admin Order</p>
-    <h1 class="mt-1 text-3xl font-bold">Quản lý đơn hàng</h1>
-    <p class="mt-2 text-slate-500">Quản lý danh sách đơn hàng trong hệ thống</p>
+    <div class="flex justify-between items-start">
+        <div>
+            <p class="text-sm font-medium text-emerald-600">Admin Order</p>
+            <h1 class="mt-1 text-3xl font-bold">Quản lý đơn hàng</h1>
+            <p class="mt-2 text-slate-500">Quản lý danh sách đơn hàng trong hệ thống</p>
+        </div>
+        <button type="button" onclick="downloadExport()" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+            <i data-feather="download" class="w-4 h-4"></i>
+            Xuất Excel
+        </button>
+    </div>
 @endsection
 
 @section('content')
@@ -583,6 +591,36 @@ function displayPagination(meta) {
 
     }
 
+}
+
+async function downloadExport() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/orders/export`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
+                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+        });
+
+        if (!response.ok) {
+            alert('Lỗi xuất Excel. Vui lòng thử lại!');
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orders_export_${new Date().toISOString().replace(/[:.]/g, '')}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Lỗi xuất Excel. Vui lòng thử lại!');
+    }
 }
 
 loadOrders();

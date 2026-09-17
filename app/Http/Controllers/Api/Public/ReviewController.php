@@ -12,10 +12,10 @@ class ReviewController extends Controller
     {
         $reviews = Review::with('user:id,name')
             ->where('product_id', $id)
-            ->where('is_approved', true)
+            ->where('status', 'approved')
             ->latest()
             ->paginate(10);
-            
+
         return response()->json($reviews);
     }
 }

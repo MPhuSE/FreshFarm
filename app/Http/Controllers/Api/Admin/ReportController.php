@@ -37,7 +37,7 @@ class ReportController extends Controller
     {
         $totalUsers = User::count();
         $totalOrders = Order::count();
-        $totalRevenue = Order::where('status', 'completed')->sum('grand_total');
+        $totalRevenue = Order::whereIn('status', ['completed', 'delivered'])->sum('grand_total');
 
         return $this->respondSuccess([
             'total_users' => $totalUsers,

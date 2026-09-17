@@ -14,6 +14,47 @@ class UserController extends Controller
 {
     use ApiResponse;
 
+    #[OA\Get(
+        path: '/api/v1/admin/users',
+        summary: 'Lấy danh sách người dùng',
+        tags: ['Admin'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'role', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền'),
+        ]
+    )]
+    public function index(Request $request): JsonResponse
+    {
+        $query = User::query();
+
+        if ($request->filled('q')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->q.'%')
+                    ->orWhere('email', 'like', '%'.$request->q.'%')
+                    ->orWhere('phone', 'like', '%'.$request->q.'%');
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $users = $query->orderBy('id', 'desc')->paginate(15);
+
+        return $this->successPaginated($users->items(), $users, 'Lấy danh sách người dùng thành công');
+    }
+
     #[OA\Patch(
         path: '/api/v1/admin/users/{user}/status',
         summary: 'Khóa hoặc mở khóa tài khoản',

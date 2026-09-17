@@ -92,6 +92,17 @@
                         </span>
                     </label>
 
+                    <label class="choice-card">
+                        <input type="radio"
+                               name="payment_method"
+                               value="vnpay">
+
+                        <span>
+                            <strong>Thanh toán qua VNPay</strong>
+                            <small>ATM/Visa/MasterCard/QRCode</small>
+                        </span>
+                    </label>
+
                 </div>
 
             </section>
@@ -127,6 +138,12 @@
 
                 <!-- Sản phẩm sẽ được API đưa vào đây -->
 
+            </div>
+
+            <!-- Áp dụng mã giảm giá -->
+            <div class="coupon-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
+                <input type="text" id="coupon_code_input" placeholder="Mã giảm giá" class="input" style="flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 1rem; outline: none;">
+                <button type="button" id="apply_coupon_btn" class="btn btn--outline" style="white-space: nowrap;">Áp dụng</button>
             </div>
 
 

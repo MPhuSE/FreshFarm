@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\OrderItem;
 use App\Models\Review;
 use Illuminate\Http\Request;
 
@@ -11,19 +12,39 @@ class ReviewController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
+            'order_item_id' => 'required|exists:order_items,id',
             'rating' => 'required|integer|min:1|max:5',
-            'content' => 'required|string',
+            'comment' => 'required|string',
         ]);
+
+        $userId = $request->user()->id;
+
+        $orderItem = OrderItem::with('order')->findOrFail($request->order_item_id);
+
+        if ($orderItem->order->user_id !== $userId) {
+            return response()->json(['message' => 'Bạn không có quyền đánh giá sản phẩm này.'], 403);
+        }
+
+        if ($orderItem->order->status !== 'completed') {
+            return response()->json(['message' => 'Bạn cần nhận hàng thành công trước khi có thể đánh giá.'], 403);
+        }
+
+        // Ensure user hasn't already reviewed this item
+        $existingReview = Review::where('order_item_id', $orderItem->id)->first();
+
+        if ($existingReview) {
+            return response()->json(['message' => 'Bạn đã đánh giá sản phẩm này rồi.'], 400);
+        }
 
         $review = Review::create([
-            'user_id' => $request->user()->id,
-            'product_id' => $request->product_id,
+            'user_id' => $userId,
+            'product_id' => $orderItem->product_id,
+            'order_item_id' => $orderItem->id,
             'rating' => $request->rating,
-            'content' => $request->content,
-            'is_approved' => false,
+            'comment' => $request->comment,
+            'status' => 'pending',
         ]);
 
-        return response()->json($review, 201);
+        return response()->json(['message' => 'Đánh giá đã được gửi và đang chờ duyệt.', 'data' => $review], 201);
     }
 }

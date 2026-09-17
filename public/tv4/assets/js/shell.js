@@ -78,13 +78,31 @@ function header() {
 
     // Auth-aware actions
     const userAction = loggedIn && user
-        ? `<a class="user-pill" href="${FF.url('account')}">
-               <span class="avatar">${userInitials(user.full_name || user.name)}</span>
-               <span>${(user.full_name || user.name || 'Tài khoản').split(' ').pop()}</span>
-           </a>`
+        ? `<div class="user-menu-wrapper">
+               <button class="user-pill" type="button" onclick="this.nextElementSibling.classList.toggle('show'); event.stopPropagation();">
+                   <span class="avatar">${userInitials(user.full_name || user.name)}</span>
+                   <span>${(user.full_name || user.name || 'Tài khoản').split(' ').pop()}</span>
+               </button>
+               <div class="user-dropdown">
+                   <a href="${FF.url('account')}">${icon('user')} Hồ sơ cá nhân</a>
+                   <a href="${FF.url('wishlist')}">${icon('heart')} Sản phẩm yêu thích <span data-wishlist-count style="margin-left:auto;background:var(--green-600);color:white;border-radius:99px;padding:1px 7px;font-size:12px;display:none">0</span></a>
+                   <a href="${FF.url('orders')}">${icon('package')} Đơn hàng của tôi</a>
+                   ${user.role === 'admin' ? `<a href="/admin">${icon('settings')} Quản trị hệ thống</a>` : ''}
+                   <div class="divider"></div>
+                   <a href="#" data-header-logout>${icon('log-out')} Đăng xuất</a>
+               </div>
+           </div>`
         : `<a class="icon-btn" aria-label="Đăng nhập" href="${FF.url('login')}">
                ${icon('user')}
            </a>`;
+
+    // Wishlist icon for header
+    const wishlistIcon = loggedIn
+        ? `<a class="icon-btn" href="${FF.url('wishlist')}" aria-label="Yêu thích">
+               ${icon('heart')}
+               <span class="cart-count" data-wishlist-badge style="display:none;">0</span>
+           </a>`
+        : '';
 
     headerElement.innerHTML = `
         <div class="topbar">
@@ -150,15 +168,15 @@ function header() {
                 </a>
 
                 <a
-                    class=""
-                    href="#"
+                    class="${page === 'about' ? 'is-active' : ''}"
+                    href="/gioi-thieu"
                 >
                     Giới thiệu
                 </a>
 
                 <a
-                    class=""
-                    href="#"
+                    class="${page === 'news' ? 'is-active' : ''}"
+                    href="/tin-tuc"
                 >
                     Tin tức
                 </a>
@@ -181,6 +199,8 @@ function header() {
                 }
 
                 ${userAction}
+
+                ${wishlistIcon}
 
                 <a
                     class="icon-btn cart-btn"
@@ -208,6 +228,26 @@ function header() {
 
         </div>
     `;
+
+    const logoutBtn = headerElement.querySelector('[data-header-logout]');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            sessionStorage.removeItem('access_token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('current_user');
+            toast('Đã đăng xuất');
+            setTimeout(() => {
+                location.href = FF.url('login');
+            }, 600);
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-menu-wrapper')) {
+            document.querySelectorAll('.user-dropdown.show').forEach(el => el.classList.remove('show'));
+        }
+    });
 }
 
 
@@ -269,8 +309,8 @@ function footer() {
 
                         <a href="${FF.url('index')}">Trang chủ</a>
                         <a href="${FF.url('shop')}">Sản phẩm</a>
-                        <a href="#">Giới thiệu</a>
-                        <a href="#">Tin tức</a>
+                        <a href="/gioi-thieu">Giới thiệu</a>
+                        <a href="/tin-tuc">Tin tức</a>
 
                     </div>
 
@@ -280,10 +320,10 @@ function footer() {
                             Hỗ trợ khách hàng
                         </h3>
 
-                        <a href="#">Hướng dẫn mua hàng</a>
-                        <a href="#">Chính sách giao hàng</a>
-                        <a href="#">Chính sách đổi trả</a>
-                        <a href="#">Câu hỏi thường gặp</a>
+                        <a href="/p/huong-dan-mua-hang">Hướng dẫn mua hàng</a>
+                        <a href="/p/chinh-sach-giao-hang">Chính sách giao hàng</a>
+                        <a href="/p/chinh-sach-doi-tra">Chính sách đổi trả</a>
+                        <a href="/p/cau-hoi-thuong-gap">Câu hỏi thường gặp</a>
 
                     </div>
 
@@ -650,6 +690,37 @@ async function loadCartCount() {
         // Silently fail — cart count will show 0
     }
 }
+// Try to load wishlist count on page load if logged in
+async function loadWishlistCount() {
+    if (!isLoggedIn()) return;
+
+    try {
+        const token = getToken();
+        const res = await fetch(FF.base + '/api/v1/wishlist', {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const count = (data?.data?.data || data?.data || []).length;
+            if (count > 0) {
+                document.querySelectorAll('[data-wishlist-badge]').forEach(el => {
+                    el.textContent = count;
+                    el.style.display = 'inline-block';
+                });
+                document.querySelectorAll('[data-wishlist-count]').forEach(el => {
+                    el.textContent = count;
+                    el.style.display = 'inline-block';
+                });
+            }
+        }
+    } catch {
+        // Silently fail
+    }
+}
 
 
 /* =============================================
@@ -667,6 +738,7 @@ document.addEventListener(
         initStickyHeader();
         initScrollToTop();
         loadCartCount();
+        loadWishlistCount();
 
         // Delay reveal setup to allow page content to render
         requestAnimationFrame(() => {

@@ -29,4 +29,9 @@ class ProductController extends Controller
 
         return view('admin.catalog.product-detail', compact('product'));
     }
+
+    public function images(Product $product): View
+    {
+        return view('admin.catalog.images', compact('product'));
+    }
 }

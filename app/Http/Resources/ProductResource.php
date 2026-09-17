@@ -24,6 +24,8 @@ class ProductResource extends JsonResource
                 : 0,
             'status' => $this->status,
             'primary_image_url' => $this->resolvePrimaryImageUrl(),
+            'rating_avg' => $this->reviews_avg_rating ? (float) $this->reviews_avg_rating : 0,
+            'reviews_count' => $this->reviews_count ?? 0,
         ];
     }
 

@@ -1,42 +1,16 @@
-<!DOCTYPE html>
+@extends('layouts.admin')
 
-<html lang="vi">
+@section('title', 'Quản lý bài viết')
 
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Quản lý bài viết</title>
-    @vite('resources/js/app.js')
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
-</head>
-
-<body class="bg-gray-100">
-
-<div class="p-6">
-
-    <!-- HEADER -->
-
-    <div class="flex justify-between items-center mb-6">
-
+@section('page-header')
+    <div class="flex items-center justify-between">
         <div>
-
-            <h1 class="text-2xl font-bold text-gray-800">
-
+            <h1 class="text-3xl font-bold text-gray-800">
                 Quản lý bài viết
-
             </h1>
-
             <p class="text-gray-500 mt-1">
-
                 Quản lý danh sách và nội dung bài viết
-
             </p>
-
         </div>
 
         <button
@@ -403,10 +377,9 @@
 
     </div>
 
-</div>
+@endsection
 
-
-
+@push('scripts')
 <script>
 
 const API_BASE_URL = '/api/v1';
@@ -1294,7 +1267,4 @@ document.addEventListener(
 );
 
 </script>
-
-</body>
-
-</html>
+@endpush

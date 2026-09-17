@@ -1,27 +1,19 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Báo cáo</title>
-    @vite('resources/js/app.js')
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+@extends('layouts.admin')
 
-<body class="bg-gray-100">
+@section('title', 'Báo cáo')
 
-<div class="container mx-auto px-6 py-8">
-
-    <!-- Header -->
+@section('page-header')
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">
+        <h1 class="text-3xl font-bold text-gray-800">
             Báo cáo tổng hợp
         </h1>
-
         <p class="text-gray-500 mt-1">
             Thống kê doanh thu và đơn hàng
         </p>
     </div>
+@endsection
+
+@section('content')
 
 
     <!-- Bộ lọc ngày -->
@@ -224,7 +216,9 @@
 
 </div>
 
+@endsection
 
+@push('scripts')
 <script>
 
     const API_BASE_URL = '/api/v1';
@@ -467,6 +461,4 @@
     });
 
 </script>
-
-</body>
-</html>
+@endpush

@@ -18,6 +18,11 @@ import {
 function card(product) {
     const quantity = Number(product.available_quantity);
     const hasDiscount = product.compare_at_price > product.price;
+    const ratingAvg = product.rating_avg ? Number(product.rating_avg).toFixed(1) : 0;
+    const reviewsCount = product.reviews_count || 0;
+    const ratingHtml = reviewsCount > 0 
+        ? `<i data-feather="star" class="star-icon"></i> ${ratingAvg} (${reviewsCount})`
+        : `<span style="font-size: 0.85em; color: #9ca3af;">Chưa có đánh giá</span>`;
 
     return `
         <article class="product-card product-card--premium">
@@ -25,7 +30,7 @@ function card(product) {
                 <div class="product-card__badges">
                     ${product.featured ? '<span class="badge badge--featured">Bán chạy</span>' : (hasDiscount ? '<span class="badge badge--sale">Giảm giá</span>' : '<span class="badge badge--fresh">Tươi mới</span>')}
                 </div>
-                <button class="wishlist-btn" type="button" aria-label="Thêm vào yêu thích">
+                <button class="wishlist-btn" type="button" aria-label="Thêm vào yêu thích" data-wishlist="${esc(product.id)}">
                     <i data-feather="heart"></i>
                 </button>
             </div>
@@ -43,10 +48,10 @@ function card(product) {
 
                 <div class="product-card__meta">
                     <span class="location">
-                        <i data-feather="map-pin"></i> ${esc(product.origin || 'Nông trại sạch')}
+                        <i data-feather="map-pin"></i> ${esc((product.origin && isNaN(product.origin)) ? product.origin : 'Đà Lạt, Lâm Đồng')}
                     </span>
                     <span class="rating">
-                        <i data-feather="star" class="star-icon"></i> 4.9 (88)
+                        ${ratingHtml}
                     </span>
                 </div>
 
@@ -167,6 +172,41 @@ function bindAdd(root) {
         });
 }
 
+function bindWishlist(root) {
+    root
+        .querySelectorAll(
+            '[data-wishlist]'
+        )
+        .forEach((button) => {
+            button.onclick = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isLoggedIn()) {
+                    location.href = url('login');
+                    return;
+                }
+                const productId = button.dataset.wishlist;
+                try {
+                    const res = await request('/wishlist', {
+                        method: 'POST',
+                        body: { product_id: Number(productId) }
+                    });
+                    if (res.status === 'added') {
+                        button.querySelector('svg').setAttribute('fill', 'var(--primary)');
+                        button.querySelector('svg').setAttribute('color', 'var(--primary)');
+                        toast('Đã thêm vào danh sách yêu thích');
+                    } else {
+                        button.querySelector('svg').setAttribute('fill', 'none');
+                        button.querySelector('svg').setAttribute('color', 'currentColor');
+                        toast('Đã xóa khỏi danh sách yêu thích');
+                    }
+                } catch (e) {
+                    toast(e.message || 'Có lỗi xảy ra');
+                }
+            };
+        });
+}
+
 
 async function catalog(
     home = false
@@ -183,29 +223,47 @@ async function catalog(
         return;
     }
 
+    if (home) {
+        const catGrid = document.querySelector('.categories-grid');
+        if (catGrid && categories.data) {
+            const bgColors = ['#eef7eb', '#fff3e0', '#ffebee', '#fdf8e8', '#f0f4ec'];
+            catGrid.innerHTML = categories.data.slice(0, 5).map((cat, i) => `
+                <a href="${FF.url('shop')}?category_id=${cat.id}" class="cat-card" style="background: ${bgColors[i % bgColors.length]};">
+                    <div class="cat-card__img"><img src="${cat.image_path ? cat.image_path : 'https://placehold.co/400x400/eef7eb/2d6a4f?text=' + encodeURIComponent(cat.name)}" alt="${esc(cat.name)}"></div>
+                    <div class="cat-card__content">
+                        <h3>${esc(cat.name)} <i data-feather="arrow-right"></i></h3>
+                        <p>${esc(cat.description || 'Khám phá ngay')}</p>
+                    </div>
+                </a>
+            `).join('');
+            if (window.feather) feather.replace();
+        }
+    }
+
     if (!home) {
         main.innerHTML = `
-            <div class="shop-hero">
-                <div class="container shop-hero__inner">
-                    <nav class="breadcrumbs">
-                        <a href="${url('/')}">Trang chủ</a>
+            <div class="shop-hero" style="background: url('${FF.asset('images/farmer_banner.jpg')}') center/cover no-repeat; position: relative; color: white;">
+                <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4);"></div>
+                <div class="container shop-hero__inner" style="position: relative; z-index: 2; padding: 60px 0;">
+                    <nav class="breadcrumbs" style="color: rgba(255,255,255,0.8);">
+                        <a href="${url('/')}" style="color: white;">Trang chủ</a>
                         <span>/</span>
-                        <span>Sản phẩm</span>
+                        <span style="color: white;">Sản phẩm</span>
                     </nav>
-                    <h1>Cửa hàng</h1>
-                    <p>Nông sản tươi sạch — từ vườn đến bàn ăn</p>
+                    <h1 style="color: white; margin-top: 16px; font-size: 40px; font-weight: 700;">Cửa hàng</h1>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 18px;">Nông sản tươi sạch — từ vườn đến bàn ăn</p>
                 </div>
             </div>
             
-            <div class="container category-chips">
-                <a href="javascript:void(0)" class="chip active">
-                    <div class="chip__icon"><img src="${FF.asset('images/placeholder.svg')}" alt="Tất cả"></div>
+            <div class="container category-chips" style="margin-top: -30px; position: relative; z-index: 10;">
+                <a href="javascript:void(0)" class="chip active" style="background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <div class="chip__icon" style="background: #eef7eb;"><i data-feather="grid" style="width: 16px; height: 16px; color: var(--green-600);"></i></div>
                     Tất cả
                 </a>
                 ${
                     (categories.data || []).map(category => `
-                        <a href="javascript:void(0)" class="chip">
-                            <div class="chip__icon"><img src="${FF.asset('images/placeholder.svg')}" alt="${esc(category.name)}"></div>
+                        <a href="javascript:void(0)" class="chip" style="background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <div class="chip__icon"><img src="${category.image_path ? category.image_path : 'https://placehold.co/100x100/eef7eb/2d6a4f?text=' + encodeURIComponent(category.name.substring(0,2))}" alt="${esc(category.name)}" style="object-fit: cover; width: 100%; height: 100%;"></div>
                             ${esc(category.name)}
                         </a>
                     `).join('')
@@ -233,7 +291,6 @@ async function catalog(
                                         <input type="radio" name="category_id" value="" checked>
                                         <span class="custom-checkbox"><i data-feather="check"></i></span>
                                         <span class="cat-name">Tất cả</span>
-                                        <span class="cat-count">(10)</span>
                                     </label>
                                     ${
                                         (categories.data || []).map(category => `
@@ -241,7 +298,6 @@ async function catalog(
                                                 <input type="radio" name="category_id" value="${esc(category.id)}">
                                                 <span class="custom-checkbox"><i data-feather="check"></i></span>
                                                 <span class="cat-name">${esc(category.name)}</span>
-                                                <span class="cat-count">(${Math.floor(Math.random()*15 + 2)})</span>
                                             </label>
                                         `).join('')
                                     }
@@ -327,7 +383,11 @@ async function catalog(
                 chip.classList.add('active');
                 if (radios[index]) {
                     radios[index].checked = true;
-                    form.dispatchEvent(new Event('submit'));
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
                 }
             };
         });
@@ -481,6 +541,7 @@ async function catalog(
             bindAdd(
                 target
             );
+            bindWishlist(target);
 
         } catch (error) {
 
@@ -494,6 +555,29 @@ async function catalog(
     }
 
     if (form) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.forEach((value, key) => {
+            const field = form.querySelector(`[name="${key}"]`);
+            if (field) {
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    const el = form.querySelector(`[name="${key}"][value="${value}"]`);
+                    if (el) el.checked = true;
+                } else {
+                    field.value = value;
+                }
+            }
+        });
+        
+        // update chips UI
+        const chips = document.querySelectorAll('.category-chips .chip');
+        const radios = document.querySelectorAll('input[name="category_id"]');
+        radios.forEach((radio, index) => {
+            if (radio.checked && chips[index]) {
+                chips.forEach(c => c.classList.remove('active'));
+                chips[index].classList.add('active');
+            }
+        });
+
         form.addEventListener(
             'submit',
             (e) => {
@@ -656,6 +740,10 @@ async function product() {
                         Thêm vào giỏ
                     </button>
 
+                    <button class="btn btn--outline wishlist-btn--lg" type="button" data-wishlist="${esc(productData.id)}" style="display:flex;align-items:center;gap:8px;">
+                        ${icon('heart')} Yêu thích
+                    </button>
+
                 </div>
 
                 <div data-feedback></div>
@@ -720,6 +808,7 @@ async function product() {
         doc.body.textContent;
 
     bindAdd(main);
+    bindWishlist(main);
 
 
 
@@ -795,7 +884,6 @@ async function product() {
             );
     }
     try {
-
         const reviews =
             await request(
                 '/products/' +
@@ -805,46 +893,49 @@ async function product() {
                 '/reviews'
             );
 
-        $('#product-reviews')
-            .innerHTML =
-            (reviews.data || [])
-                .map(
-                    (review) => `
-                        <article class="panel">
+        const reviewList = reviews.data || [];
+        const avgRating = reviewList.length
+            ? (reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length).toFixed(1)
+            : null;
 
-                            <strong>
-                                ${esc(
-                                    review.user
-                                        ?.full_name ||
-                                    review.user
-                                        ?.name ||
-                                    'Khách hàng'
-                                )}
-                            </strong>
+        const stars = (rating) => {
+            let s = '';
+            for (let i = 1; i <= 5; i++) {
+                s += `<svg width="16" height="16" viewBox="0 0 24 24" fill="${i <= Math.round(rating) ? '#f59e0b' : 'none'}" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+            }
+            return s;
+        };
 
-                            <p>
-                                ${esc(
-                                    review.rating
-                                )}
-                                / 5 sao
-                            </p>
+        $('#product-reviews').innerHTML = `
+            ${avgRating ? `
+            <div style="display:flex;align-items:center;gap:16px;background:#f9f9f9;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <div style="text-align:center;">
+                    <div style="font-size:48px;font-weight:700;color:#1a3b2e;line-height:1;">${avgRating}</div>
+                    <div style="margin:6px 0;">${stars(avgRating)}</div>
+                    <div style="color:#666;font-size:14px;">${reviewList.length} đánh giá</div>
+                </div>
+            </div>` : ''}
 
-                            <p>
-                                ${esc(
-                                    review.comment
-                                )}
-                            </p>
+            ${reviewList.map(r => `
+                <article style="border-bottom:1px solid #eee;padding:20px 0;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                        <div style="width:40px;height:40px;border-radius:50%;background:var(--green-100);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--green-700);font-size:16px;">
+                            ${esc((r.user?.full_name || r.user?.name || 'K')[0])}
+                        </div>
+                        <div>
+                            <div style="font-weight:600;">${esc(r.user?.full_name || r.user?.name || 'Khách hàng')}</div>
+                            <div style="display:flex;gap:2px;margin-top:2px;">${stars(r.rating)}</div>
+                        </div>
+                        <span style="margin-left:auto;color:#999;font-size:13px;">${esc(r.created_at?.substring(0,10) || '')}</span>
+                    </div>
+                    <p style="margin:0;color:#444;line-height:1.6;">${esc(r.comment)}</p>
+                </article>
+            `).join('')}
 
-                        </article>
-                    `
-                )
-                .join('')
-
-            ||
-
-            message(
-                'Chưa có đánh giá.'
-            );
+            ${reviewList.length === 0 ? `<div style="text-align:center;padding:40px;color:#999;">
+                <p style="font-size:16px;">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+            </div>` : ''}
+        `;
 
     } catch (error) {
 

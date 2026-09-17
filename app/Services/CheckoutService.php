@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Jobs\CancelUnpaidOrderJob;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use App\Models\Inventory;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -39,11 +40,44 @@ class CheckoutService
         $discountAmount = 0;
         $couponData = null;
 
-        if ($couponCode === 'XANH10') {
-            $discountAmount = (int) ($subtotal * 0.1);
-            $couponData = ['code' => $couponCode, 'discount' => $discountAmount];
-        } elseif ($couponCode) {
-            throw new Exception('Mã giảm giá không hợp lệ.', 422);
+        if ($couponCode) {
+            $coupon = Coupon::where('code', $couponCode)->first();
+
+            if (! $coupon || $coupon->status !== 'active') {
+                throw new Exception('Mã giảm giá không tồn tại hoặc đã bị khóa.', 422);
+            }
+            if ($coupon->starts_at && now()->lt($coupon->starts_at)) {
+                throw new Exception('Mã giảm giá chưa đến thời gian áp dụng.', 422);
+            }
+            if ($coupon->ends_at && now()->gt($coupon->ends_at)) {
+                throw new Exception('Mã giảm giá đã hết hạn.', 422);
+            }
+            if ($coupon->usage_limit !== null) {
+                // Count actual usage from orders table
+                $usedCount = Order::where('coupon_id', $coupon->id)
+                    ->whereNotIn('status', ['cancelled'])
+                    ->count();
+                if ($usedCount >= $coupon->usage_limit) {
+                    throw new Exception('Mã giảm giá đã hết lượt sử dụng.', 422);
+                }
+            }
+            if ($coupon->min_order_amount !== null && $subtotal < $coupon->min_order_amount) {
+                throw new Exception('Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã này.', 422);
+            }
+
+            // type: 'percent' or 'fixed'
+            if ($coupon->type === 'percent') {
+                $discountAmount = (int) ($subtotal * ($coupon->value / 100));
+            } else {
+                $discountAmount = (int) $coupon->value;
+            }
+
+            // Cap discount at subtotal
+            if ($discountAmount > $subtotal) {
+                $discountAmount = $subtotal;
+            }
+
+            $couponData = ['code' => $coupon->code, 'discount' => $discountAmount, 'id' => $coupon->id];
         }
 
         $grandTotal = max(0, $subtotal + $shippingFee - $discountAmount);
@@ -73,7 +107,7 @@ class CheckoutService
             $order = Order::forceCreate([
                 'order_code' => 'NSX-'.date('Ymd').'-'.rand(1000, 9999),
                 'user_id' => $userId,
-                'coupon_id' => null,
+                'coupon_id' => $previewData['coupon']['id'] ?? null,
                 'status' => 'pending',
                 'payment_method' => $data['payment_method'],
                 'payment_status' => 'unpaid',
@@ -86,6 +120,11 @@ class CheckoutService
                 'grand_total' => $previewData['grand_total'],
                 'note' => $data['note'] ?? null,
             ]);
+
+            if (isset($previewData['coupon']['id'])) {
+                // Count usage is now derived from orders, no increment needed on coupons table
+                // as usage is counted dynamically from orders
+            }
 
             foreach ($previewData['items'] as $itemData) {
                 $productId = $itemData['product']['id'];
@@ -116,6 +155,9 @@ class CheckoutService
             })->delete();
 
             DB::commit();
+
+            \App\Jobs\SendOrderConfirmationEmail::dispatch($order);
+
             if ($data['payment_method'] === 'vnpay') {
                 CancelUnpaidOrderJob::dispatch($order->id)->delay(now()->addMinutes(10));
             }

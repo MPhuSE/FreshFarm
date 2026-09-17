@@ -1,10 +1,15 @@
-    <?php
+<?php
 
+use App\Http\Controllers\Api\Admin\AuditLogController;
+use App\Http\Controllers\Api\Admin\CouponController;
+use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Api\Admin\PageController;
 use App\Http\Controllers\Api\Admin\PostController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ReportController;
+use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BenchmarkController;
@@ -12,6 +17,7 @@ use App\Http\Controllers\Api\Customer\CartController;
 use App\Http\Controllers\Api\Customer\CheckoutController;
 use App\Http\Controllers\Api\Customer\OrderController;
 use App\Http\Controllers\Api\Customer\ReviewController as CustomerReviewController;
+use App\Http\Controllers\Api\Customer\WishlistController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Public\CategoryController;
@@ -87,6 +93,10 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/reviews', [CustomerReviewController::class, 'store']);
 
+        Route::get('/wishlist', [WishlistController::class, 'index']);
+        Route::post('/wishlist', [WishlistController::class, 'store']);
+        Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']);
+
         /*
         |--------------------------------------------------------------------
         | ADMIN
@@ -103,18 +113,52 @@ Route::prefix('v1')->group(function () {
             Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
             Route::patch('/products/{id}/images/reorder', [ProductImageController::class, 'reorder']);
 
+            // --- Danh mục & Khuyến mãi ---
+            Route::apiResource('categories', App\Http\Controllers\Api\Admin\CategoryController::class)->except(['show']);
+            Route::apiResource('coupons', CouponController::class)->except(['show']);
+
             // --- Bài viết (Posts) ---
             Route::get('/posts', [PostController::class, 'index']);
             Route::post('/posts', [PostController::class, 'store']);
             Route::patch('/posts/{id}', [PostController::class, 'update']);
+            Route::delete('/posts/{id}', [PostController::class, 'destroy']);
+
+            // --- Đánh giá (Reviews) ---
+            Route::get('/reviews', [App\Http\Controllers\Api\Admin\ReviewController::class, 'index']);
+            Route::patch('/reviews/{id}', [App\Http\Controllers\Api\Admin\ReviewController::class, 'update']);
+            Route::delete('/reviews/{id}', [App\Http\Controllers\Api\Admin\ReviewController::class, 'destroy']);
+
+            // --- Đơn hàng (Orders) ---
+            Route::get('/orders/export', [AdminOrderController::class, 'export']);
+            Route::get('/orders', [AdminOrderController::class, 'index']);
+            Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
+            Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+            Route::patch('/orders/{id}/payment-status', [AdminOrderController::class, 'updatePaymentStatus']);
+
+            // --- Tồn kho (Inventory) ---
+            Route::get('/inventory', [InventoryController::class, 'index']);
+            Route::get('/inventory/{id}', [InventoryController::class, 'show']);
+            Route::patch('/inventory/{id}', [InventoryController::class, 'update']);
+
+            // --- Cài đặt (Settings) ---
+            Route::get('/settings', [SettingController::class, 'index']);
+            Route::post('/settings', [SettingController::class, 'update']);
+
+            // --- Audit Logs ---
+            Route::get('/audit-logs', [AuditLogController::class, 'index']);
+
+            // --- Trang tĩnh (Pages) ---
+            Route::apiResource('pages', PageController::class);
 
             // --- Đơn hàng ---
+            Route::get('/orders/export', [AdminOrderController::class, 'export']);
             Route::get('/orders', [AdminOrderController::class, 'index']);
             Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
             Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
             Route::patch('/orders/{id}/payment-status', [AdminOrderController::class, 'updatePaymentStatus']);
 
             // --- Người dùng ---
+            Route::get('/users', [UserController::class, 'index']);
             Route::patch('/users/{user}/status', [UserController::class, 'lock']);
             Route::patch('/users/{user}/role', [UserController::class, 'changeRole']);
 

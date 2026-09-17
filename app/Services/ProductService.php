@@ -22,7 +22,8 @@ class ProductService
     public function paginatePublic(array $filters): LengthAwarePaginator
     {
         // Dùng cache version thay vì Cache::tags() để tương thích với database driver
-        $version = Cache::get('products_paginate_version', 1);
+        // Sửa lỗi: lấy mặc định là 0 để khi increment lần đầu tiên nó sẽ thành 1, tránh bị trùng version
+        $version = Cache::get('products_paginate_version', 0);
         $cacheKey = "catalog:products:paginate:{$version}:".md5(json_encode($filters));
 
         return Cache::remember($cacheKey, 3600, function () use ($filters) {
@@ -30,6 +31,8 @@ class ProductService
 
             $query = Product::query()
                 ->with(['category', 'inventory', 'primaryImage'])
+                ->withAvg('reviews', 'rating')
+                ->withCount('reviews')
                 ->active();
 
             if (! empty($filters['q'])) {

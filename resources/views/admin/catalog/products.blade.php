@@ -101,7 +101,7 @@
 
 
     function getAuthHeaders(includeContentType = false) {
-        const token = localStorage.getItem('access_token');
+        const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
 
         const headers = {
             'Accept': 'application/json'

@@ -12,8 +12,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
+use App\Exports\OrdersExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 class OrderController extends Controller
 {
+    public function export()
+    {
+        return Excel::download(new OrdersExport, 'orders_export_' . now()->format('Ymd_His') . '.xlsx');
+    }
     #[OA\Get(
         path: '/api/v1/admin/orders',
         summary: 'Admin - danh sách đơn hàng',
@@ -53,16 +60,16 @@ class OrderController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/v1/admin/orders/{order_code}',
+        path: '/api/v1/admin/orders/{id}',
         summary: 'Admin - chi tiết đơn hàng',
         tags: ['Admin Orders'],
         security: [['bearerAuth' => []]],
-        parameters: [new OA\Parameter(name: 'order_code', in: 'path', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Chi tiết đơn hàng')]
     )]
-    public function show(string $order_code): JsonResponse
+    public function show(int $id): JsonResponse
     {
-        $order = Order::with('items')->where('order_code', $order_code)->first();
+        $order = Order::with('items')->find($id);
 
         if (! $order) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn hàng.', 'error_code' => 'ORDER_NOT_FOUND'], 404);

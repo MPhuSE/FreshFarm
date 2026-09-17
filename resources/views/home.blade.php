@@ -40,41 +40,20 @@
             <a href="{{ url('/products') }}" class="text-link">Xem tất cả danh mục <i data-feather="arrow-right"></i></a>
         </div>
         <div class="categories-grid">
-            <a href="{{ url('/products?category_id=1') }}" class="cat-card" style="background: #eef7eb;">
-                <div class="cat-card__img"><img src="{{ asset('tv4/assets/images/placeholder.svg') }}" alt="Rau củ"></div>
+            @php
+                $bgColors = ['#eef7eb', '#fff3e0', '#ffebee', '#fdf8e8', '#f0f4ec'];
+            @endphp
+            @foreach($categories ?? [] as $index => $cat)
+            <a href="{{ url('/products?category_id=' . $cat->id) }}" class="cat-card" style="background: {{ $bgColors[$index % count($bgColors)] }};">
+                <div class="cat-card__img">
+                    <img src="{{ $cat->image_path ? asset($cat->image_path) : 'https://placehold.co/400x400/eef7eb/2d6a4f?text='.urlencode($cat->name) }}" alt="{{ $cat->name }}">
+                </div>
                 <div class="cat-card__content">
-                    <h3>Rau củ <i data-feather="arrow-right"></i></h3>
-                    <p>Tươi ngon mỗi ngày</p>
+                    <h3>{{ $cat->name }} <i data-feather="arrow-right"></i></h3>
+                    <p>{{ $cat->description ?: 'Khám phá ngay' }}</p>
                 </div>
             </a>
-            <a href="{{ url('/products?category_id=2') }}" class="cat-card" style="background: #fff3e0;">
-                <div class="cat-card__img"><img src="{{ asset('tv4/assets/images/placeholder.svg') }}" alt="Trái cây"></div>
-                <div class="cat-card__content">
-                    <h3>Trái cây <i data-feather="arrow-right"></i></h3>
-                    <p>Ngọt lành tự nhiên</p>
-                </div>
-            </a>
-            <a href="{{ url('/products?category_id=3') }}" class="cat-card" style="background: #ffebee;">
-                <div class="cat-card__img"><img src="{{ asset('tv4/assets/images/placeholder.svg') }}" alt="Thịt & trứng"></div>
-                <div class="cat-card__content">
-                    <h3>Thịt & trứng <i data-feather="arrow-right"></i></h3>
-                    <p>An toàn, chất lượng</p>
-                </div>
-            </a>
-            <a href="{{ url('/products?category_id=4') }}" class="cat-card" style="background: #fdf8e8;">
-                <div class="cat-card__img"><img src="{{ asset('tv4/assets/images/placeholder.svg') }}" alt="Gạo & hạt"></div>
-                <div class="cat-card__content">
-                    <h3>Gạo & hạt <i data-feather="arrow-right"></i></h3>
-                    <p>Tinh hoa nông sản Việt</p>
-                </div>
-            </a>
-            <a href="{{ url('/products?category_id=5') }}" class="cat-card" style="background: #f0f4ec;">
-                <div class="cat-card__img"><img src="{{ asset('tv4/assets/images/placeholder.svg') }}" alt="Đặc sản"></div>
-                <div class="cat-card__content">
-                    <h3>Đặc sản <i data-feather="arrow-right"></i></h3>
-                    <p>Hương vị vùng miền</p>
-                </div>
-            </a>
+            @endforeach
         </div>
     </section>
 

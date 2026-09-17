@@ -8,16 +8,24 @@
     
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
+    
+    @stack('styles')
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex">
 
+    <!-- Sidebar overlay for mobile -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar -->
-    <aside class="w-64 bg-emerald-800 text-emerald-50 flex flex-col flex-shrink-0 transition-all duration-300 relative z-20">
-        <div class="h-16 flex items-center px-6 border-b border-emerald-700/50">
+    <aside id="adminSidebar" class="w-64 bg-emerald-800 text-emerald-50 flex flex-col flex-shrink-0 transition-transform duration-300 fixed inset-y-0 left-0 z-50 -translate-x-full lg:relative lg:translate-x-0">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-emerald-700/50">
             <span class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <i data-feather="leaf" class="w-6 h-6 text-emerald-400"></i>
                 NSX Admin
             </span>
+            <button onclick="toggleSidebar()" class="lg:hidden text-emerald-100 hover:text-white">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
         </div>
         
         <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
@@ -40,6 +48,31 @@
                 Sản phẩm
             </a>
             
+            <a href="{{ route('admin.categories.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/categories*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="grid" class="w-5 h-5"></i>
+                Danh mục
+            </a>
+
+            <a href="{{ route('admin.coupons.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/coupons*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="tag" class="w-5 h-5"></i>
+                Khuyến mãi
+            </a>
+
+            <a href="{{ route('admin.reviews.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/reviews*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="star" class="w-5 h-5"></i>
+                Đánh giá
+            </a>
+            
+            <a href="{{ route('admin.posts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/posts*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="file-text" class="w-5 h-5"></i>
+                Bài viết
+            </a>
+            
+            <a href="{{ route('admin.inventory.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/inventory*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="package" class="w-5 h-5"></i>
+                Tồn kho
+            </a>
+            
             <div class="pt-4 pb-2">
                 <p class="px-3 text-xs font-semibold text-emerald-400 uppercase tracking-wider">Hệ thống</p>
             </div>
@@ -58,6 +91,21 @@
                 <i data-feather="shield" class="w-5 h-5"></i>
                 Phân quyền
             </a>
+
+            <a href="{{ route('admin.system.pages') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/system/pages*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="layout" class="w-5 h-5"></i>
+                Trang tĩnh
+            </a>
+
+            <a href="{{ route('admin.system.audit-logs') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/system/audit-logs*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="activity" class="w-5 h-5"></i>
+                Nhật ký
+            </a>
+
+            <a href="{{ route('admin.system.settings') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-700 {{ request()->is('admin/system/settings*') ? 'bg-emerald-700 text-white shadow-inner' : 'text-emerald-100' }}">
+                <i data-feather="settings" class="w-5 h-5"></i>
+                Cài đặt
+            </a>
         </nav>
         
         <div class="p-4 border-t border-emerald-700/50">
@@ -71,9 +119,9 @@
     <!-- Main wrapper -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
         <!-- Topbar -->
-        <header class="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200 shadow-sm z-10">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 sticky top-0">
             <div class="flex items-center gap-4">
-                <button class="lg:hidden text-slate-500 hover:text-slate-700">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
                     <i data-feather="menu" class="w-6 h-6"></i>
                 </button>
             </div>
@@ -116,6 +164,14 @@
     <!-- Init Feather Icons -->
     <script>
         feather.replace();
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
     </script>
     
     @stack('scripts')

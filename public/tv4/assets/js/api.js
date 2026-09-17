@@ -30,6 +30,10 @@ import {
 } from './api.user.js';
 
 import {
+    loadWishlist
+} from './api.wishlist.js';
+
+import {
     showError,
     request,
     esc,
@@ -81,6 +85,9 @@ const handlers = {
     addresses:
         addresses,
 
+    wishlist:
+        loadWishlist,
+
     'ui-states':
         async () => {
 
@@ -125,7 +132,7 @@ async function startTV4() {
 
         const handler =
             handlers[page] ||
-            handlers.shop;
+            (() => {}); // Do nothing by default for static pages
 
         await handler();
 
