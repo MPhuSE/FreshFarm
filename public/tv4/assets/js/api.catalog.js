@@ -94,11 +94,11 @@ function bindAdd(root) {
                     try {
 
                         const quantity =
-                            Number(
+                            Math.floor(Number(
                                 root.querySelector(
                                     '[name=quantity]'
                                 )?.value || 1
-                            );
+                            )) || 1;
 
                         if (
                             !Number.isFinite(
@@ -711,11 +711,12 @@ async function product() {
                             type="number"
                             min="1"
                             max="${esc(
-                                productData
-                                    .available_quantity
+                                Math.floor(Number(productData.available_quantity)) || 1
                             )}"
-                            step="0.001"
+                            step="1"
                             value="1"
+                            onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value, 10) < 1) this.value = '1';"
                         >
                     </label>
 

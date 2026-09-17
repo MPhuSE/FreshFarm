@@ -6,7 +6,8 @@ import {
 
 async function auth(register = false) {
     // Redirect if already logged in
-    if (localStorage.getItem('access_token') || sessionStorage.getItem('access_token')) {
+    const existingToken = window.FF_AUTH ? window.FF_AUTH.getToken() : (localStorage.getItem('access_token') || sessionStorage.getItem('access_token'));
+    if (existingToken) {
         location.href = url('shop');
         return;
     }
@@ -121,21 +122,17 @@ async function auth(register = false) {
                     if (
                         response.data?.token
                     ) {
-
-                        sessionStorage.setItem(
-                            'access_token',
-                            response.data.token
-                        );
-
-                        localStorage.removeItem(
-                            'access_token'
-                        );
-
-                        if (response.data?.user) {
-                            localStorage.setItem(
-                                'current_user',
-                                JSON.stringify(response.data.user)
-                            );
+                        if (window.FF_AUTH) {
+                            window.FF_AUTH.setToken(response.data.token, false);
+                            if (response.data?.user) {
+                                window.FF_AUTH.setUser(response.data.user);
+                            }
+                        } else {
+                            sessionStorage.setItem('access_token', response.data.token);
+                            localStorage.removeItem('access_token');
+                            if (response.data?.user) {
+                                localStorage.setItem('current_user', JSON.stringify(response.data.user));
+                            }
                         }
 
                         location.href =
@@ -252,36 +249,23 @@ async function auth(register = false) {
                 if (
                     response.data?.token
                 ) {
-
-                    if (data.get('remember')) {
-                        localStorage.setItem(
-                            'access_token',
-                            response.data.token
-                        );
-                        sessionStorage.removeItem(
-                            'access_token'
-                        );
+                    const remember = Boolean(data.get('remember'));
+                    if (window.FF_AUTH) {
+                        window.FF_AUTH.setToken(response.data.token, remember);
+                        if (response.data?.user) {
+                            window.FF_AUTH.setUser(response.data.user);
+                        }
                     } else {
-                        sessionStorage.setItem(
-                            'access_token',
-                            response.data.token
-                        );
-                        localStorage.removeItem(
-                            'access_token'
-                        );
-                    }
-
-                    // Có thể lưu user nếu backend trả về
-                    if (
-                        response.data?.user
-                    ) {
-
-                        localStorage.setItem(
-                            'current_user',
-                            JSON.stringify(
-                                response.data.user
-                            )
-                        );
+                        if (remember) {
+                            localStorage.setItem('access_token', response.data.token);
+                            sessionStorage.removeItem('access_token');
+                        } else {
+                            sessionStorage.setItem('access_token', response.data.token);
+                            localStorage.removeItem('access_token');
+                        }
+                        if (response.data?.user) {
+                            localStorage.setItem('current_user', JSON.stringify(response.data.user));
+                        }
                     }
 
                     location.href =

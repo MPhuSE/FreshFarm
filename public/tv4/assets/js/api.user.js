@@ -30,8 +30,12 @@ async function account() {
         const response = await request('/me');
         const user = response.data;
 
-        // Save user to localStorage for header
-        localStorage.setItem('current_user', JSON.stringify(user));
+        // Save sanitized user to storage for header
+        if (window.FF_AUTH) {
+            window.FF_AUTH.setUser(user);
+        } else {
+            localStorage.setItem('current_user', JSON.stringify({ name: user.full_name || user.name, role: user.role }));
+        }
 
         // Fill the existing Blade form fields
         const nameField = document.getElementById('full_name');
@@ -80,10 +84,14 @@ async function account() {
                     body
                 });
 
-                // Update localStorage
+                // Update user storage
                 user.full_name = body.full_name;
                 user.phone = body.phone;
-                localStorage.setItem('current_user', JSON.stringify(user));
+                if (window.FF_AUTH) {
+                    window.FF_AUTH.setUser(user);
+                } else {
+                    localStorage.setItem('current_user', JSON.stringify({ name: user.full_name, role: user.role }));
+                }
 
                 if (typeof toast === 'function') {
                     toast('Đã cập nhật thông tin tài khoản');

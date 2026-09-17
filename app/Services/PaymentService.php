@@ -10,6 +10,14 @@ class PaymentService
         $vnp_HashSecret = config('services.vnpay.hash_secret');
         $vnp_Url = config('services.vnpay.url');
         $vnp_Returnurl = config('services.vnpay.return_url');
+        if (request()->hasHeader('host')) {
+            // Keep customer on their current website host (127.0.0.1, localhost, or production domain)
+            $vnp_Returnurl = request()->schemeAndHttpHost() . '/payment/vnpay/return';
+        } elseif (empty($vnp_Returnurl)) {
+            $vnp_Returnurl = url('/payment/vnpay/return');
+        } elseif (str_contains($vnp_Returnurl, '/api/v1/payment/vnpay/ipn')) {
+            $vnp_Returnurl = str_replace('/api/v1/payment/vnpay/ipn', '/payment/vnpay/return', $vnp_Returnurl);
+        }
 
         $vnp_TxnRef = $order->order_code;
         $vnp_OrderInfo = 'Thanh toan don hang '.$order->order_code;
@@ -59,13 +67,17 @@ class PaymentService
         $vnp_HashSecret = config('services.vnpay.hash_secret');
         $vnp_SecureHash = $requestData['vnp_SecureHash'] ?? '';
 
-        unset($requestData['vnp_SecureHash']);
-        unset($requestData['vnp_SecureHashType']);
+        $vnpData = [];
+        foreach ($requestData as $key => $value) {
+            if (str_starts_with($key, 'vnp_') && $key !== 'vnp_SecureHash' && $key !== 'vnp_SecureHashType') {
+                $vnpData[$key] = $value;
+            }
+        }
 
-        ksort($requestData);
+        ksort($vnpData);
         $hashData = '';
         $i = 0;
-        foreach ($requestData as $key => $value) {
+        foreach ($vnpData as $key => $value) {
             if ($i == 1) {
                 $hashData = $hashData.'&'.urlencode($key).'='.urlencode($value);
             } else {
@@ -76,6 +88,6 @@ class PaymentService
 
         $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
 
-        return $secureHash === $vnp_SecureHash;
+        return hash_equals(strtolower($secureHash), strtolower($vnp_SecureHash));
     }
 }

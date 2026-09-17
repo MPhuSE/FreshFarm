@@ -4,9 +4,7 @@
 @section('page', 'orders')
 
 @section('content')
-<main id="live-main">
-
-    <section class="page-hero page-hero--compact">
+<section class="page-hero page-hero--compact">
         <div class="container">
 
             <nav class="breadcrumbs">
@@ -76,6 +74,4 @@
         </div>
 
     </section>
-
-</main>
 @endsection

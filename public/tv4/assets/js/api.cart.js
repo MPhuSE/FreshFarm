@@ -202,13 +202,14 @@ async function cart() {
                                                     <input
                                                         type="number"
                                                         min="1"
-                                                        step="0.001"
+                                                        step="1"
                                                         value="${esc(
-                                                            item.quantity
+                                                            Math.floor(Number(item.quantity)) || 1
                                                         )}"
                                                         data-quantity="${esc(
                                                             item.id
                                                         )}"
+                                                        onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"
                                                         aria-label="Số lượng ${esc(
                                                             item
                                                                 .product
@@ -386,10 +387,10 @@ async function cart() {
 
                                 body: {
                                     quantity:
-                                        Number(
+                                        Math.floor(Number(
                                             inputElement
                                                 .value
-                                        )
+                                        )) || 1
                                 }
                             }
                         );

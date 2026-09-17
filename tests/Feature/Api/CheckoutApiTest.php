@@ -183,4 +183,51 @@ class CheckoutApiTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_create_vnpay_payment_url_success()
+    {
+        $orderResponse = $this->actingAs($this->user)->postJson('/api/v1/orders', [
+            'address_id' => $this->address->id,
+            'payment_method' => 'vnpay',
+            'idempotency_key' => 'unique-req-vnpay-1',
+        ]);
+
+        $orderResponse->assertStatus(201);
+        $orderCode = $orderResponse->json('data.order_code');
+
+        $paymentResponse = $this->actingAs($this->user)->postJson('/api/v1/payment/vnpay/' . $orderCode);
+
+        $paymentResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        $this->assertNotEmpty($paymentResponse->json('payment_url'));
+        $this->assertNotEmpty($paymentResponse->json('data.payment_url'));
+    }
+
+    public function test_vnpay_return_page_renders_and_updates_order()
+    {
+        $orderResponse = $this->actingAs($this->user)->postJson('/api/v1/orders', [
+            'address_id' => $this->address->id,
+            'payment_method' => 'vnpay',
+            'idempotency_key' => 'unique-req-vnpay-return',
+        ]);
+
+        $orderResponse->assertStatus(201);
+        $orderCode = $orderResponse->json('data.order_code');
+
+        $hashSecret = config('services.vnpay.hash_secret');
+        $hashData = 'vnp_ResponseCode=00&vnp_TxnRef=' . $orderCode;
+        $secureHash = hash_hmac('sha512', $hashData, $hashSecret);
+
+        $returnResponse = $this->actingAs($this->user)->get('/payment/vnpay/return?vnp_ResponseCode=00&vnp_TxnRef=' . $orderCode . '&vnp_SecureHash=' . $secureHash);
+
+        $returnResponse->assertRedirect('/orders/' . $orderCode . '?payment=success');
+
+        $this->assertDatabaseHas('orders', [
+            'order_code' => $orderCode,
+            'payment_status' => 'paid',
+        ]);
+    }
 }

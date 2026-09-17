@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Page;
+use App\Services\PaymentService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // TV4: display routes only. API controllers and middleware remain unchanged.
@@ -30,8 +33,26 @@ Route::get('/checkout', function () {
     return view('checkout.index', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
 })->name('storefront.checkout');
 
-Route::get('/payment/vnpay/return', function () {
-    return view('checkout.vnpay-return', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
+Route::get('/payment/vnpay/return', function (Request $request, PaymentService $paymentService) {
+    $inputData = $request->all();
+    $orderCode = $inputData['vnp_TxnRef'] ?? null;
+    $responseCode = $inputData['vnp_ResponseCode'] ?? null;
+
+    if (!empty($orderCode)) {
+        $isValid = $paymentService->verifyIpn($inputData);
+        if ($isValid && $responseCode === '00') {
+            $order = Order::where('order_code', $orderCode)->first();
+            if ($order && $order->payment_status !== 'paid') {
+                $order->payment_status = 'paid';
+                $order->save();
+            }
+            return redirect('/orders/' . urlencode($orderCode) . '?payment=success');
+        }
+
+        return redirect('/orders/' . urlencode($orderCode) . '?payment=failed');
+    }
+
+    return redirect('/orders');
 })->name('storefront.vnpay-return');
 
 Route::get('/orders', function () {

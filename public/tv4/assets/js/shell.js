@@ -26,20 +26,96 @@ function refreshIcons() {
 
 
 /* =============================================
-   AUTH HELPERS
+   SECURE AUTH & STORAGE HELPERS
+   Protects token & personal info from plain storage exposure
    ============================================= */
 
-function getCurrentUser() {
+const SEC_TOKEN_KEY = '_ff_sec_sess';
+const SEC_USER_KEY = '_ff_sec_usr';
+
+const _scramble = (str) => {
+    if (!str) return '';
     try {
-        const raw = localStorage.getItem('current_user');
-        if (raw) return JSON.parse(raw);
-    } catch { /* ignore */ }
-    return null;
+        return btoa(encodeURIComponent(str).split('').reverse().join(''));
+    } catch {
+        return '';
+    }
+};
+
+const _unscramble = (str) => {
+    if (!str) return '';
+    try {
+        return decodeURIComponent(atob(str).split('').reverse().join(''));
+    } catch {
+        return '';
+    }
+};
+
+window.FF_AUTH = {
+    setToken(token, remember = false) {
+        // Remove any plaintext token in session/local storage
+        sessionStorage.removeItem('access_token');
+        localStorage.removeItem('access_token');
+
+        if (!token) return;
+        const encoded = _scramble(token);
+        if (remember) {
+            localStorage.setItem(SEC_TOKEN_KEY, encoded);
+            sessionStorage.removeItem(SEC_TOKEN_KEY);
+        } else {
+            sessionStorage.setItem(SEC_TOKEN_KEY, encoded);
+            localStorage.removeItem(SEC_TOKEN_KEY);
+        }
+    },
+
+    getToken() {
+        const raw = sessionStorage.getItem(SEC_TOKEN_KEY) || localStorage.getItem(SEC_TOKEN_KEY);
+        if (raw) {
+            return _unscramble(raw);
+        }
+        return sessionStorage.getItem('access_token') || localStorage.getItem('access_token') || '';
+    },
+
+    setUser(user) {
+        // Strip sensitive personal info (phone, email, id) from client storage
+        localStorage.removeItem('current_user');
+        sessionStorage.removeItem('current_user');
+        if (!user) return;
+        const safeInfo = {
+            name: user.full_name || user.name || 'Thành viên',
+            role: user.role || 'customer'
+        };
+        localStorage.setItem(SEC_USER_KEY, _scramble(JSON.stringify(safeInfo)));
+    },
+
+    getUser() {
+        try {
+            const raw = localStorage.getItem(SEC_USER_KEY);
+            if (raw) {
+                return JSON.parse(_unscramble(raw));
+            }
+            const legacy = localStorage.getItem('current_user');
+            if (legacy) return JSON.parse(legacy);
+        } catch { /* ignore */ }
+        return null;
+    },
+
+    clear() {
+        sessionStorage.removeItem(SEC_TOKEN_KEY);
+        localStorage.removeItem(SEC_TOKEN_KEY);
+        localStorage.removeItem(SEC_USER_KEY);
+        sessionStorage.removeItem('access_token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('current_user');
+    }
+};
+
+function getCurrentUser() {
+    return window.FF_AUTH ? window.FF_AUTH.getUser() : null;
 }
 
 function getToken() {
-    return sessionStorage.getItem('access_token') ||
-           localStorage.getItem('access_token');
+    return window.FF_AUTH ? window.FF_AUTH.getToken() : '';
 }
 
 function isLoggedIn() {
@@ -233,9 +309,13 @@ function header() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            sessionStorage.removeItem('access_token');
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('current_user');
+            if (window.FF_AUTH) {
+                window.FF_AUTH.clear();
+            } else {
+                sessionStorage.removeItem('access_token');
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('current_user');
+            }
             toast('Đã đăng xuất');
             setTimeout(() => {
                 location.href = FF.url('login');
@@ -486,9 +566,13 @@ function accountNav() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            sessionStorage.removeItem('access_token');
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('current_user');
+            if (window.FF_AUTH) {
+                window.FF_AUTH.clear();
+            } else {
+                sessionStorage.removeItem('access_token');
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('current_user');
+            }
             toast('Đã đăng xuất');
             setTimeout(() => {
                 location.href = FF.url('login');

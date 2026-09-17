@@ -46,9 +46,12 @@ class PaymentController extends Controller
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function createPaymentUrl($order_code)
+    public function createPaymentUrl(Request $request, $order_code)
     {
-        $order = Order::where('order_code', $order_code)->where('user_id', auth()->id())->firstOrFail();
+        $userId = auth()->id() ?? auth('sanctum')->id() ?? $request->user()?->id;
+        $order = Order::where('order_code', $order_code)
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->firstOrFail();
 
         if ($order->payment_status === 'paid') {
             return response()->json(['success' => false, 'message' => 'Đơn hàng đã được thanh toán.'], 400);
@@ -58,6 +61,10 @@ class PaymentController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Tạo link thanh toán VNPay thành công.',
+            'data' => [
+                'payment_url' => $url,
+            ],
             'payment_url' => $url,
         ]);
     }

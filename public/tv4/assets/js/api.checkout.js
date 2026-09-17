@@ -455,10 +455,15 @@ async function checkout() {
                                 result.data;
 
                             if (order?.payment_method === 'vnpay' && order?.order_code) {
-                                const vnpayResult = await request('/payment/vnpay/' + order.order_code, { method: 'POST' });
-                                if (vnpayResult.data?.payment_url) {
-                                    location.href = vnpayResult.data.payment_url;
-                                    return;
+                                try {
+                                    const vnpayResult = await request('/payment/vnpay/' + encodeURIComponent(order.order_code), { method: 'POST' });
+                                    const paymentUrl = vnpayResult?.data?.payment_url || vnpayResult?.payment_url;
+                                    if (paymentUrl) {
+                                        location.href = paymentUrl;
+                                        return;
+                                    }
+                                } catch (vnpayError) {
+                                    console.error('VNPay error:', vnpayError);
                                 }
                             }
 

@@ -35,13 +35,16 @@ export const cash = (value) => {
 export const url = FF.url;
 
 export const token = () => {
+    if (window.FF_AUTH && typeof window.FF_AUTH.getToken === 'function') {
+        return window.FF_AUTH.getToken();
+    }
     return (
         sessionStorage.getItem(
             'access_token'
         ) ||
         localStorage.getItem(
             'access_token'
-        )
+        ) || ''
     );
 };
 
@@ -190,17 +193,13 @@ export async function request(
                 response.status ===
                 401
             ) {
-                sessionStorage.removeItem(
-                    'access_token'
-                );
-
-                localStorage.removeItem(
-                    'access_token'
-                );
-
-                localStorage.removeItem(
-                    'current_user'
-                );
+                if (window.FF_AUTH) {
+                    window.FF_AUTH.clear();
+                } else {
+                    sessionStorage.removeItem('access_token');
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('current_user');
+                }
             }
 
             throw error;
