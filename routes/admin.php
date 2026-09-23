@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PerformanceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,3 +33,6 @@ Route::get('/posts/{id}/edit', function ($id) {
     $post = App\Models\Post::findOrFail($id);
     return view('admin.posts.form', compact('post'));
 })->name('admin.posts.edit');
+
+Route::get('/performance', [PerformanceController::class, 'index'])->name('admin.performance.index');
+Route::post('/performance/run', [PerformanceController::class, 'runTest'])->name('admin.performance.run');
