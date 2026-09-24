@@ -458,12 +458,18 @@ function getOrderStatus(status) {
 
         shipping:
             ['Đang giao', 'bg-purple-100 text-purple-700'],
+            
+        delivered:
+            ['Đã giao', 'bg-emerald-100 text-emerald-700'],
 
         completed:
             ['Hoàn thành', 'bg-emerald-100 text-emerald-700'],
 
         cancelled:
-            ['Đã hủy', 'bg-red-100 text-red-700']
+            ['Đã hủy', 'bg-red-100 text-red-700'],
+            
+        returned:
+            ['Hoàn trả', 'bg-orange-100 text-orange-700']
 
     };
 

@@ -101,7 +101,9 @@ function getOrderStatus(status) {
         confirmed: ['Đã xác nhận', 'bg-blue-100 text-blue-700'],
         shipping: ['Đang giao', 'bg-purple-100 text-purple-700'],
         completed: ['Hoàn thành', 'bg-emerald-100 text-emerald-700'],
-        cancelled: ['Đã hủy', 'bg-red-100 text-red-700']
+        cancelled: ['Đã hủy', 'bg-red-100 text-red-700'],
+        delivered: ['Đã giao', 'bg-emerald-100 text-emerald-700'],
+        returned: ['Hoàn trả', 'bg-orange-100 text-orange-700']
     };
     const item = statusMap[status] || ['Không xác định', 'bg-slate-100 text-slate-600'];
     return `<span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${item[1]} ring-1 ring-inset ring-current/20">${item[0]}</span>`;

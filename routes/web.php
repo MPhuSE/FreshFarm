@@ -79,7 +79,7 @@ Route::get('/addresses', function () {
     return view('auth.addresses', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
 })->name('storefront.addresses');
 
-Route::get('/review', function () {
+Route::get('/reviews', function () {
     return view('review', ['tv4Preview' => app()->environment('local') && request()->boolean('preview')]);
 })->name('storefront.review');
 
