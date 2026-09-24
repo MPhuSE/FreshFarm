@@ -257,6 +257,12 @@ function header() {
                     Tin tức
                 </a>
 
+                <a
+                    class="${page === 'home' ? 'is-active' : ''}"
+                    href="/dang-nhap"
+                >
+                    Đăng nhập
+                </a>
             </nav>
 
             <div class="nav__search">
