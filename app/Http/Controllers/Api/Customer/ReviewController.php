@@ -25,7 +25,7 @@ class ReviewController extends Controller
             return response()->json(['message' => 'Bạn không có quyền đánh giá sản phẩm này.'], 403);
         }
 
-        if ($orderItem->order->status !== 'completed') {
+        if (! in_array($orderItem->order->status, ['completed', 'delivered'])) {
             return response()->json(['message' => 'Bạn cần nhận hàng thành công trước khi có thể đánh giá.'], 403);
         }
 

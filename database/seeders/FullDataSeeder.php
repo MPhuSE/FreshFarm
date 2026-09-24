@@ -174,18 +174,20 @@ class FullDataSeeder extends Seeder
             );
 
             // 4. Seed Product Images
-            // Tạo ảnh placeholder ngẫu nhiên dựa vào tên
-            $placeholderColor = match($pData['category_id']) {
-                $categoryModels[0]->id => 'eef7eb/0a2d1d', // Rau củ
-                $categoryModels[1]->id => 'fff3e0/e65100', // Trái cây
-                $categoryModels[2]->id => 'ffebee/b71c1c', // Thịt trứng
-                $categoryModels[3]->id => 'fdf8e8/f57f17', // Gạo hạt
-                $categoryModels[4]->id => 'f0f4ec/33691e', // Đặc sản
-                default => 'f4f6f8/333333'
-            };
-            
-            $encodedName = urlencode($pData['name']);
-            $imageUrl = "https://placehold.co/600x600/{$placeholderColor}?text={$encodedName}";
+            $realImagesMap = [
+                'RC-001' => '/tv4/assets/images/products/xa-lach-da-lat.jpg',
+                'RC-002' => '/tv4/assets/images/products/ca-chua-bi.jpg',
+                'RC-003' => '/tv4/assets/images/products/ca-rot-huu-co.jpg',
+                'TC-001' => '/tv4/assets/images/products/bo-sap.jpg',
+                'TC-002' => '/tv4/assets/images/products/cam-sanh-vinh-long.jpg',
+                'TC-003' => '/tv4/assets/images/products/dau-tay-thuy-canh.jpg',
+                'TT-001' => '/tv4/assets/images/products/thit-heo-thao-moc.jpg',
+                'TT-002' => '/tv4/assets/images/products/trung-ga-ta.jpg',
+                'DS-001' => '/tv4/assets/images/products/nam-dui-ga.jpg',
+                'DS-002' => '/tv4/assets/images/products/mat-ong-rung-sap-ong.jpg',
+            ];
+
+            $imageUrl = $realImagesMap[$pData['sku']] ?? "https://placehold.co/600x600/eef7eb/0a2d1d?text=".urlencode($pData['name']);
             
             ProductImage::updateOrCreate(
                 [

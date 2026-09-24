@@ -1,6 +1,9 @@
 const ADMIN_API_BASE_URL = '/api/v1';
 
 function adminApiHeaders(json = false) {
+	if (window.AdminAuth && typeof window.AdminAuth.getHeaders === 'function') {
+		return window.AdminAuth.getHeaders(json);
+	}
 	const headers = { Accept: 'application/json' };
 	const token = window.sessionStorage.getItem('access_token') || window.localStorage.getItem('access_token');
 

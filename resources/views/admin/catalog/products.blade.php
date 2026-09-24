@@ -101,20 +101,13 @@
 
 
     function getAuthHeaders(includeContentType = false) {
+        if (window.AdminAuth) {
+            return window.AdminAuth.getHeaders(includeContentType);
+        }
         const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
-
-        const headers = {
-            'Accept': 'application/json'
-        };
-
-        if (includeContentType) {
-            headers['Content-Type'] = 'application/json';
-        }
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
+        const headers = { 'Accept': 'application/json' };
+        if (includeContentType) headers['Content-Type'] = 'application/json';
+        if (token) headers['Authorization'] = `Bearer ${token}`;
         return headers;
     }
 

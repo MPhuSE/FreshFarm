@@ -46,25 +46,32 @@ const API_BASE_URL = '/api/v1';
 async function loadLogs(page = 1) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/audit-logs?page=${page}`, {
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Accept': 'application/json'
             }
         });
 
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
         const result = await response.json();
 
         if (response.ok) {
-            displayLogs(result.data || []);
+            const logs = Array.isArray(result) ? result : (Array.isArray(result?.data) ? result.data : []);
+            displayLogs(logs);
             displayPagination(result);
             return;
         }
 
-        alert('Không thể tải nhật ký.');
+        console.error('Audit logs error:', result);
+        displayLogs([]);
 
     } catch (error) {
         console.error(error);
-        alert('Không thể kết nối đến API.');
+        displayLogs([]);
     }
 }
 

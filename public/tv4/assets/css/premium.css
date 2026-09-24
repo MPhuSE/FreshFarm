@@ -859,7 +859,7 @@ input:focus, select:focus, textarea:focus {
 }
 .home-hero__content {
     flex: 1;
-    padding: 64px;
+    padding: clamp(28px, 4.5vw, 64px);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -868,31 +868,34 @@ input:focus, select:focus, textarea:focus {
     z-index: 2;
 }
 .home-hero__content h1 {
-    font-size: 56px;
-    line-height: 1.1;
+    font-size: clamp(28px, 4.5vw, 56px);
+    line-height: 1.15;
     color: var(--green-900);
     margin: 16px 0 24px;
     letter-spacing: -0.02em;
+    word-break: break-word;
 }
 .home-hero__content p {
-    font-size: 18px;
+    font-size: clamp(14px, 1.4vw, 18px);
     color: var(--text);
-    margin-bottom: 40px;
-    max-width: 400px;
+    margin-bottom: clamp(20px, 3vw, 40px);
+    max-width: 440px;
 }
 .home-hero__actions {
     display: flex;
-    gap: 16px;
-    margin-bottom: 48px;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: clamp(24px, 3.5vw, 48px);
 }
 .home-hero__actions .btn {
     border-radius: 100px;
-    padding: 0 32px;
-    height: 52px;
+    padding: 0 28px;
+    height: 50px;
 }
 .home-hero__badges {
     display: flex;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 12px 20px;
     font-size: 14px;
     font-weight: 500;
     color: var(--green-800);
@@ -901,11 +904,13 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
 }
 .home-hero__badges .ui-icon {
     width: 20px;
     height: 20px;
     color: var(--primary);
+    flex-shrink: 0;
 }
 .home-hero__image {
     flex: 1.2;
@@ -1112,18 +1117,35 @@ html, body {
     max-width: 100%;
 }
 
+@media (max-width: 1100px) and (min-width: 961px) {
+    .nav__links {
+        gap: 16px;
+        font-size: 14px;
+    }
+    .nav__search {
+        max-width: 280px;
+        margin: 0 12px;
+    }
+    .categories-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+}
+
 @media (max-width: 1024px) {
     .home-hero__inner {
         flex-direction: column;
     }
     .home-hero__image {
-        min-height: 360px;
+        min-height: 320px;
+        height: 340px;
     }
     .home-hero__image img {
         border-radius: 0 0 24px 24px;
     }
     .categories-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
     }
     .home-trust-strip__inner {
         flex-wrap: wrap;
@@ -1311,6 +1333,7 @@ html, body {
 /* User Dropdown */
 .user-menu-wrapper {
     position: relative;
+    z-index: 100;
 }
 .user-dropdown {
     position: absolute;
@@ -1318,14 +1341,14 @@ html, body {
     right: 0;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     padding: 8px;
-    min-width: 200px;
+    min-width: 220px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(10px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
 }
@@ -1333,6 +1356,14 @@ html, body {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+}
+@media (max-width: 768px) {
+    .user-dropdown {
+        left: 0;
+        right: auto;
+        min-width: 200px;
+        max-width: calc(100vw - 24px);
+    }
 }
 .user-dropdown a {
     display: flex;
@@ -1363,3 +1394,57 @@ html, body {
     background: #eee;
     margin: 6px 0;
 }
+
+/* Mobile Auth in Navigation Drawer */
+.nav__mobile-auth {
+    display: none;
+}
+
+@media (max-width: 960px) {
+    .nav__mobile-auth {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+    }
+    .nav__mobile-auth .btn {
+        width: 100%;
+        min-height: 42px;
+        height: 42px;
+        padding: 0 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+    .nav__mobile-auth .btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    .nav__mobile-login-btn {
+        background: #f8faf8;
+        border: 1px solid var(--line);
+        color: var(--green-700);
+    }
+    .nav__mobile-login-btn:hover {
+        background: var(--green-100);
+        border-color: var(--green-600);
+    }
+    .nav__mobile-register-btn {
+        background: var(--green-600);
+        color: white;
+        border: 1px solid var(--green-600);
+    }
+    .nav__mobile-register-btn:hover {
+        background: var(--green-700);
+        border-color: var(--green-700);
+    }
+}
+
+

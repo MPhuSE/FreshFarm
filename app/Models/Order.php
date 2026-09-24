@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['order_code', 'user_id', 'coupon_id', 'subtotal', 'discount_amount', 'grand_total', 'status', 'payment_method', 'payment_status', 'shipping_address', 'recipient_name', 'phone'])]
+#[Fillable(['order_code', 'user_id', 'coupon_id', 'subtotal', 'discount_amount', 'shipping_fee', 'grand_total', 'status', 'payment_method', 'payment_status', 'transaction_ref', 'shipping_address', 'recipient_name', 'phone', 'carrier', 'tracking_code', 'note'])]
 class Order extends Model
 {
     use HasFactory;
@@ -19,13 +19,18 @@ class Order extends Model
         'coupon_id',
         'subtotal',
         'discount_amount',
+        'shipping_fee',
         'grand_total',
         'status',
         'payment_method',
         'payment_status',
+        'transaction_ref',
         'shipping_address',
         'recipient_name',
         'phone',
+        'carrier',
+        'tracking_code',
+        'note',
     ];
 
     public function user(): BelongsTo

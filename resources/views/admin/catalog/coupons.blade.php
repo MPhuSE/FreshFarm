@@ -72,7 +72,7 @@
                     <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">Loại giảm giá *</label>
                         <select id="couponType" required class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-                            <option value="fixed">Tiền mặt (VND)</option>
+                            <option value="fixed">Tiền mặt (VNĐ)</option>
                             <option value="percent">Phần trăm (%)</option>
                         </select>
                     </div>
@@ -80,12 +80,14 @@
                 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Giá trị giảm *</label>
-                        <input type="number" id="couponValue" required min="0" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <label id="couponValueLabel" class="mb-1 block text-sm font-medium text-slate-700">Giá trị giảm (VNĐ) *</label>
+                        <input type="number" id="couponValue" required min="0" step="any" placeholder="Ví dụ: 20000" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <div id="couponValueHint" class="mt-1 text-xs text-emerald-600 font-medium"></div>
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Đơn tối thiểu (VND)</label>
-                        <input type="number" id="couponMinOrder" value="0" min="0" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Đơn tối thiểu (VNĐ)</label>
+                        <input type="number" id="couponMinOrder" value="0" min="0" step="any" placeholder="Ví dụ: 500000" class="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <div id="couponMinOrderHint" class="mt-1 text-xs text-slate-500"></div>
                     </div>
                 </div>
                 
@@ -163,13 +165,18 @@
         }
 
         tbody.innerHTML = coupons.map(coupon => {
-            const val = coupon.type === 'percent' ? `${coupon.value}%` : `${new Intl.NumberFormat('vi-VN').format(coupon.value)}đ`;
+            const numVal = parseFloat(coupon.value) || 0;
+            const val = coupon.type === 'percent' ? `${numVal}%` : `${new Intl.NumberFormat('vi-VN').format(numVal)} đ`;
+            const minOrder = parseFloat(coupon.min_order_amount) || 0;
             
             return `
             <tr class="hover:bg-slate-50">
                 <td class="px-5 py-3 font-bold text-slate-800">${escapeHtml(coupon.code)}</td>
                 <td class="px-5 py-3">${coupon.type === 'percent' ? 'Phần trăm' : 'Tiền mặt'}</td>
-                <td class="px-5 py-3 font-medium text-emerald-600">${val}</td>
+                <td class="px-5 py-3">
+                    <span class="font-medium text-emerald-600">${val}</span>
+                    ${minOrder > 0 ? `<div class="text-xs text-slate-400">Đơn từ ${new Intl.NumberFormat('vi-VN').format(minOrder)}đ</div>` : ''}
+                </td>
                 <td class="px-5 py-3 text-sm text-slate-500">
                     ${coupon.starts_at ? new Date(coupon.starts_at).toLocaleDateString('vi-VN') : 'Bất kỳ'} 
                     &rarr; 
@@ -222,6 +229,49 @@
         return d.toISOString().slice(0, 16);
     }
 
+    function updateCouponTypeUI() {
+        const type = document.getElementById('couponType').value;
+        const label = document.getElementById('couponValueLabel');
+        const input = document.getElementById('couponValue');
+        if (type === 'percent') {
+            label.textContent = 'Giá trị giảm (%) *';
+            input.placeholder = 'Ví dụ: 10 (từ 1 - 100)';
+            input.max = 100;
+        } else {
+            label.textContent = 'Giá trị giảm (VNĐ) *';
+            input.placeholder = 'Ví dụ: 20000';
+            input.removeAttribute('max');
+        }
+        updateValueHint();
+    }
+
+    function updateValueHint() {
+        const type = document.getElementById('couponType').value;
+        const rawVal = document.getElementById('couponValue').value;
+        const val = parseFloat(rawVal);
+        const hint = document.getElementById('couponValueHint');
+        if (isNaN(val) || val <= 0) {
+            hint.textContent = '';
+            return;
+        }
+        if (type === 'percent') {
+            hint.textContent = `Xem trước: Giảm ${val}%`;
+        } else {
+            hint.textContent = `Xem trước: Giảm ${new Intl.NumberFormat('vi-VN').format(val)} đ`;
+        }
+    }
+
+    function updateMinOrderHint() {
+        const rawVal = document.getElementById('couponMinOrder').value;
+        const val = parseFloat(rawVal);
+        const hint = document.getElementById('couponMinOrderHint');
+        if (isNaN(val) || val <= 0) {
+            hint.textContent = 'Áp dụng cho mọi giá trị đơn';
+            return;
+        }
+        hint.textContent = `Đơn tối thiểu: ${new Intl.NumberFormat('vi-VN').format(val)} đ`;
+    }
+
     function openModal() {
         document.getElementById('couponId').value = '';
         document.getElementById('couponCode').value = '';
@@ -233,6 +283,8 @@
         document.getElementById('couponEndsAt').value = '';
         document.getElementById('couponStatus').value = 'active';
         document.getElementById('modalTitle').textContent = 'Thêm mã giảm giá';
+        updateCouponTypeUI();
+        updateMinOrderHint();
         document.getElementById('couponModal').classList.remove('hidden');
     }
 
@@ -240,13 +292,16 @@
         document.getElementById('couponId').value = coupon.id;
         document.getElementById('couponCode').value = coupon.code;
         document.getElementById('couponType').value = coupon.type;
-        document.getElementById('couponValue').value = coupon.value;
-        document.getElementById('couponMinOrder').value = coupon.min_order_amount;
+        // Parse float to remove redundant trailing zeros like 20000.00
+        document.getElementById('couponValue').value = parseFloat(coupon.value) || 0;
+        document.getElementById('couponMinOrder').value = parseFloat(coupon.min_order_amount) || 0;
         document.getElementById('couponUsageLimit').value = coupon.usage_limit || '';
         document.getElementById('couponStartsAt').value = formatDateTimeLocal(coupon.starts_at);
         document.getElementById('couponEndsAt').value = formatDateTimeLocal(coupon.ends_at);
         document.getElementById('couponStatus').value = coupon.status;
         document.getElementById('modalTitle').textContent = 'Sửa mã giảm giá';
+        updateCouponTypeUI();
+        updateMinOrderHint();
         document.getElementById('couponModal').classList.remove('hidden');
     }
 
@@ -321,6 +376,11 @@
             .replace(/'/g, "&#039;");
     }
 
-    document.addEventListener('DOMContentLoaded', () => loadCoupons(1));
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCoupons(1);
+        document.getElementById('couponType')?.addEventListener('change', updateCouponTypeUI);
+        document.getElementById('couponValue')?.addEventListener('input', updateValueHint);
+        document.getElementById('couponMinOrder')?.addEventListener('input', updateMinOrderHint);
+    });
 </script>
 @endpush

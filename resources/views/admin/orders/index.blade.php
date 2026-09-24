@@ -376,8 +376,14 @@ const orderId = document.createElement('p');
 orderId.className = 'text-xs text-slate-500';
 orderId.textContent = `ID: ${order.id}`;
 
+const customerName = document.createElement('p');
+customerName.className = 'text-xs text-slate-700 font-medium mt-1';
+const cName = order.user?.name || order.recipient_name || (order.user_id ? ('Khách hàng #' + order.user_id) : 'Khách vãng lai');
+customerName.textContent = cName;
+
 orderInfo.appendChild(orderCode);
 orderInfo.appendChild(orderId);
+orderInfo.appendChild(customerName);
 
 
 const statusCell = document.createElement('td');
@@ -428,8 +434,8 @@ row.appendChild(createdAt);
 row.appendChild(actionCell);
 
 tbody.appendChild(row);
-
-
+    });
+}
 
 function viewOrder(id) {
 

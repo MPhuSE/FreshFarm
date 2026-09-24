@@ -19,6 +19,7 @@ class ProductResource extends JsonResource
             'price' => (int) $this->price,
             'compare_at_price' => (int) $this->compare_at_price,
             'origin' => $this->origin,
+            'featured' => (bool) $this->featured,
             'available_quantity' => $this->relationLoaded('inventory')
                 ? (int) $this->available_quantity
                 : 0,
@@ -42,6 +43,9 @@ class ProductResource extends JsonResource
         if ($image) {
             if (str_starts_with($image->file_path, 'http')) {
                 return $image->file_path;
+            }
+            if (str_starts_with($image->file_path, '/') || str_starts_with($image->file_path, 'tv4/')) {
+                return asset(ltrim($image->file_path, '/'));
             }
             return asset('storage/'.$image->file_path);
         }

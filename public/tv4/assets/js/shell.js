@@ -53,18 +53,24 @@ const _unscramble = (str) => {
 
 window.FF_AUTH = {
     setToken(token, remember = false) {
-        // Remove any plaintext token in session/local storage
-        sessionStorage.removeItem('access_token');
-        localStorage.removeItem('access_token');
-
-        if (!token) return;
+        if (!token) {
+            sessionStorage.removeItem(SEC_TOKEN_KEY);
+            localStorage.removeItem(SEC_TOKEN_KEY);
+            sessionStorage.removeItem('access_token');
+            localStorage.removeItem('access_token');
+            return;
+        }
         const encoded = _scramble(token);
         if (remember) {
             localStorage.setItem(SEC_TOKEN_KEY, encoded);
             sessionStorage.removeItem(SEC_TOKEN_KEY);
+            localStorage.setItem('access_token', token);
+            sessionStorage.removeItem('access_token');
         } else {
             sessionStorage.setItem(SEC_TOKEN_KEY, encoded);
             localStorage.removeItem(SEC_TOKEN_KEY);
+            sessionStorage.setItem('access_token', token);
+            localStorage.removeItem('access_token');
         }
     },
 
@@ -77,15 +83,18 @@ window.FF_AUTH = {
     },
 
     setUser(user) {
-        // Strip sensitive personal info (phone, email, id) from client storage
-        localStorage.removeItem('current_user');
-        sessionStorage.removeItem('current_user');
-        if (!user) return;
+        if (!user) {
+            localStorage.removeItem('current_user');
+            sessionStorage.removeItem('current_user');
+            localStorage.removeItem(SEC_USER_KEY);
+            return;
+        }
         const safeInfo = {
             name: user.full_name || user.name || 'Thành viên',
             role: user.role || 'customer'
         };
         localStorage.setItem(SEC_USER_KEY, _scramble(JSON.stringify(safeInfo)));
+        localStorage.setItem('current_user', JSON.stringify(user));
     },
 
     getUser() {
@@ -94,7 +103,7 @@ window.FF_AUTH = {
             if (raw) {
                 return JSON.parse(_unscramble(raw));
             }
-            const legacy = localStorage.getItem('current_user');
+            const legacy = localStorage.getItem('current_user') || sessionStorage.getItem('current_user');
             if (legacy) return JSON.parse(legacy);
         } catch { /* ignore */ }
         return null;
@@ -106,6 +115,7 @@ window.FF_AUTH = {
         localStorage.removeItem(SEC_USER_KEY);
         sessionStorage.removeItem('access_token');
         localStorage.removeItem('access_token');
+        sessionStorage.removeItem('current_user');
         localStorage.removeItem('current_user');
     }
 };
@@ -163,7 +173,7 @@ function header() {
                    <a href="${FF.url('account')}">${icon('user')} Hồ sơ cá nhân</a>
                    <a href="${FF.url('wishlist')}">${icon('heart')} Sản phẩm yêu thích <span data-wishlist-count style="margin-left:auto;background:var(--green-600);color:white;border-radius:99px;padding:1px 7px;font-size:12px;display:none">0</span></a>
                    <a href="${FF.url('orders')}">${icon('package')} Đơn hàng của tôi</a>
-                   ${user.role === 'admin' ? `<a href="/admin">${icon('settings')} Quản trị hệ thống</a>` : ''}
+                   ${(user.role === 'admin' || user.role === 'staff') ? `<a href="/admin">${icon('settings')} Quản trị hệ thống</a>` : ''}
                    <div class="divider"></div>
                    <a href="#" data-header-logout>${icon('log-out')} Đăng xuất</a>
                </div>
@@ -256,6 +266,17 @@ function header() {
                 >
                     Tin tức
                 </a>
+
+                ${!loggedIn ? `
+                    <div class="nav__mobile-auth">
+                        <a href="${FF.url('login')}" class="btn btn--outline btn--sm nav__mobile-login-btn">
+                            ${icon('user')} Đăng nhập
+                        </a>
+                        <a href="${FF.url('register')}" class="btn btn--primary btn--sm nav__mobile-register-btn">
+                            ${icon('user-plus')} Đăng ký
+                        </a>
+                    </div>
+                ` : ''}
 
             </nav>
 
@@ -551,6 +572,12 @@ function accountNav() {
             ${icon('activity')}
             Trạng thái API
         </a>
+
+        ${(user && (user.role === 'admin' || user.role === 'staff')) ? `
+        <a href="/admin">
+            ${icon('settings')}
+            Quản trị hệ thống
+        </a>` : ''}
 
         <a
             href="#"

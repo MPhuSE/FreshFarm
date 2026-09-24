@@ -35,18 +35,29 @@ const API_BASE_URL = '/api/v1';
 async function loadSettings() {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/settings`, {
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Accept': 'application/json'
             }
         });
 
-        const settings = await response.json();
-        renderSettings(settings || []);
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const result = await response.json();
+        if (response.ok) {
+            const list = Array.isArray(result) ? result : (Array.isArray(result?.data) ? result.data : []);
+            renderSettings(list);
+        } else {
+            console.error('Settings load error:', result);
+            renderSettings([]);
+        }
 
     } catch (error) {
         console.error(error);
-        alert('Không thể tải cài đặt.');
+        renderSettings([]);
     }
 }
 
@@ -64,8 +75,10 @@ function renderSettings(settings) {
     
     // Merge DB settings with defaults
     const combinedSettings = [...defaultFields];
+    const safeList = Array.isArray(settings) ? settings : (Array.isArray(settings?.data) ? settings.data : []);
     
-    settings.forEach(dbSetting => {
+    safeList.forEach(dbSetting => {
+        if (!dbSetting || !dbSetting.key) return;
         const index = combinedSettings.findIndex(s => s.key === dbSetting.key);
         if (index > -1) {
             combinedSettings[index].value = dbSetting.value;
@@ -128,7 +141,7 @@ async function saveSettings(e) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/settings`, {
             method: 'POST',
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders(true) : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -139,7 +152,8 @@ async function saveSettings(e) {
         if (response.ok) {
             alert('Lưu cài đặt thành công!');
         } else {
-            alert('Lỗi lưu cài đặt');
+            const err = await response.json().catch(() => ({}));
+            alert(err.message || 'Lỗi lưu cài đặt');
         }
     } catch (e) {
         console.error(e);

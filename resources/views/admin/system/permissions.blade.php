@@ -1,1270 +1,317 @@
 @extends('layouts.admin')
 
-@section('title', 'Quản lý bài viết')
+@section('title', 'Phân quyền người dùng')
 
 @section('page-header')
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">
-                Quản lý bài viết
-            </h1>
-            <p class="text-gray-500 mt-1">
-                Quản lý danh sách và nội dung bài viết
-            </p>
+            <p class="text-sm font-medium text-emerald-600">Admin System</p>
+            <h1 class="mt-1 text-3xl font-bold">Phân quyền người dùng</h1>
+            <p class="mt-2 text-slate-500">Quản lý vai trò (Admin, Staff, Customer) và quyền hạn tài khoản trong hệ thống.</p>
         </div>
-
-        <button
-            onclick="openCreateModal()"
-            class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
-        >
-
-            + Thêm bài viết
-
-        </button>
-
     </div>
+@endsection
 
-
-
-    <!-- TÌM KIẾM + LỌC -->
-
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-
-        <div class="flex flex-wrap gap-4 items-end">
-
-            <!-- q -->
-
+@section('content')
+    <!-- THẺ CẬP NHẬT NHANH VAI TRÒ -->
+    <section class="mb-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <h2 class="mb-4 text-lg font-semibold text-slate-800">Cập nhật quyền người dùng</h2>
+        <form id="quickRoleForm" onsubmit="handleQuickRoleUpdate(event)" class="grid gap-4 md:grid-cols-3 items-end">
             <div>
+                <label for="quickUserSelect" class="block text-sm font-medium text-slate-700 mb-1">Chọn người dùng</label>
+                <select id="quickUserSelect" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <option value="">-- Đang tải người dùng... --</option>
+                </select>
+            </div>
+            <div>
+                <label for="quickRoleSelect" class="block text-sm font-medium text-slate-700 mb-1">Gán vai trò mới</label>
+                <select id="quickRoleSelect" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <option value="customer">Customer (Khách hàng)</option>
+                    <option value="staff">Staff (Nhân viên)</option>
+                    <option value="admin">Admin (Quản trị viên)</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" id="btnQuickSubmit" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition">
+                    Cập nhật vai trò
+                </button>
+            </div>
+        </form>
+    </section>
 
-                <label class="block text-sm font-medium mb-1">
-
-                    Tìm kiếm
-
-                </label>
-
+    <!-- BỘ LỌC & TÌM KIẾM -->
+    <div class="mb-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <div class="flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-[200px]">
+                <label for="searchQuery" class="block text-sm font-medium text-slate-700 mb-1">Tìm kiếm</label>
                 <input
                     type="text"
-                    id="search"
-                    placeholder="Tên bài viết..."
-                    class="border rounded-lg px-3 py-2 w-64"
+                    id="searchQuery"
+                    placeholder="Tên, email, số điện thoại..."
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 >
-
             </div>
 
-
-
-            <!-- status -->
-
-            <div>
-
-                <label class="block text-sm font-medium mb-1">
-
-                    Trạng thái
-
-                </label>
-
-                <select
-                    id="statusFilter"
-                    class="border rounded-lg px-3 py-2"
-                >
-
-                    <option value="">
-
-                        Tất cả
-
-                    </option>
-
-                    <option value="published">
-
-                        Published
-
-                    </option>
-
-                    <option value="draft">
-
-                        Draft
-
-                    </option>
-
+            <div class="w-44">
+                <label for="roleFilter" class="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
+                <select id="roleFilter" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <option value="">Tất cả vai trò</option>
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                    <option value="customer">Customer</option>
                 </select>
-
             </div>
 
-
+            <div class="w-44">
+                <label for="statusFilter" class="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
+                <select id="statusFilter" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <option value="">Tất cả</option>
+                    <option value="active">Hoạt động (Active)</option>
+                    <option value="locked">Bị khóa (Locked)</option>
+                </select>
+            </div>
 
             <button
-                onclick="loadPosts(1)"
-                class="bg-green-600 text-white px-5 py-2 rounded-lg"
+                type="button"
+                onclick="loadUsers(1)"
+                class="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition"
             >
-
-                Tìm kiếm
-
+                Lọc dữ liệu
             </button>
-
         </div>
-
     </div>
 
-
-
-    <!-- DANH SÁCH -->
-
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-
-        <div class="p-5 border-b">
-
-            <h2 class="text-lg font-bold">
-
-                Danh sách bài viết
-
-            </h2>
-
+    <!-- DANH SÁCH PHÂN QUYỀN -->
+    <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-800">Danh sách phân quyền tài khoản</h2>
+            <span id="userCount" class="text-xs text-slate-500"></span>
         </div>
-
-
 
         <div class="overflow-x-auto">
-
-            <table class="w-full">
-
-                <thead class="bg-gray-50">
-
+            <table class="w-full min-w-[850px] text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-
-                        <th class="text-left px-5 py-3">
-
-                            ID
-
-                        </th>
-
-                        <th class="text-left px-5 py-3">
-
-                            Tiêu đề
-
-                        </th>
-
-                        <th class="text-left px-5 py-3">
-
-                            Slug
-
-                        </th>
-
-                        <th class="text-left px-5 py-3">
-
-                            Mô tả
-
-                        </th>
-
-                        <th class="text-left px-5 py-3">
-
-                            Trạng thái
-
-                        </th>
-
-                        <th class="text-left px-5 py-3">
-
-                            Ngày đăng
-
-                        </th>
-
-                        <th class="text-center px-5 py-3">
-
-                            Thao tác
-
-                        </th>
-
+                        <th class="px-6 py-4">ID</th>
+                        <th class="px-6 py-4">Người dùng</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Vai trò</th>
+                        <th class="px-6 py-4">Trạng thái</th>
+                        <th class="px-6 py-4 text-right">Thay đổi vai trò</th>
                     </tr>
-
                 </thead>
-
-
-
-                <tbody id="postsTable">
-
+                <tbody id="userTableBody" class="divide-y divide-slate-100">
                     <tr>
-
-                        <td
-                            colspan="7"
-                            class="text-center py-6 text-gray-500"
-                        >
-
-                            Đang tải dữ liệu...
-
-                        </td>
-
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">Đang tải danh sách người dùng...</td>
                     </tr>
-
                 </tbody>
-
             </table>
-
         </div>
+    </section>
 
-
-
-        <!-- PHÂN TRANG -->
-
-        <div
-            id="pagination"
-            class="p-4 border-t flex justify-between items-center"
-        ></div>
-
-    </div>
-
-</div>
-
-
-
-<div
-    id="postModal"
-    class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
->
-
-    <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
-
-        <h2
-            id="modalTitle"
-            class="text-xl font-bold mb-5"
-        >
-
-            Thêm bài viết
-
-        </h2>
-
-
-
-        <input
-            type="hidden"
-            id="postId"
-        >
-
-
-
-        <!-- TITLE -->
-
-        <div class="mb-4">
-
-            <label class="block text-sm font-medium mb-1">
-
-                Tiêu đề
-
-            </label>
-
-            <input
-                type="text"
-                id="postTitle"
-                class="border rounded-lg px-3 py-2 w-full"
-            >
-
-        </div>
-
-
-
-        <div class="mb-4">
-
-            <label class="block text-sm font-medium mb-1">
-
-                Mô tả ngắn
-
-            </label>
-
-            <textarea
-                id="postExcerpt"
-                rows="3"
-                class="border rounded-lg px-3 py-2 w-full"
-            ></textarea>
-
-        </div>
-
-
-
-        <div class="mb-4">
-
-            <label class="block text-sm font-medium mb-1">
-
-                Nội dung
-
-            </label>
-
-            <textarea
-                id="postContent"
-                rows="8"
-                class="border rounded-lg px-3 py-2 w-full"
-                placeholder="<p>Nội dung bài viết...</p>"
-            ></textarea>
-
-            <p class="text-xs text-gray-500 mt-1">
-
-                Nội dung HTML phải được server sanitize trước khi lưu.
-
-            </p>
-
-        </div>
-
-
-
-        <div class="mb-4">
-
-            <label class="block text-sm font-medium mb-1">
-
-                Thumbnail
-
-            </label>
-
-            <input
-                type="text"
-                id="postThumbnail"
-                placeholder="URL thumbnail"
-                class="border rounded-lg px-3 py-2 w-full"
-            >
-
-        </div>
-
-
-
-        <div class="mb-5">
-
-            <label class="block text-sm font-medium mb-1">
-
-                Trạng thái
-
-            </label>
-
-            <select
-                id="postStatus"
-                class="border rounded-lg px-3 py-2 w-full"
-            >
-
-                <option value="draft">
-
-                    Draft
-
-                </option>
-
-                <option value="published">
-
-                    Published
-
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <div class="flex justify-end gap-2">
-
-            <button
-                onclick="closeModal()"
-                class="px-4 py-2 border rounded-lg"
-            >
-
-                Hủy
-
-            </button>
-
-            <button
-                onclick="savePost()"
-                class="px-4 py-2 bg-green-600 text-white rounded-lg"
-            >
-
-                Lưu
-
-            </button>
-
-        </div>
-
-    </div>
-
+    <!-- Phân trang -->
+    <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
 @endsection
 
 @push('scripts')
 <script>
-
-const API_BASE_URL = '/api/v1';
-
 let currentPage = 1;
+let loadedUsers = [];
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+    });
+}
 
+function getRoleBadge(role) {
+    switch (role) {
+        case 'admin':
+            return '<span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">Admin</span>';
+        case 'staff':
+            return '<span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">Staff</span>';
+        default:
+            return '<span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Customer</span>';
+    }
+}
 
-async function loadPosts(page = 1) {
+function getStatusBadge(status) {
+    if (status === 'locked') {
+        return '<span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">Bị khóa</span>';
+    }
+    return '<span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Hoạt động</span>';
+}
 
+async function loadUsers(page = 1) {
     currentPage = page;
+    const q = document.getElementById('searchQuery').value.trim();
+    const role = document.getElementById('roleFilter').value;
+    const status = document.getElementById('statusFilter').value;
 
-    const q =
-        document.getElementById('search').value.trim();
+    const params = new URLSearchParams();
+    params.append('page', page);
+    if (q) params.append('q', q);
+    if (role) params.append('role', role);
+    if (status) params.append('status', status);
 
-    const status =
-        document.getElementById('statusFilter').value;
-
-
-
-    let url =
-        `${API_BASE_URL}/admin/posts?page=${page}`;
-
-
-
-    if (q) {
-
-        url +=
-            `&q=${encodeURIComponent(q)}`;
-
-    }
-
-
-
-    if (status) {
-
-        url +=
-            `&status=${encodeURIComponent(status)}`;
-
-    }
-
-
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">Đang tải danh sách...</td></tr>';
 
     try {
-
-        const response = await fetch(url, {
-
-            method: 'GET',
-
-            headers: {
-
-                'Accept':
-                    'application/json',
-
-                ...AdminApi.headers()
-
-            }
-
+        const response = await fetch(`/api/v1/admin/users?${params.toString()}`, {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : { 'Accept': 'application/json' }
         });
 
-
-
-        const result =
-            await response.json();
-
-
-
-        if (!response.ok) {
-
-            const errorCode =
-                result.errors?.error_code ||
-                result.error_code;
-
-
-
-            if (errorCode === 'FORBIDDEN') {
-
-                alert(
-                    'Bạn không có quyền xem danh sách bài viết'
-                );
-
-            } else {
-
-                alert(
-                    'Không thể tải danh sách bài viết'
-                );
-
-            }
-
+        if (response.status === 401) {
+            window.location.href = '/login';
             return;
-
         }
 
-
-
-        renderPosts(result.data || []);
-
-        renderPagination(result.meta);
-
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            'Không thể kết nối đến API'
-        );
-
+        const result = await response.json();
+        if (response.ok && result.success) {
+            const users = result.data || [];
+            loadedUsers = users;
+            renderUsers(users);
+            updateQuickUserSelect(users);
+            renderPagination(result.meta || {});
+        } else {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500">${escapeHtml(result.message || 'Lỗi khi tải dữ liệu')}</td></tr>`;
+        }
+    } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500">Không thể kết nối đến máy chủ.</td></tr>';
     }
-
 }
 
-
-
-function renderPosts(posts) {
-
-    const table =
-        document.getElementById('postsTable');
-
-
-
-    table.innerHTML = '';
-
-
-
-    if (!posts.length) {
-
-        table.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="7"
-                    class="text-center py-6 text-gray-500"
-                >
-
-                    Không có bài viết
-
-                </td>
-
-            </tr>
-
-        `;
-
+function updateQuickUserSelect(users) {
+    const select = document.getElementById('quickUserSelect');
+    if (!select) return;
+    if (!users || users.length === 0) {
+        select.innerHTML = '<option value="">-- Không có người dùng --</option>';
         return;
-
     }
-
-
-
-    posts.forEach(post => {
-
-        table.innerHTML += `
-
-            <tr class="border-t">
-
-                <td class="px-5 py-3">
-
-                    ${post.id}
-
-                </td>
-
-                <td class="px-5 py-3 font-medium">
-
-                    ${escapeHtml(post.title)}
-
-                </td>
-
-                <td class="px-5 py-3">
-
-                    ${escapeHtml(post.slug)}
-
-                </td>
-
-                <td class="px-5 py-3">
-
-                    ${escapeHtml(post.excerpt || '')}
-
-                </td>
-
-                <td class="px-5 py-3">
-
-                    ${
-                        post.status === 'published'
-
-                        ? `
-
-                            <span class="px-2 py-1 rounded bg-green-100 text-green-700">
-
-                                Published
-
-                            </span>
-
-                        `
-
-                        : `
-
-                            <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">
-
-                                Draft
-
-                            </span>
-
-                        `
-
-                    }
-
-                </td>
-
-                <td class="px-5 py-3">
-
-                    ${formatDate(post.published_at)}
-
-                </td>
-
-                <td class="px-5 py-3 text-center">
-
-                    <button
-                        onclick="editPost(${post.id})"
-                        class="text-blue-600 hover:underline"
-                    >
-
-                        Sửa
-
-                    </button>
-
-                </td>
-
-            </tr>
-
-        `;
-
-    });
-
+    select.innerHTML = '<option value="">-- Chọn người dùng --</option>' + users.map(u => `
+        <option value="${u.id}">${escapeHtml(u.name)} (${escapeHtml(u.email)}) - [${u.role || 'customer'}]</option>
+    `).join('');
 }
 
+function renderUsers(users) {
+    const tbody = document.getElementById('userTableBody');
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500">Không tìm thấy tài khoản nào.</td></tr>';
+        return;
+    }
 
+    tbody.innerHTML = users.map(user => `
+        <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 font-mono text-xs text-slate-500">#${user.id}</td>
+            <td class="px-6 py-4 font-medium text-slate-900">${escapeHtml(user.name)}</td>
+            <td class="px-6 py-4 text-slate-600">${escapeHtml(user.email)}</td>
+            <td class="px-6 py-4">${getRoleBadge(user.role)}</td>
+            <td class="px-6 py-4">${getStatusBadge(user.status)}</td>
+            <td class="px-6 py-4 text-right">
+                <div class="inline-flex items-center gap-2">
+                    <select id="role-select-${user.id}" class="rounded border border-slate-300 bg-white px-2.5 py-1 text-xs outline-none focus:border-emerald-500">
+                        <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Customer</option>
+                        <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                    <button onclick="changeUserRole(${user.id})" class="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 transition">
+                        Lưu
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
 
 function renderPagination(meta) {
-
-    const pagination =
-        document.getElementById('pagination');
-
-
-
-    if (!meta || meta.last_page <= 1) {
-
+    const pagination = document.getElementById('pagination');
+    if (!meta || !meta.last_page || meta.last_page <= 1) {
         pagination.innerHTML = '';
-
         return;
-
     }
 
-
-
-    pagination.innerHTML = `
-
-        <div class="text-sm text-gray-500">
-
-            Hiển thị
-
-            ${meta.from || 0}
-
-            -
-
-            ${meta.to || 0}
-
-            / ${meta.total || 0} bài viết
-
-        </div>
-
-
-
-        <div class="flex gap-2">
-
+    let html = '';
+    for (let p = 1; p <= meta.last_page; p++) {
+        const isActive = p === meta.current_page;
+        html += `
             <button
-                onclick="loadPosts(${meta.current_page - 1})"
-                ${meta.current_page <= 1 ? 'disabled' : ''}
-                class="px-3 py-1 border rounded"
-            >
-
-                Trước
-
-            </button>
-
-
-
-            <span class="px-3 py-1">
-
-                Trang
-
-                ${meta.current_page}
-
-                /
-
-                ${meta.last_page}
-
-            </span>
-
-
-
-            <button
-                onclick="loadPosts(${meta.current_page + 1})"
-                ${meta.current_page >= meta.last_page ? 'disabled' : ''}
-                class="px-3 py-1 border rounded"
-            >
-
-                Sau
-
-            </button>
-
-        </div>
-
-    `;
-
+                type="button"
+                onclick="loadUsers(${p})"
+                class="rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                    isActive ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                }"
+            >${p}</button>
+        `;
+    }
+    pagination.innerHTML = html;
 }
 
-
-
-function openCreateModal() {
-
-    document.getElementById('modalTitle').textContent =
-        'Thêm bài viết';
-
-    document.getElementById('postId').value = '';
-
-    document.getElementById('postTitle').value = '';
-
-    document.getElementById('postExcerpt').value = '';
-
-    document.getElementById('postContent').value = '';
-
-    document.getElementById('postThumbnail').value = '';
-
-    document.getElementById('postStatus').value =
-        'draft';
-
-
-
-    document
-        .getElementById('postModal')
-        .classList
-        .remove('hidden');
-
-}
-
-
-
-// =================================================
-// ĐÓNG MODAL
-// =================================================
-
-function closeModal() {
-
-    document
-        .getElementById('postModal')
-        .classList
-        .add('hidden');
-
-}
-
-
-
-async function editPost(id) {
+async function changeUserRole(userId) {
+    const select = document.getElementById(`role-select-${userId}`);
+    if (!select) return;
+    const newRole = select.value;
 
     try {
+        const response = await fetch(`/api/v1/admin/users/${userId}/role`, {
+            method: 'PATCH',
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders(true) : { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ role: newRole })
+        });
 
-        /*
-         * API hiện tại không có:
-         * GET /api/v1/admin/posts/{id}
-         *
-         * Vì vậy lấy lại danh sách của trang hiện tại
-         * rồi tìm bài viết theo id.
-         */
-
-        const response = await fetch(
-
-            `${API_BASE_URL}/admin/posts?page=${currentPage}`,
-
-            {
-
-                method: 'GET',
-
-                headers: {
-
-                    'Accept': 'application/json',
-
-                    ...AdminApi.headers(true)
-
-                }
-
-            }
-
-        );
-
-
-
-        const result =
-            await response.json();
-
-
-
-        if (!response.ok) {
-
-            const errorCode =
-                result.errors?.error_code ||
-                result.error_code;
-
-
-
-            if (errorCode === 'FORBIDDEN') {
-
-                alert(
-                    'Bạn không có quyền xem danh sách bài viết'
-                );
-
-            } else {
-
-                alert(
-                    'Không thể tải dữ liệu bài viết'
-                );
-
-            }
-
-            return;
-
+        const result = await response.json();
+        if (response.ok && result.success) {
+            alert('Cập nhật vai trò thành công!');
+            loadUsers(currentPage);
+        } else {
+            alert(result.message || 'Không thể cập nhật vai trò.');
         }
-
-
-
-        const post =
-            (result.data || []).find(
-                item => item.id == id
-            );
-
-
-
-        if (!post) {
-
-            alert(
-                'Không tìm thấy bài viết'
-            );
-
-            return;
-
-        }
-
-
-
-        document.getElementById('modalTitle').textContent =
-            'Cập nhật bài viết';
-
-
-
-        document.getElementById('postId').value =
-            post.id;
-
-
-
-        document.getElementById('postTitle').value =
-            post.title || '';
-
-
-
-        document.getElementById('postExcerpt').value =
-            post.excerpt || '';
-
-
-
-        /*
-         * API GET danh sách hiện tại chỉ trả:
-         * id, title, slug, excerpt, status, published_at
-         *
-         * Không có content_html và thumbnail
-         * nên không tự đoán dữ liệu.
-         */
-
-        document.getElementById('postContent').value = '';
-
-        document.getElementById('postThumbnail').value = '';
-
-
-
-        document.getElementById('postStatus').value =
-            post.status || 'draft';
-
-
-
-        document
-            .getElementById('postModal')
-            .classList
-            .remove('hidden');
-
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            'Không thể kết nối đến API'
-        );
-
+    } catch (e) {
+        console.error(e);
+        alert('Lỗi kết nối máy chủ.');
     }
-
 }
 
+async function handleQuickRoleUpdate(e) {
+    e.preventDefault();
+    const userId = document.getElementById('quickUserSelect').value;
+    const newRole = document.getElementById('quickRoleSelect').value;
 
-
-async function savePost() {
-
-    const id =
-        document.getElementById('postId').value;
-
-
-
-    const title =
-        document.getElementById('postTitle').value.trim();
-
-
-
-    const excerpt =
-        document.getElementById('postExcerpt').value.trim();
-
-
-
-    const contentHtml =
-        document.getElementById('postContent').value.trim();
-
-
-
-    const thumbnail =
-        document.getElementById('postThumbnail').value.trim();
-
-
-
-    const status =
-        document.getElementById('postStatus').value;
-
-
-
-    if (!title) {
-
-        alert('Vui lòng nhập tiêu đề');
-
+    if (!userId) {
+        alert('Vui lòng chọn người dùng.');
         return;
-
     }
 
-
-
-    if (!id && !contentHtml) {
-
-        alert('Vui lòng nhập nội dung bài viết');
-
-        return;
-
-    }
-
-
+    const btn = document.getElementById('btnQuickSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Đang lưu...';
 
     try {
+        const response = await fetch(`/api/v1/admin/users/${userId}/role`, {
+            method: 'PATCH',
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders(true) : { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ role: newRole })
+        });
 
-
-
-        if (!id) {
-
-            const body = {
-
-                title: title,
-
-                content_html: contentHtml,
-
-                status: status
-
-            };
-
-
-
-            if (excerpt) {
-
-                body.excerpt = excerpt;
-
-            }
-
-
-
-            if (thumbnail) {
-
-                body.thumbnail = thumbnail;
-
-            }
-
-
-
-            const response = await fetch(
-
-                `${API_BASE_URL}/admin/posts`,
-
-                {
-
-                    method: 'POST',
-
-                    headers: {
-
-                        'Accept':
-                            'application/json',
-
-                        'Content-Type':
-                            'application/json',
-
-                        ...AdminApi.headers(true)
-
-                    },
-
-                    body:
-                        JSON.stringify(body)
-
-                }
-
-            );
-
-
-
-            const result =
-                await response.json();
-
-
-
-            if (!response.ok) {
-
-                const errorCode =
-                    result.errors?.error_code ||
-                    result.error_code;
-
-
-
-                if (
-                    errorCode ===
-                    'SLUG_EXISTS'
-                ) {
-
-                    alert(
-                        'Slug bài viết đã tồn tại'
-                    );
-
-                }
-
-                else if (
-                    errorCode ===
-                    'VALIDATION_ERROR'
-                ) {
-
-                    alert(
-                        'Dữ liệu bài viết không hợp lệ'
-                    );
-
-                }
-
-                else {
-
-                    alert(
-                        'Không thể tạo bài viết'
-                    );
-
-                }
-
-                return;
-
-            }
-
-
-
-            alert(
-                'Tạo bài viết thành công'
-            );
-
+        const result = await response.json();
+        if (response.ok && result.success) {
+            alert('Cập nhật vai trò thành công!');
+            loadUsers(currentPage);
+        } else {
+            alert(result.message || 'Không thể cập nhật vai trò.');
         }
-
-
-
-        else {
-
-            const body = {};
-
-
-
-            if (title) {
-
-                body.title = title;
-
-            }
-
-
-
-            if (excerpt) {
-
-                body.excerpt = excerpt;
-
-            }
-
-
-
-            if (contentHtml) {
-
-                body.content_html =
-                    contentHtml;
-
-            }
-
-
-
-            if (thumbnail) {
-
-                body.thumbnail =
-                    thumbnail;
-
-            }
-
-
-
-            if (status) {
-
-                body.status =
-                    status;
-
-            }
-
-
-
-            const response = await fetch(
-
-                `${API_BASE_URL}/admin/posts/${id}`,
-
-                {
-
-                    method: 'PATCH',
-
-                    headers: {
-
-                        'Accept':
-                            'application/json',
-
-                        'Content-Type':
-                            'application/json',
-
-                        'Authorization':
-                            ...AdminApi.headers(true)
-
-                    },
-
-                    body:
-                        JSON.stringify(body)
-
-                }
-
-            );
-
-
-
-            const result =
-                await response.json();
-
-
-
-            if (!response.ok) {
-
-                const errorCode =
-                    result.errors?.error_code ||
-                    result.error_code;
-
-
-
-                if (
-                    errorCode ===
-                    'POST_NOT_FOUND'
-                ) {
-
-                    alert(
-                        'Không tìm thấy bài viết'
-                    );
-
-                }
-
-                else if (
-                    errorCode ===
-                    'VALIDATION_ERROR'
-                ) {
-
-                    alert(
-                        'Dữ liệu bài viết không hợp lệ'
-                    );
-
-                }
-
-                else {
-
-                    alert(
-                        'Không thể cập nhật bài viết'
-                    );
-
-                }
-
-                return;
-
-            }
-
-
-
-            alert(
-                'Cập nhật bài viết thành công'
-            );
-
-        }
-
-
-
-        closeModal();
-
-        loadPosts(currentPage);
-
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            'Không thể kết nối đến API'
-        );
-
+    } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối máy chủ.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cập nhật vai trò';
     }
-
 }
 
-
-
-function escapeHtml(value) {
-
-    return String(value || '')
-
-        .replace(/&/g, '&amp;')
-
-        .replace(/</g, '&lt;')
-
-        .replace(/>/g, '&gt;')
-
-        .replace(/"/g, '&quot;')
-
-        .replace(/'/g, '&#039;');
-
-}
-
-
-
-function formatDate(date) {
-
-    if (!date) {
-
-        return '';
-
-    }
-
-
-
-    return new Date(date)
-
-        .toLocaleDateString('vi-VN');
-
-}
-
-
-
-document.addEventListener(
-
-    'DOMContentLoaded',
-
-    function () {
-
-        loadPosts(1);
-
-    }
-
-);
-
+// Khởi chạy khi tải trang
+loadUsers(1);
 </script>
 @endpush

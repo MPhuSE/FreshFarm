@@ -16,7 +16,10 @@ import {
 
 
 function card(product) {
-    const quantity = Number(product.available_quantity);
+    const rawQty = product.available_quantity ?? product.stock ?? product.quantity;
+    const quantity = rawQty !== undefined && rawQty !== null && !isNaN(Number(rawQty))
+        ? Number(rawQty)
+        : 0;
     const hasDiscount = product.compare_at_price > product.price;
     const ratingAvg = product.rating_avg ? Number(product.rating_avg).toFixed(1) : 0;
     const reviewsCount = product.reviews_count || 0;
@@ -335,8 +338,8 @@ async function catalog(
                             <h2 class="catalog-title">24 sản phẩm</h2>
                             <div class="catalog-actions">
                                 <div class="view-toggles">
-                                    <button class="view-btn active"><i data-feather="grid"></i></button>
-                                    <button class="view-btn"><i data-feather="list"></i></button>
+                                    <button class="view-btn active" data-view="grid" title="Xem dạng lưới" aria-label="Xem dạng lưới"><i data-feather="grid"></i></button>
+                                    <button class="view-btn" data-view="list" title="Xem dạng danh sách" aria-label="Xem dạng danh sách"><i data-feather="list"></i></button>
                                 </div>
                                 <label class="inline-select inline-select--premium">
                                     Sắp xếp
@@ -369,6 +372,31 @@ async function catalog(
                 </div>
             </div>
         `;
+    }
+
+    let currentViewMode = 'grid';
+
+    if (!home) {
+        const viewBtns = document.querySelectorAll('.view-btn');
+        viewBtns.forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const mode = btn.dataset.view;
+                if (!mode) return;
+                currentViewMode = mode;
+                viewBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const targetGrid = $('#catalog-results .product-grid');
+                if (targetGrid) {
+                    if (currentViewMode === 'list') {
+                        targetGrid.classList.add('product-grid--list');
+                    } else {
+                        targetGrid.classList.remove('product-grid--list');
+                    }
+                }
+            };
+        });
     }
 
     const form =
@@ -462,7 +490,7 @@ async function catalog(
             target.innerHTML =
                 items.length
                     ? `
-                        <div class="product-grid ${home ? '' : 'product-grid--catalog'}">
+                        <div class="product-grid ${home ? '' : 'product-grid--catalog'} ${!home && currentViewMode === 'list' ? 'product-grid--list' : ''}">
                             ${items
                                 .map(card)
                                 .join('')}

@@ -88,11 +88,15 @@ const API_BASE_URL = '/api/v1';
 async function loadPages(page = 1) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/pages?page=${page}`, {
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Accept': 'application/json'
             }
         });
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         const result = await response.json();
         if (response.ok) {
             displayPages(result.data || []);
@@ -164,7 +168,7 @@ async function savePage(e) {
     try {
         const response = await fetch(url, {
             method,
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders(true) : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -183,7 +187,7 @@ async function deletePage(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/pages/${id}`, {
             method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')) }
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : { 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')), 'Accept': 'application/json' }
         });
         if(response.ok) loadPages();
     } catch(err) { console.error(err); }

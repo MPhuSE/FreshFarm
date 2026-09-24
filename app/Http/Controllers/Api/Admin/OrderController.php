@@ -35,7 +35,7 @@ class OrderController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = Order::query()->orderBy('created_at', 'desc');
+        $query = Order::with('user:id,name,email,phone')->orderBy('created_at', 'desc');
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -69,7 +69,7 @@ class OrderController extends Controller
     )]
     public function show(int $id): JsonResponse
     {
-        $order = Order::with('items')->find($id);
+        $order = Order::with(['items.product.images', 'user:id,name,email,phone', 'coupon'])->find($id);
 
         if (! $order) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn hàng.', 'error_code' => 'ORDER_NOT_FOUND'], 404);
@@ -107,23 +107,29 @@ class OrderController extends Controller
         $validTransitions = [
             'pending' => ['confirmed', 'cancelled'],
             'confirmed' => ['shipping', 'cancelled'],
-            'shipping' => ['delivered'],
+            'shipping' => ['delivered', 'completed', 'cancelled'],
             'delivered' => ['returned'],
+            'completed' => ['returned'],
         ];
 
         if (! isset($validTransitions[$order->status]) || ! in_array($newStatus, $validTransitions[$order->status])) {
-            return response()->json(['success' => false, 'message' => 'Trạng thái không hợp lệ.', 'error_code' => 'INVALID_ORDER_TRANSITION'], 409);
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể chuyển sang trạng thái này. Luồng xử lý đơn hàng yêu cầu tuần tự: Chờ xử lý ➔ Đã xác nhận ➔ Đang giao ➔ Đã giao hàng.',
+                'error_code' => 'INVALID_ORDER_TRANSITION'
+            ], 409);
         }
 
         DB::transaction(function () use ($order, $newStatus, $request) {
+            $oldStatus = $order->status;
             $order->status = $newStatus;
-            if ($request->has('note')) {
-                $order->note = rtrim($order->note.' | '.$request->note, ' | ');
+            if ($request->filled('note')) {
+                $order->note = rtrim(($order->note ? $order->note.' | ' : '').$request->note, ' | ');
             }
             $order->save();
 
-            // nếu Admin hủy đơn, hoàn kho
-            if ($newStatus === 'cancelled') {
+            // nếu Admin hủy đơn và đơn chưa từng bị hủy trước đó -> hoàn kho
+            if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
                 foreach ($order->items as $item) {
                     $inventory = Inventory::where('product_id', $item->product_id)->lockForUpdate()->first();
                     if ($inventory) {
@@ -131,9 +137,18 @@ class OrderController extends Controller
                     }
                 }
             }
+            // nếu đơn trước đó bị cancelled mà nay chuyển lại trạng thái khác -> trừ lại kho
+            if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+                foreach ($order->items as $item) {
+                    $inventory = Inventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                    if ($inventory) {
+                        $inventory->decrement('quantity_on_hand', $item->quantity);
+                    }
+                }
+            }
         });
 
-        return response()->json(['success' => true, 'message' => 'Cập nhật trạng thái thành công.', 'data' => $order->fresh()]);
+        return response()->json(['success' => true, 'message' => 'Cập nhật trạng thái thành công.', 'data' => $order->fresh(['items.product', 'user:id,name,email,phone', 'coupon'])]);
     }
 
     #[OA\Patch(
@@ -155,11 +170,7 @@ class OrderController extends Controller
     {
         $order = Order::find($id);
         if (! $order) {
-            return response()->json(['success' => false, 'message' => 'Lỗi', 'error_code' => 'ORDER_NOT_FOUND'], 404);
-        }
-
-        if ($order->payment_status === 'paid' && $request->payment_status !== 'refunded') {
-            return response()->json(['success' => false, 'message' => 'Đã thanh toán.', 'error_code' => 'INVALID_PAYMENT_STATE'], 409);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn hàng.', 'error_code' => 'ORDER_NOT_FOUND'], 404);
         }
 
         $order->payment_status = $request->payment_status;
@@ -168,6 +179,6 @@ class OrderController extends Controller
         }
         $order->save();
 
-        return response()->json(['success' => true, 'message' => 'Cập nhật thanh toán thành công.', 'data' => $order]);
+        return response()->json(['success' => true, 'message' => 'Cập nhật thanh toán thành công.', 'data' => $order->fresh(['items.product', 'user:id,name,email,phone', 'coupon'])]);
     }
 }

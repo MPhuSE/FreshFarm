@@ -46,11 +46,16 @@ const API_BASE_URL = '/api/v1';
 async function loadReviews(page = 1) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/reviews?page=${page}`, {
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Accept': 'application/json'
             }
         });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
 
         const result = await response.json();
 
@@ -60,11 +65,11 @@ async function loadReviews(page = 1) {
             return;
         }
 
-        alert('Không thể tải danh sách đánh giá.');
+        displayReviews([]);
 
     } catch (error) {
         console.error(error);
-        alert('Không thể kết nối đến API.');
+        displayReviews([]);
     }
 }
 
@@ -136,7 +141,7 @@ async function updateStatus(id, status) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/reviews/${id}`, {
             method: 'PATCH',
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders(true) : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -156,8 +161,9 @@ async function deleteReview(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/reviews/${id}`, {
             method: 'DELETE',
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
+                'Accept': 'application/json'
             }
         });
         if(response.ok) {

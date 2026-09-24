@@ -14,7 +14,7 @@ class UpdateOrderPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_status' => 'required|string|in:paid,refunded',
+            'payment_status' => 'required|string|in:unpaid,paid,refunded',
             'transaction_ref' => 'nullable|string|max:255',
         ];
     }

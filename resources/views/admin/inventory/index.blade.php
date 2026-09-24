@@ -46,11 +46,16 @@ const API_BASE_URL = '/api/v1';
 async function loadInventory(page = 1) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/inventory?page=${page}`, {
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders() : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Accept': 'application/json'
             }
         });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
 
         const result = await response.json();
 
@@ -60,11 +65,11 @@ async function loadInventory(page = 1) {
             return;
         }
 
-        alert('Không thể tải danh sách tồn kho.');
+        displayInventory([]);
 
     } catch (error) {
         console.error(error);
-        alert('Không thể kết nối đến API.');
+        displayInventory([]);
     }
 }
 
@@ -130,7 +135,7 @@ async function updateQuantity(productId, currentQty) {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/inventory/${productId}`, {
             method: 'PATCH',
-            headers: {
+            headers: window.AdminAuth ? window.AdminAuth.getHeaders(true) : {
                 'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'

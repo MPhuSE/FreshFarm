@@ -85,7 +85,7 @@
 const API_BASE_URL = '/api/v1';
 
 const getAuthHeaders = () => {
-    return {
+    return window.AdminAuth ? window.AdminAuth.getHeaders() : {
         'Authorization': 'Bearer ' + (sessionStorage.getItem('access_token') || localStorage.getItem('access_token')),
         'Accept': 'application/json'
     };
@@ -134,21 +134,38 @@ async function loadDashboard() {
             if (orders.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">Chưa có đơn hàng nào</td></tr>';
             } else {
-                tbody.innerHTML = orders.map(order => `
+                tbody.innerHTML = orders.map(order => {
+                    const customerName = order.user?.name || order.recipient_name || (order.user_id ? ('Khách hàng #' + order.user_id) : 'Khách vãng lai');
+                    const customerPhone = order.phone || order.user?.phone || '';
+
+                    return `
                     <tr class="hover:bg-slate-50">
                         <td class="px-6 py-4 font-medium text-emerald-600">
-                            <a href="/admin/orders/${order.id}">${order.order_code || ('#' + order.id)}</a>
+                            <a href="/admin/orders/${order.id}" class="hover:underline">${escapeHtml(order.order_code || ('#' + order.id))}</a>
                         </td>
-                        <td class="px-6 py-4 text-slate-700">${order.user_id ? 'Thành viên #' + order.user_id : 'Khách vãng lai'}</td>
+                        <td class="px-6 py-4 text-slate-800">
+                            <div class="font-medium">${escapeHtml(customerName)}</div>
+                            ${customerPhone ? `<div class="text-xs text-slate-400 font-normal">${escapeHtml(customerPhone)}</div>` : ''}
+                        </td>
                         <td class="px-6 py-4">${getOrderStatus(order.status)}</td>
                         <td class="px-6 py-4 text-right font-medium">${formatMoney(order.grand_total)}</td>
                     </tr>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
     } catch (error) {
         console.error('Failed to load dashboard:', error);
     }
+}
+
+function escapeHtml(unsafe) {
+    return (unsafe || '').toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 loadDashboard();

@@ -8,6 +8,11 @@ async function auth(register = false) {
     // Redirect if already logged in
     const existingToken = window.FF_AUTH ? window.FF_AUTH.getToken() : (localStorage.getItem('access_token') || sessionStorage.getItem('access_token'));
     if (existingToken) {
+        const user = window.FF_AUTH ? window.FF_AUTH.getUser() : JSON.parse(localStorage.getItem('current_user') || 'null');
+        if (user && (user.role === 'admin' || user.role === 'staff')) {
+            location.href = '/admin';
+            return;
+        }
         location.href = url('shop');
         return;
     }
@@ -250,10 +255,11 @@ async function auth(register = false) {
                     response.data?.token
                 ) {
                     const remember = Boolean(data.get('remember'));
+                    const user = response.data?.user;
                     if (window.FF_AUTH) {
                         window.FF_AUTH.setToken(response.data.token, remember);
-                        if (response.data?.user) {
-                            window.FF_AUTH.setUser(response.data.user);
+                        if (user) {
+                            window.FF_AUTH.setUser(user);
                         }
                     } else {
                         if (remember) {
@@ -263,9 +269,30 @@ async function auth(register = false) {
                             sessionStorage.setItem('access_token', response.data.token);
                             localStorage.removeItem('access_token');
                         }
-                        if (response.data?.user) {
-                            localStorage.setItem('current_user', JSON.stringify(response.data.user));
+                        if (user) {
+                            localStorage.setItem('current_user', JSON.stringify(user));
                         }
+                    }
+
+                    // Always ensure access_token & current_user exist for admin and legacy scripts
+                    try {
+                        localStorage.setItem('access_token', response.data.token);
+                        if (user) {
+                            localStorage.setItem('current_user', JSON.stringify(user));
+                        }
+                    } catch (e) {}
+
+                    // Redirect admin and staff directly to admin dashboard
+                    if (user && (user.role === 'admin' || user.role === 'staff')) {
+                        location.href = '/admin';
+                        return;
+                    }
+
+                    const params = new URLSearchParams(window.location.search);
+                    const redirectUrl = params.get('redirect');
+                    if (redirectUrl) {
+                        location.href = redirectUrl;
+                        return;
                     }
 
                     location.href =

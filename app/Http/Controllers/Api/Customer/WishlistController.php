@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
 
@@ -13,9 +14,27 @@ class WishlistController extends Controller
      */
     public function index(Request $request)
     {
-        $wishlists = Wishlist::with('product')
+        $wishlists = Wishlist::with([
+            'product' => function ($query) {
+                $query->with(['category', 'inventory', 'primaryImage', 'images'])
+                    ->withAvg('reviews', 'rating')
+                    ->withCount('reviews');
+            },
+        ])
             ->where('user_id', $request->user()->id)
+            ->latest()
             ->paginate(12);
+
+        $wishlists->through(function ($item) {
+            return [
+                'id' => $item->id,
+                'user_id' => $item->user_id,
+                'product_id' => $item->product_id,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+                'product' => $item->product ? (new ProductResource($item->product))->resolve() : null,
+            ];
+        });
 
         return response()->json($wishlists);
     }

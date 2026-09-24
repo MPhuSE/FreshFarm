@@ -72,7 +72,8 @@
                     <label class="choice-card">
                         <input type="radio"
                                name="payment_method"
-                               value="cod">
+                               value="cod"
+                               checked>
 
                         <span>
                             <strong>Thanh toán khi nhận hàng</strong>

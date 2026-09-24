@@ -7,7 +7,8 @@ import {
     errorBox,
     heading,
     message,
-    input
+    input,
+    generateUUID
 } from './api.core.js';
 
 import {
@@ -210,9 +211,6 @@ async function checkout() {
                                 Thanh toán khi nhận hàng
                             </option>
 
-                            <option value="bank_transfer">
-                                Chuyển khoản ngân hàng
-                            </option>
 
                             <option value="vnpay">
                                 Thanh toán qua VNPay
@@ -354,7 +352,7 @@ async function checkout() {
                 payload = body;
 
                 key =
-                    crypto.randomUUID();
+                    generateUUID();
 
                 const preview =
                     response.data;
