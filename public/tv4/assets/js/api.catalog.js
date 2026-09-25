@@ -211,6 +211,41 @@ function bindWishlist(root) {
 }
 
 
+function getCategoryIcon(slug) {
+    switch (slug) {
+        case 'rau-cu':
+            return {
+                bg: '#dcfce7',
+                icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12c0-2.5 1-4.8 2.6-6.5L12 2z"/><path d="M12 2v20"/><path d="M12 7l5 5"/><path d="M12 12l-5 5"/></svg>'
+            };
+        case 'trai-cay':
+            return {
+                bg: '#ffedd5',
+                icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 5V2"/><path d="M15 2c0 2-3 3-3 3"/></svg>'
+            };
+        case 'thit-trung':
+            return {
+                bg: '#fee2e2',
+                icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><circle cx="8" cy="8" r="4"/><circle cx="16" cy="16" r="4"/></svg>'
+            };
+        case 'gao-hat':
+            return {
+                bg: '#fef3c7',
+                icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5c-3 1-5 4-5 7"/><path d="M7 9c3 1 5 4 5 7"/><path d="M17 13c-3 1-5 4-5 7"/><path d="M7 17c3 1 5 4 5 7"/></svg>'
+            };
+        case 'dac-san':
+            return {
+                bg: '#ede9fe',
+                icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+            };
+        default:
+            return {
+                bg: '#eef7eb',
+                icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d6a4f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'
+            };
+    }
+}
+
 async function catalog(
     home = false
 ) {
@@ -230,15 +265,17 @@ async function catalog(
         const catGrid = document.querySelector('.categories-grid');
         if (catGrid && categories.data) {
             const bgColors = ['#eef7eb', '#fff3e0', '#ffebee', '#fdf8e8', '#f0f4ec'];
-            catGrid.innerHTML = categories.data.slice(0, 5).map((cat, i) => `
+            catGrid.innerHTML = categories.data.slice(0, 5).map((cat, i) => {
+                const imgSrc = cat.image_url || cat.image_path || FF.asset('images/categories/' + cat.slug + '.jpg');
+                return `
                 <a href="${FF.url('shop')}?category_id=${cat.id}" class="cat-card" style="background: ${bgColors[i % bgColors.length]};">
-                    <div class="cat-card__img"><img src="${cat.image_path ? cat.image_path : 'https://placehold.co/400x400/eef7eb/2d6a4f?text=' + encodeURIComponent(cat.name)}" alt="${esc(cat.name)}"></div>
+                    <div class="cat-card__img"><img src="${imgSrc}" alt="${esc(cat.name)}" loading="lazy"></div>
                     <div class="cat-card__content">
                         <h3>${esc(cat.name)} <i data-feather="arrow-right"></i></h3>
                         <p>${esc(cat.description || 'Khám phá ngay')}</p>
                     </div>
                 </a>
-            `).join('');
+            `}).join('');
             if (window.feather) feather.replace();
         }
     }
@@ -260,16 +297,18 @@ async function catalog(
             
             <div class="container category-chips" style="margin-top: -30px; position: relative; z-index: 10;">
                 <a href="javascript:void(0)" class="chip active" style="background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <div class="chip__icon" style="background: #eef7eb;"><i data-feather="grid" style="width: 16px; height: 16px; color: var(--green-600);"></i></div>
+                    <div class="chip__icon" style="background: #eef7eb;">${getCategoryIcon('all').icon}</div>
                     Tất cả
                 </a>
                 ${
-                    (categories.data || []).map(category => `
+                    (categories.data || []).map(category => {
+                        const styleInfo = getCategoryIcon(category.slug);
+                        return `
                         <a href="javascript:void(0)" class="chip" style="background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                            <div class="chip__icon"><img src="${category.image_path ? category.image_path : 'https://placehold.co/100x100/eef7eb/2d6a4f?text=' + encodeURIComponent(category.name.substring(0,2))}" alt="${esc(category.name)}" style="object-fit: cover; width: 100%; height: 100%;"></div>
+                            <div class="chip__icon" style="background: ${styleInfo.bg};">${styleInfo.icon}</div>
                             ${esc(category.name)}
                         </a>
-                    `).join('')
+                    `}).join('')
                 }
             </div>
         
@@ -308,14 +347,18 @@ async function catalog(
                             </div>
 
                             <div class="filter-group">
-                                <h3>Khoảng giá</h3>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <h3 style="margin:0;">Khoảng giá</h3>
+                                    <span id="price-slider-val" style="font-size:13px; font-weight:700; color:var(--green-700); background:#eef7eb; padding:2px 8px; border-radius:12px; border:1px solid #c7e6d0;">0đ – 500.000đ</span>
+                                </div>
                                 <div class="price-slider-ui">
-                                    <input type="range" min="0" max="500000" value="500000" class="range-slider">
-                                    <div class="price-range-labels">
+                                    <input type="range" name="max_price" id="max-price-slider" min="0" max="500000" step="5000" value="500000" class="range-slider">
+                                    <div class="price-range-labels" style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px; color:var(--text-light, #6b7280);">
                                         <span>0đ</span>
-                                        <span>500.000đ</span>
+                                        <span id="price-slider-max-label">500.000đ</span>
                                     </div>
                                 </div>
+                                <input type="hidden" name="min_price" value="0">
                             </div>
 
                             <div class="filter-group filter-group--toggle">
@@ -583,6 +626,32 @@ async function catalog(
     }
 
     if (form) {
+        const priceSlider = form.querySelector('#max-price-slider');
+        const priceValBadge = form.querySelector('#price-slider-val');
+        const priceMaxLabel = form.querySelector('#price-slider-max-label');
+
+        const updatePriceDisplay = (val) => {
+            const num = Number(val) || 0;
+            const formatted = num.toLocaleString('vi-VN') + 'đ';
+            if (priceValBadge) {
+                priceValBadge.textContent = `0đ – ${formatted}`;
+            }
+            if (priceMaxLabel) {
+                priceMaxLabel.textContent = formatted;
+            }
+            if (priceSlider) {
+                const percent = Math.min(Math.max((num / 500000) * 100, 0), 100);
+                priceSlider.style.background = `linear-gradient(to right, var(--green-600, #16a34a) ${percent}%, #e2e8f0 ${percent}%)`;
+            }
+        };
+
+        if (priceSlider) {
+            priceSlider.addEventListener('input', (e) => {
+                updatePriceDisplay(e.target.value);
+            });
+            updatePriceDisplay(priceSlider.value);
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.forEach((value, key) => {
             const field = form.querySelector(`[name="${key}"]`);
@@ -592,6 +661,9 @@ async function catalog(
                     if (el) el.checked = true;
                 } else {
                     field.value = value;
+                    if (field.id === 'max-price-slider') {
+                        updatePriceDisplay(value);
+                    }
                 }
             }
         });
@@ -613,6 +685,18 @@ async function catalog(
                 load(1);
             }
         );
+
+        form.addEventListener('reset', () => {
+            setTimeout(() => {
+                if (priceSlider) {
+                    priceSlider.value = 500000;
+                    updatePriceDisplay(500000);
+                }
+                const chips = document.querySelectorAll('.category-chips .chip');
+                chips.forEach((c, idx) => c.classList.toggle('active', idx === 0));
+                load(1);
+            }, 50);
+        });
     } await load();
 }
 
@@ -656,18 +740,22 @@ async function product() {
 
         <section class="live-product">
 
-            <img
-                id="main-product-image"
-                src="${safeImage(
-                    productData
-                        .primary_image_url ||
-                    productData
-                        .images?.[0]?.url
-                )}"
-                alt="${esc(
-                    productData.name
-                )}"
-            >
+            <div class="live-product__media">
+                <div class="live-product__main-img-wrap">
+                    <img
+                        id="main-product-image"
+                        src="${safeImage(
+                            productData
+                                .primary_image_url ||
+                            productData
+                                .images?.[0]?.url
+                        )}"
+                        alt="${esc(
+                            productData.name
+                        )}"
+                    >
+                </div>
+            </div>
 
             <div>
 
@@ -842,9 +930,9 @@ async function product() {
 
 
     if (
-        productData.images?.length
+        productData.images &&
+        productData.images.length > 1
     ) {
-
         const gallery =
             document.createElement(
                 'div'
@@ -853,42 +941,41 @@ async function product() {
         gallery.className =
             'gallery__thumbs';
 
-        gallery.style.cssText =
-            'flex-direction:row;' +
-            'flex-wrap:wrap;' +
-            'margin-top:16px';
-
         gallery.innerHTML =
             productData.images
                 .map(
-                    (image) => `
+                    (image, idx) => `
                         <button
                             type="button"
-                            style="width:64px"
+                            class="${idx === 0 ? 'is-active' : ''}"
                             aria-label="Xem ảnh sản phẩm"
                         >
-
                             <img
                                 src="${safeImage(
-                                    image.url
+                                    image.url || image.file_path
                                 )}"
                                 alt="${esc(
                                     productData.name
                                 )}"
                             >
-
                         </button>
                     `
                 )
                 .join('');
 
-        main
-            .querySelector(
+        const mediaCol =
+            main.querySelector(
+                '.live-product__media'
+            ) ||
+            main.querySelector(
                 '.live-product>div'
-            )
-            .append(
+            );
+
+        if (mediaCol) {
+            mediaCol.append(
                 gallery
             );
+        }
 
         gallery
             .querySelectorAll(
@@ -896,18 +983,14 @@ async function product() {
             )
             .forEach(
                 (button) => {
-
                     button.onclick =
                         () => {
-
-                            $(
-                                '#main-product-image'
-                            ).src =
-                                button
-                                    .querySelector(
-                                        'img'
-                                    )
-                                    .src;
+                            gallery.querySelectorAll('button').forEach(b => b.classList.remove('is-active'));
+                            button.classList.add('is-active');
+                            const mainImg = $('#main-product-image');
+                            if (mainImg) {
+                                mainImg.src = button.querySelector('img').src;
+                            }
                         };
                 }
             );
