@@ -304,12 +304,26 @@
 }
 .wishlist-btn svg { width: 16px; height: 16px; }
 
-.product-card--premium .product-card__media {
-    padding: 24px;
+.product-card--premium .product-card__media,
+.product-card__media {
+    padding: 0 !important;
     background: #f8fafc;
     border-radius: 16px 16px 0 0;
-    display: block;
-    aspect-ratio: 1;
+    display: block !important;
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.product-card--premium .product-card__media img,
+.product-card__media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+    transition: transform 0.4s ease !important;
 }
 .product-card--premium .product-card__body {
     padding: 16px;
@@ -427,7 +441,8 @@
 .product-grid--list .product-card__media img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
+    object-position: center !important;
     transition: transform 0.3s ease !important;
 }
 
@@ -495,3 +510,139 @@
     }
 }
 
+
+/* --- Global Product & Category Framing Fixes --- */
+.product-card__media {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+}
+
+.product-card__media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+/* Category cards in 'Khám phá danh mục' */
+.cat-card__img {
+    width: 92px !important;
+    height: 92px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    border: 3px solid #fff !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+    margin: 0 auto 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #fff !important;
+}
+
+.cat-card__img img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+}
+
+/* Category chips (Filter tabs) icons */
+.chip__icon {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+}
+
+.chip__icon svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Product Detail Page Gallery */
+.live-product {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 40px !important;
+    align-items: start !important;
+}
+
+.live-product__media {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+.live-product__main-img-wrap,
+.gallery__main {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    min-height: auto !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06) !important;
+    position: relative !important;
+}
+
+.live-product #main-product-image,
+.live-product > img,
+.gallery__main > img {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 20px !important;
+    display: block !important;
+}
+
+.gallery__thumbs {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    margin-top: 14px !important;
+    flex-wrap: wrap !important;
+}
+
+.gallery__thumbs button {
+    width: 72px !important;
+    height: 72px !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: 2px solid transparent !important;
+    background: #f8fafc !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.gallery__thumbs button.is-active,
+.gallery__thumbs button:hover {
+    border-color: var(--green-600) !important;
+    transform: translateY(-2px) !important;
+}
+
+.gallery__thumbs button img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+}
+
+@media (max-width: 768px) {
+    .live-product {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+    }
+}

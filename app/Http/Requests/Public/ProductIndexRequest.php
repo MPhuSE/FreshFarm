@@ -19,7 +19,16 @@ class ProductIndexRequest extends FormRequest
             'q' => ['nullable', 'string', 'max:190'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'min_price' => ['nullable', 'numeric', 'min:0'],
-            'max_price' => ['nullable', 'numeric', 'min:0', 'gte:min_price'],
+            'max_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) {
+                    if ($this->filled('min_price') && (float) $value < (float) $this->input('min_price')) {
+                        $fail('Giá tối đa phải lớn hơn hoặc bằng giá tối thiểu.');
+                    }
+                },
+            ],
             'in_stock' => ['nullable', 'boolean'],
             'sort' => ['nullable', 'in:price_asc,price_desc,name_asc,newest'],
             'page' => ['nullable', 'integer', 'min:1'],

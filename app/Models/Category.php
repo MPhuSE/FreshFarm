@@ -19,7 +19,7 @@ class Category extends Model
 
     protected $fillable = [
         'parent_id', 'name', 'slug', 'description',
-        'image_path', 'sort_order', 'status',
+        'image_path', 'image_url', 'sort_order', 'status',
     ];
 
     protected $casts = [

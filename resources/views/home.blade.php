@@ -46,7 +46,13 @@
             @foreach($categories ?? [] as $index => $cat)
             <a href="{{ url('/products?category_id=' . $cat->id) }}" class="cat-card" style="background: {{ $bgColors[$index % count($bgColors)] }};">
                 <div class="cat-card__img">
-                    <img src="{{ $cat->image_path ? asset($cat->image_path) : 'https://placehold.co/400x400/eef7eb/2d6a4f?text='.urlencode($cat->name) }}" alt="{{ $cat->name }}">
+                    @php
+                        $catImg = $cat->image_url ?: $cat->image_path;
+                        $catImgSrc = $catImg 
+                            ? (str_starts_with($catImg, 'http') ? $catImg : asset(ltrim($catImg, '/')))
+                            : asset('tv4/assets/images/categories/' . $cat->slug . '.jpg');
+                    @endphp
+                    <img src="{{ $catImgSrc }}" alt="{{ $cat->name }}">
                 </div>
                 <div class="cat-card__content">
                     <h3>{{ $cat->name }} <i data-feather="arrow-right"></i></h3>
